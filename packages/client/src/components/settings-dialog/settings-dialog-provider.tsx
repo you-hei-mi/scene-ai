@@ -37,10 +37,13 @@ import {
   ToolsSetting,
   WalletSetting,
 } from "./settings-items";
-import { AboutSetting } from "./settings-items/about-setting";
 import PersonalizedSetting from "./settings-items/personalized-setting";
 
-const SETTINGS_COMPONENTS: Record<SettingsPage, React.ComponentType> = {
+const AboutSetting = React.lazy(() =>
+  import("./settings-items/about-setting").then((module) => ({ default: module.AboutSetting })),
+);
+
+const SETTINGS_COMPONENTS: Record<SettingsPage, React.ElementType> = {
   profile: ProfileSetting,
   general: GeneralSetting,
   wallet: WalletSetting,
@@ -251,6 +254,7 @@ export function SettingsDialogProvider({ children }: { children: React.ReactNode
   const activeNavItem = navGroups
     .flatMap((group) => group.items)
     .find((item) => item.id === state.activePage);
+  const ActiveSettingsComponent = SETTINGS_COMPONENTS[state.activePage];
 
   return (
     <SettingsDialogContext.Provider value={contextValue}>
@@ -330,7 +334,9 @@ export function SettingsDialogProvider({ children }: { children: React.ReactNode
               <div className="h-full flex-1 overflow-hidden">
                 <ScrollArea className="h-full">
                   <div className="p-4 pt-0">
-                    {React.createElement(SETTINGS_COMPONENTS[state.activePage])}
+                    <React.Suspense fallback={null}>
+                      <ActiveSettingsComponent />
+                    </React.Suspense>
                   </div>
                 </ScrollArea>
               </div>

@@ -4,17 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 
-/**
- * Resolve the base URL for extension iframe.
- * - Dev: uses VITE_DEVELOP_APP_BASE_URL or falls back to localhost:4090
- * - Prod: uses current origin (same domain)
- */
-function getExtensionBaseUrl() {
-  if (import.meta.env.DEV) {
-    return import.meta.env.VITE_DEVELOP_APP_BASE_URL || "http://localhost:4090";
-  }
-  return window.location.origin;
-}
+import { resolveExtensionBaseUrl } from "./extension-frame-url";
 
 function isNotFoundError(error: unknown) {
   return Boolean(error && typeof error === "object" && "status" in error && error.status === 404);
@@ -41,7 +31,15 @@ export default function AppIframePage() {
   const iframeSrc = useMemo(() => {
     if (!identifier) return "";
     const subPath = wildcard ? `/${wildcard}` : "";
-    return `${getExtensionBaseUrl()}/extension/${identifier}${subPath}${location.search}${location.hash}`;
+    const extensionBaseUrl = resolveExtensionBaseUrl({
+      identifier,
+      isDev: import.meta.env.DEV,
+      apiBaseUrl: import.meta.env.VITE_DEVELOP_APP_BASE_URL,
+      extensionDevBaseUrls: import.meta.env.VITE_EXTENSION_DEV_BASE_URLS,
+      currentOrigin: window.location.origin,
+    });
+
+    return `${extensionBaseUrl}/extension/${identifier}${subPath}${location.search}${location.hash}`;
   }, [identifier, wildcard, location.search, location.hash]);
 
   // Listen for navigation messages from iframe (iframe → parent sync)

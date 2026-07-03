@@ -20,6 +20,7 @@ setStackFinderFn(findStackTargetFile);
 
 import { HttpExceptionFilter } from "./common/filters/http-exception.filter";
 import { TransformInterceptor } from "./common/interceptors/transform.interceptor";
+import { resolveCorsOrigin } from "./common/utils/cors-origin";
 import { AppModule } from "./modules/app.module";
 
 /**
@@ -70,7 +71,10 @@ async function bootstrap() {
     const corsEnabled = process.env.SERVER_CORS_ENABLED === "true";
     if (corsEnabled) {
         app.enableCors({
-            origin: process.env.SERVER_CORS_ORIGIN || "*",
+            origin: (origin, callback) => {
+                const resolvedOrigin = resolveCorsOrigin(process.env.SERVER_CORS_ORIGIN, origin);
+                callback(null, resolvedOrigin);
+            },
             credentials: true,
         });
         appLogger.log(

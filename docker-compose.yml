@@ -18,6 +18,12 @@ services:
             TZ: Asia/Shanghai
             REDIS_PASSWORD: ${REDIS_PASSWORD:-}
             QUICK_START_MODE: ${QUICK_START_MODE:-false}
+        command: >
+            sh -c 'if [ -n "$$REDIS_PASSWORD" ]; then
+            exec redis-server --requirepass "$$REDIS_PASSWORD";
+            else
+            exec redis-server;
+            fi'
         ports:
             - "${REDIS_EXTERNAL_PORT:-}${REDIS_EXTERNAL_PORT:+:}6379"
         volumes:

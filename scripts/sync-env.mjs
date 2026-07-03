@@ -134,10 +134,15 @@ function syncEnvFile(examplePath, envPath, rootVersion) {
         }
     }
 
-    // Find removed keys (exist in .env but not in .env.example)
-    for (const [key] of existingVariables) {
-        if (!exampleKeys.has(key) && !IGNORED_KEYS.has(key)) {
-            removedKeys.push(key);
+    // Removing keys can destroy deployment-specific configuration. Keep existing
+    // variables by default; opt in only for local cleanup workflows.
+    const removeObsolete = process.env.SYNC_ENV_REMOVE_OBSOLETE === "true";
+    if (removeObsolete) {
+        // Find removed keys (exist in .env but not in .env.example)
+        for (const [key] of existingVariables) {
+            if (!exampleKeys.has(key) && !IGNORED_KEYS.has(key)) {
+                removedKeys.push(key);
+            }
         }
     }
 

@@ -8,12 +8,16 @@ import {
   DialogTitle,
 } from "@buildingai/ui/components/ui/dialog";
 import { Check, ChevronRight, Copy } from "lucide-react";
-import { useState } from "react";
+import { lazy, Suspense, useState } from "react";
 import { toast } from "sonner";
 
-import { AgreementDialog, type AgreementType } from "@/components/agreement-dialog";
+import type { AgreementType } from "@/components/agreement-dialog";
 
 import { SettingItem, SettingItemAction, SettingItemGroup } from "../setting-item";
+
+const AgreementDialog = lazy(() =>
+  import("@/components/agreement-dialog").then((module) => ({ default: module.AgreementDialog })),
+);
 
 const AboutSetting = () => {
   const [agreementOpen, setAgreementOpen] = useState(false);
@@ -99,7 +103,11 @@ const AboutSetting = () => {
         </SettingItemGroup>
       </div>
 
-      <AgreementDialog open={agreementOpen} onOpenChange={setAgreementOpen} type={activeTab} />
+      {agreementOpen && (
+        <Suspense fallback={null}>
+          <AgreementDialog open={agreementOpen} onOpenChange={setAgreementOpen} type={activeTab} />
+        </Suspense>
+      )}
 
       <Dialog open={customerServiceOpen} onOpenChange={setCustomerServiceOpen}>
         <DialogContent className="sm:max-w-sm">

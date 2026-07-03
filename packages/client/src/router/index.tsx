@@ -3,29 +3,42 @@ import GlobalError from "@buildingai/ui/components/exception/global-error";
 import NotFoundPage from "@buildingai/ui/components/exception/not-found-page";
 import MainLayout from "@buildingai/ui/layouts/main/index";
 import DefaultLayout from "@buildingai/ui/layouts/styles/default/index";
+import { lazy, Suspense, type ComponentType, type LazyExoticComponent } from "react";
 import { createBrowserRouter } from "react-router-dom";
 
-import AgentsIndexPage from "@/pages/agents";
-import AgentChatPage from "@/pages/agents/detail/chat";
-import AgentConfigurationPage from "@/pages/agents/detail/configuration";
-import AgentLogsPage from "@/pages/agents/detail/logs";
-import AgentMonitoringPage from "@/pages/agents/detail/monitoring";
-import AgentPublishPage from "@/pages/agents/detail/publish";
-import PublishChatPage from "@/pages/agents/site-chat";
-import AgentsWorkspacePage from "@/pages/agents/workspace";
-import AppsIndexPage from "@/pages/apps";
-import DatasetsIndexPage from "@/pages/datasets";
-import DatasetsLayout from "@/pages/datasets/_layouts";
-import DatasetsDetailPage from "@/pages/datasets/detail";
-import InstallPage from "@/pages/install";
-
-import ConsoleLayout from "../layouts/console";
 import DynamicHomePage from "../pages";
-import AppIframePage from "../pages/apps/[identifier]";
-import ChatPage from "../pages/chat";
-import { LoginPage } from "../pages/login";
-import { OAuthCallbackPage } from "../pages/login/oauth-callback";
-import AlipayReturnPage from "../pages/payment/alipay-return";
+
+const AgentsIndexPage = lazy(() => import("@/pages/agents"));
+const AgentChatPage = lazy(() => import("@/pages/agents/detail/chat"));
+const AgentConfigurationPage = lazy(() => import("@/pages/agents/detail/configuration"));
+const AgentLogsPage = lazy(() => import("@/pages/agents/detail/logs"));
+const AgentMonitoringPage = lazy(() => import("@/pages/agents/detail/monitoring"));
+const AgentPublishPage = lazy(() => import("@/pages/agents/detail/publish"));
+const PublishChatPage = lazy(() => import("@/pages/agents/site-chat"));
+const AgentsWorkspacePage = lazy(() => import("@/pages/agents/workspace"));
+const AppsIndexPage = lazy(() => import("@/pages/apps"));
+const DatasetsIndexPage = lazy(() => import("@/pages/datasets"));
+const DatasetsLayout = lazy(() => import("@/pages/datasets/_layouts"));
+const DatasetsDetailPage = lazy(() => import("@/pages/datasets/detail"));
+const InstallPage = lazy(() => import("@/pages/install"));
+const ConsoleLayout = lazy(() => import("../layouts/console"));
+const AppIframePage = lazy(() => import("../pages/apps/[identifier]"));
+const ChatPage = lazy(() => import("../pages/chat"));
+const LoginPage = lazy(() =>
+  import("../pages/login").then((module) => ({ default: module.LoginPage })),
+);
+const OAuthCallbackPage = lazy(() =>
+  import("../pages/login/oauth-callback").then((module) => ({ default: module.OAuthCallbackPage })),
+);
+const AlipayReturnPage = lazy(() => import("../pages/payment/alipay-return"));
+
+function lazyRouteElement(Component: LazyExoticComponent<ComponentType>) {
+  return (
+    <Suspense fallback={null}>
+      <Component />
+    </Suspense>
+  );
+}
 
 export const router = createBrowserRouter([
   {
@@ -34,51 +47,51 @@ export const router = createBrowserRouter([
     children: [
       {
         path: "/login",
-        element: <LoginPage />,
+        element: lazyRouteElement(LoginPage),
       },
       {
         path: "/login/oauth-callback",
-        element: <OAuthCallbackPage />,
+        element: lazyRouteElement(OAuthCallbackPage),
       },
       {
         path: "/install",
-        element: <InstallPage />,
+        element: lazyRouteElement(InstallPage),
       },
       {
         path: "/payment/alipay-return",
-        element: <AlipayReturnPage />,
+        element: lazyRouteElement(AlipayReturnPage),
       },
       {
         path: "/agents/:id/configuration",
-        element: <AgentConfigurationPage />,
+        element: lazyRouteElement(AgentConfigurationPage),
       },
       {
         path: "/agents/:id/publish",
-        element: <AgentPublishPage />,
+        element: lazyRouteElement(AgentPublishPage),
       },
       {
         path: "/agents/:id/logs",
-        element: <AgentLogsPage />,
+        element: lazyRouteElement(AgentLogsPage),
       },
       {
         path: "/agents/:id/monitoring",
-        element: <AgentMonitoringPage />,
+        element: lazyRouteElement(AgentMonitoringPage),
       },
       {
         path: "/agents/:id/chat",
-        element: <AgentChatPage />,
+        element: lazyRouteElement(AgentChatPage),
       },
       {
         path: "/agents/:id/c/:uuid",
-        element: <AgentChatPage />,
+        element: lazyRouteElement(AgentChatPage),
       },
       {
         path: "/agents/:agentId/:accessToken/c/:conversationId",
-        element: <PublishChatPage />,
+        element: lazyRouteElement(PublishChatPage),
       },
       {
         path: "/agents/:agentId/:accessToken",
-        element: <PublishChatPage />,
+        element: lazyRouteElement(PublishChatPage),
       },
       {
         element: <DefaultLayout />,
@@ -93,60 +106,52 @@ export const router = createBrowserRouter([
             children: [
               {
                 index: true,
-                element: <ChatPage />,
+                element: lazyRouteElement(ChatPage),
               },
               {
                 path: "/c/:id",
-                element: <ChatPage />,
+                element: lazyRouteElement(ChatPage),
               },
             ],
           },
           {
             path: "/chat",
-            element: <ChatPage />,
+            element: lazyRouteElement(ChatPage),
           },
           {
             path: "/chat/:id",
-            element: <ChatPage />,
+            element: lazyRouteElement(ChatPage),
           },
           {
             path: "/apps",
-            element: <AppsIndexPage />,
+            element: lazyRouteElement(AppsIndexPage),
           },
           {
             path: "/apps/:identifier/*",
-            element: (
-              <AuthGuard>
-                <AppIframePage />
-              </AuthGuard>
-            ),
+            element: <AuthGuard>{lazyRouteElement(AppIframePage)}</AuthGuard>,
           },
           {
             path: "/agents",
-            element: <AgentsIndexPage />,
+            element: lazyRouteElement(AgentsIndexPage),
           },
           {
             path: "/datasets",
-            element: <DatasetsLayout />,
+            element: lazyRouteElement(DatasetsLayout),
             children: [
               {
                 index: true,
-                element: <DatasetsIndexPage />,
+                element: lazyRouteElement(DatasetsIndexPage),
               },
 
               {
                 path: "/datasets/:id",
-                element: (
-                  <AuthGuard>
-                    <DatasetsDetailPage />
-                  </AuthGuard>
-                ),
+                element: <AuthGuard>{lazyRouteElement(DatasetsDetailPage)}</AuthGuard>,
               },
             ],
           },
           {
             path: "/agents/workspace",
-            element: <AgentsWorkspacePage />,
+            element: lazyRouteElement(AgentsWorkspacePage),
           },
           {
             path: "*",
@@ -160,11 +165,13 @@ export const router = createBrowserRouter([
         children: [
           {
             path: "/console/*",
-            element: <ConsoleLayout />,
+            element: lazyRouteElement(ConsoleLayout),
             errorElement: (
-              <ConsoleLayout>
-                <GlobalError />
-              </ConsoleLayout>
+              <Suspense fallback={null}>
+                <ConsoleLayout>
+                  <GlobalError />
+                </ConsoleLayout>
+              </Suspense>
             ),
           },
         ],

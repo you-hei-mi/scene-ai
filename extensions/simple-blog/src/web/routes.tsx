@@ -1,12 +1,22 @@
 import { defineRouteOption } from "@buildingai/web-core";
+import { lazy, Suspense, type LazyExoticComponent, type ComponentType } from "react";
 
 import packageJson from "./../../package.json";
-import ArticleDetailPage from "./pages/article/[id]";
-import ArticleAddPage from "./pages/console/article/add";
-import ArticleEditPage from "./pages/console/article/edit";
-import ArticleListPage from "./pages/console/article/list";
-import ColumnListPage from "./pages/console/column/list";
 import BlogIndexPage from "./pages/index";
+
+const ArticleDetailPage = lazy(() => import("./pages/article/[id]"));
+const ArticleAddPage = lazy(() => import("./pages/console/article/add"));
+const ArticleEditPage = lazy(() => import("./pages/console/article/edit"));
+const ArticleListPage = lazy(() => import("./pages/console/article/list"));
+const ColumnListPage = lazy(() => import("./pages/console/column/list"));
+
+function lazyRouteElement(Component: LazyExoticComponent<ComponentType>) {
+    return (
+        <Suspense fallback={null}>
+            <Component />
+        </Suspense>
+    );
+}
 
 export const routeOption = defineRouteOption({
     base: `extension/${packageJson.name}`,
@@ -18,7 +28,7 @@ export const routeOption = defineRouteOption({
         },
         {
             path: "article/:id",
-            element: <ArticleDetailPage />,
+            element: lazyRouteElement(ArticleDetailPage),
         },
     ],
     consoleMenus: [
@@ -36,19 +46,19 @@ export const routeOption = defineRouteOption({
     consoleRoutes: [
         {
             index: true,
-            element: <ArticleListPage />,
+            element: lazyRouteElement(ArticleListPage),
         },
         {
             path: "article/add",
-            element: <ArticleAddPage />,
+            element: lazyRouteElement(ArticleAddPage),
         },
         {
             path: "article/edit",
-            element: <ArticleEditPage />,
+            element: lazyRouteElement(ArticleEditPage),
         },
         {
             path: "column/list",
-            element: <ColumnListPage />,
+            element: lazyRouteElement(ColumnListPage),
         },
     ],
 });

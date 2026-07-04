@@ -71,4 +71,12 @@ extensions/*
 !extensions/simple-blog/build
 !extensions/simple-blog/.output
 extensions/simple-blog/dist
+!extensions/infinite-canvas
+!extensions/infinite-canvas/**
+extensions/infinite-canvas/build
+extensions/infinite-canvas/.output
+extensions/infinite-canvas/.temp
+extensions/infinite-canvas/node_modules
+extensions/infinite-canvas/*.tsbuildinfo
+extensions/infinite-canvas/dist
 releases

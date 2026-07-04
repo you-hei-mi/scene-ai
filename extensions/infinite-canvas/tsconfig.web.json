@@ -1,0 +1,31 @@
+{
+    "extends": ["@buildingai/typescript-config/react-library.json"],
+    "compilerOptions": {
+        "tsBuildInfoFile": "./.temp/tsconfig.web.tsbuildinfo",
+        "target": "ES2022",
+        "baseUrl": ".",
+        "paths": {
+            "@buildingai/types": ["../../packages/@buildingai/types/src/index.ts"],
+            "@buildingai/types/*": ["../../packages/@buildingai/types/src/*"],
+            "@buildingai/utils/*": ["../../packages/@buildingai/utils/src/*"]
+        },
+        "useDefineForClassFields": true,
+        "lib": ["ES2022", "DOM", "DOM.Iterable"],
+        "module": "ESNext",
+        "moduleResolution": "bundler",
+        "verbatimModuleSyntax": false,
+        "moduleDetection": "force",
+        "allowImportingTsExtensions": true,
+        "noEmit": true,
+        "jsx": "react-jsx",
+        "types": ["vite/client"],
+        "skipLibCheck": true,
+        "strict": false,
+        "noUnusedLocals": false,
+        "noUnusedParameters": false,
+        "erasableSyntaxOnly": false,
+        "noFallthroughCasesInSwitch": true,
+        "noUncheckedSideEffectImports": true
+    },
+    "include": ["src/web", "vite.config.ts"]
+}

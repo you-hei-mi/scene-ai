@@ -1,0 +1,23 @@
+{
+    "identifier": "infinite-canvas",
+    "name": "Infinite Canvas",
+    "type": "application",
+    "version": "0.1.0",
+    "description": "Multi-model infinite canvas workflow editor for BuildingAI",
+    "homepage": "",
+    "author": {
+        "avatar": "/static/avatars/buildingai.png",
+        "name": "BuildingAI Teams",
+        "homepage": ""
+    },
+    "changelog": [
+        {
+            "version": "0.1.0",
+            "date": "2026-07-03",
+            "description": "Initial BuildingAI-native replica with canvas, asset, prompt, provider, workflow, and task scaffolding."
+        }
+    ],
+    "engine": {
+        "buildingai": ">=25.1.0"
+    }
+}

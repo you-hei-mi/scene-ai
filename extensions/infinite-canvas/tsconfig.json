@@ -1,0 +1,10 @@
+{
+    "extends": "@buildingai/typescript-config/base.json",
+    "compilerOptions": {
+        "baseUrl": ".",
+        "paths": {
+            "@/*": ["src/*"]
+        }
+    },
+    "include": ["src", "vite.config.ts", "tsup.config.ts"]
+}

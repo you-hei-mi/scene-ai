@@ -1,0 +1,2 @@
+/* 复用原 web/styles/index.css，保持一致的自定义 Tailwind 组件样式 */
+@import "../../web/styles/index.css";

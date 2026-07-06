@@ -17,8 +17,8 @@
         "moduleDetection": "force",
         "allowImportingTsExtensions": true,
         "noEmit": true,
-        "jsx": "react-jsx",
-        "types": ["vite/client"],
+        "jsx": "preserve",
+        "types": ["vite/client", "vue"],
         "skipLibCheck": true,
         "strict": false,
         "noUnusedLocals": false,
@@ -27,5 +27,5 @@
         "noFallthroughCasesInSwitch": true,
         "noUncheckedSideEffectImports": true
     },
-    "include": ["src/web", "vite.config.ts"]
+    "include": ["src/web-vue", "vite.config.ts"]
 }

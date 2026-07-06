@@ -1,11 +1,16 @@
 import tailwindcss from "@tailwindcss/vite";
-import react from "@vitejs/plugin-react";
+import vue from "@vitejs/plugin-vue";
 import { defineConfig } from "vite";
 
 import packageJson from "./package.json";
 
+/**
+ * Infinite Canvas 扩展 Vite 配置（Vue3 版本）
+ *
+ * 支持 Vue 3 单文件组件、Tailwind CSS 和构建优化。
+ */
 export default defineConfig({
-    plugins: [react(), tailwindcss()],
+    plugins: [vue(), tailwindcss()],
     base: `/extension/${packageJson.name}`,
     envDir: "./../../",
     server: {
@@ -17,9 +22,15 @@ export default defineConfig({
         rollupOptions: {
             output: {
                 manualChunks(id) {
-                    if (id.includes("lucide-react")) return "lucide";
+                    if (id.includes("lucide-vue-next")) return "lucide";
+                    if (id.includes("vue")) return "vue-vendor";
                 },
             },
+        },
+    },
+    resolve: {
+        alias: {
+            "@": "/src",
         },
     },
 });

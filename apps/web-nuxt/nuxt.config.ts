@@ -29,26 +29,12 @@ export default defineNuxtConfig({
   },
 
   nitro: {
-    devProxy: {
-      '/api': {
-        target: process.env.NUXT_PUBLIC_API_BASE_URL || 'http://localhost:4090',
-        changeOrigin: true,
-      },
-      '/consoleapi': {
-        target: process.env.NUXT_PUBLIC_API_BASE_URL || 'http://localhost:4090',
-        changeOrigin: true,
-      },
-    },
     // 压缩输出
     compressPublicAssets: true,
   },
 
-  /**
-   * 路由级渲染与缓存策略
-   * - 静态页面使用 SWR 缓存
-   * - 动态页面使用 SSR
-   * - 交互密集型页面使用客户端渲染
-   */
+  // 生产环境 API 代理配置
+  // routeRules.proxy 在 Nitro 生产构建和开发模式下均生效
   routeRules: {
     // 首页使用 SWR 缓存，60秒后重新验证
     '/': { swr: 60 },
@@ -62,7 +48,17 @@ export default defineNuxtConfig({
     '/admin/**': { ssr: true },
     // 对话页面使用客户端渲染（交互密集型）
     '/chat': { ssr: false },
+    // API 代理到后端服务（仅在配置了真实后端地址时启用）
+    // 当前环境未运行 NestJS 后端，故禁用 proxy，由 server routes 或前端直接请求处理
+    // '/api/**': {
+    //   proxy: (process.env.NUXT_PUBLIC_API_BASE_URL || 'http://localhost:4090') + '/api/**',
+    // },
+    // '/consoleapi/**': {
+    //   proxy: (process.env.NUXT_PUBLIC_API_BASE_URL || 'http://localhost:4090') + '/consoleapi/**',
+    // },
   },
+
+
 
   imports: {
     dirs: ['stores'],

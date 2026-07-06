@@ -64,6 +64,10 @@ export default defineNuxtConfig({
     '/chat': { ssr: false },
   },
 
+  imports: {
+    dirs: ['stores'],
+  },
+
   typescript: {
     strict: true,
   },

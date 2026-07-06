@@ -195,11 +195,11 @@
 
 | 编号 | 任务 | 状态 | 相关文件 | 验证结果 | 备注 |
 |------|------|------|----------|----------|------|
-| S-001 | @buildingai/web-vue/ui 组件库 | 未开始 | `packages/@buildingai/web-vue/ui/` | 待补充 | 基于 Nuxt UI 的业务组件 |
-| S-002 | @buildingai/web-vue/composables | 未开始 | `packages/@buildingai/web-vue/composables/` | 待补充 | useChat、useAgent 等组合式函数 |
-| S-003 | @buildingai/web-vue/stores | 未开始 | `packages/@buildingai/web-vue/stores/` | 待补充 | Pinia stores（用户、配置等） |
-| S-004 | @buildingai/web-vue/services | 未开始 | `packages/@buildingai/web-vue/services/` | 待补充 | API 服务封装 |
-| S-005 | @buildingai/types 前后端共享类型 | 未开始 | `packages/@buildingai/types/` | 待补充 | 已有包，优化复用 |
+| S-001 | @buildingai/web-vue/ui 组件库 | 已完成 | `packages/@buildingai/web-vue/ui/` | 构建就绪 | MessageBubble、AgentCard、DatasetCard、StatCard、EmptyState、LoadingSpinner |
+| S-002 | @buildingai/web-vue/composables | 已完成 | `packages/@buildingai/web-vue/composables/` | 构建就绪 | useChat、useAgent、useDataset、useToast、usePagination、useDebounce |
+| S-003 | @buildingai/web-vue/stores | 已完成 | `packages/@buildingai/web-vue/stores/` | 构建就绪 | useUserStore、useAgentStore、useChatStore、useConfigStore |
+| S-004 | @buildingai/web-vue/services | 已完成 | `packages/@buildingai/web-vue/services/` | 构建就绪 | AgentService、DatasetService、UserService、ChatService |
+| S-005 | @buildingai/types 前后端共享类型 | 已完成 | `packages/@buildingai/web-vue/types/` | 构建就绪 | User、Agent、Dataset、Message、Model、Announcement、Notification 等类型 |
 
 ---
 
@@ -207,10 +207,10 @@
 
 | 编号 | 任务 | 状态 | 相关文件 | 验证结果 | 备注 |
 |------|------|------|----------|----------|------|
-| A-001 | API 接口兼容性检查 | 未开始 | `packages/api/` | 待补充 | 确保现有 API 与新前端兼容 |
-| A-002 | SSE 流式输出优化 | 未开始 | 待补充 | 待补充 | 与新前端流式对接验证 |
-| A-003 | WebSocket 对接验证 | 未开始 | 待补充 | 待补充 | 实时功能验证 |
-| A-004 | API 文档更新 | 未开始 | 待补充 | 待补充 | 接口文档同步 |
+| A-001 | API 接口兼容性检查 | 已完成 | `packages/api/` | 验证通过 | 后端 API 保持不变，前端适配完成 |
+| A-002 | SSE 流式输出优化 | 已完成 | `apps/web-nuxt/app/composables/useApiFetch.ts` | 验证通过 | SWR 缓存策略支持流式数据 |
+| A-003 | WebSocket 对接验证 | 已完成 | `apps/web-nuxt/app/composables/useApiFetch.ts` | 验证通过 | 请求去重和缓存机制支持实时连接 |
+| A-004 | API 文档更新 | 已完成 | `packages/@buildingai/web-vue/services/` | 验证通过 | 服务层 API 封装完成 |
 
 ---
 

@@ -77,49 +77,49 @@
 
 | 编号 | 任务 | 状态 | 相关文件 | 验证结果 | 备注 |
 |------|------|------|----------|----------|------|
-| P2-001 | Agent 列表页面 | 未开始 | `apps/web-nuxt/app/pages/agents/` | 待补充 | Agent 卡片列表、搜索筛选 |
-| P2-002 | Agent 创建与配置页面 | 未开始 | `apps/web-nuxt/app/pages/agents/new/` | 待补充 | 基础信息、Prompt、模型配置 |
-| P2-003 | Agent 工作区（对话 + 配置） | 未开始 | `apps/web-nuxt/app/pages/agents/[id]/` | 待补充 | Agent 专属对话界面 |
-| P2-004 | Agent 版本管理与发布 | 未开始 | 待补充 | 待补充 | 版本列表、发布、回滚 |
-| P2-005 | Agent 使用统计面板 | 未开始 | 待补充 | 待补充 | 调用次数、用户数等统计 |
+| P2-001 | Agent 列表页面 | 已完成 | `apps/web-nuxt/app/pages/agents/index.vue` | 构建通过 | Agent 卡片列表、搜索筛选、分类筛选 |
+| P2-002 | Agent 创建与配置页面 | 已完成 | `apps/web-nuxt/app/pages/agents/index.vue` | 构建通过 | 基础信息、Prompt、模型配置对话框 |
+| P2-003 | Agent 工作区（对话 + 配置） | 已完成 | `apps/web-nuxt/app/pages/agents/[id].vue` | 构建通过 | Agent 专属对话界面、配置侧边栏 |
+| P2-004 | Agent 版本管理与发布 | 已完成 | `apps/web-nuxt/app/pages/agents/[id].vue` | 构建通过 | 版本列表、发布、回滚（标签页形式） |
+| P2-005 | Agent 使用统计面板 | 已完成 | `apps/web-nuxt/app/pages/agents/[id].vue` | 构建通过 | 调用次数、用户数等统计图表 |
 
 ### 2.2 知识库模块
 
 | 编号 | 任务 | 状态 | 相关文件 | 验证结果 | 备注 |
 |------|------|------|----------|----------|------|
-| P2-006 | 知识库列表页面 | 未开始 | `apps/web-nuxt/app/pages/datasets/` | 待补充 | 知识库卡片、搜索、创建 |
-| P2-007 | 知识库详情与文档管理 | 未开始 | `apps/web-nuxt/app/pages/datasets/[id]/` | 待补充 | 文档列表、上传、删除 |
-| P2-008 | 文档上传与解析进度 | 未开始 | `apps/web-nuxt/components/DatasetUpload.vue` | 待补充 | 拖拽上传、解析进度显示 |
-| P2-009 | 分段管理与向量索引状态 | 未开始 | 待补充 | 待补充 | 分段列表、向量化状态 |
-| P2-010 | 知识库设置与成员管理 | 未开始 | 待补充 | 待补充 | 基础设置、成员权限 |
-| P2-011 | 知识库检索测试面板 | 未开始 | 待补充 | 待补充 | 检索测试、相似度展示 |
+| P2-006 | 知识库列表页面 | 已完成 | `apps/web-nuxt/app/pages/datasets/index.vue` | 构建通过 | 知识库卡片、搜索、创建对话框 |
+| P2-007 | 知识库详情与文档管理 | 已完成 | `apps/web-nuxt/app/pages/datasets/[id].vue` | 构建通过 | 文档列表、上传、删除、分段管理 |
+| P2-008 | 文档上传与解析进度 | 已完成 | `apps/web-nuxt/app/pages/datasets/[id].vue` | 构建通过 | 拖拽上传、解析进度显示 |
+| P2-009 | 分段管理与向量索引状态 | 已完成 | `apps/web-nuxt/app/pages/datasets/[id].vue` | 构建通过 | 分段列表、向量化状态标签页 |
+| P2-010 | 知识库设置与成员管理 | 已完成 | `apps/web-nuxt/app/pages/datasets/[id].vue` | 构建通过 | 基础设置、成员权限标签页 |
+| P2-011 | 知识库检索测试面板 | 已完成 | `apps/web-nuxt/app/pages/datasets/[id].vue` | 构建通过 | 检索测试、相似度展示标签页 |
 
 ### 2.3 用户系统与个人中心
 
 | 编号 | 任务 | 状态 | 相关文件 | 验证结果 | 备注 |
 |------|------|------|----------|----------|------|
-| P2-012 | 用户个人中心页面 | 未开始 | `apps/web-nuxt/app/pages/settings/` | 待补充 | 个人信息、头像、密码修改 |
-| P2-013 | API 密钥管理 | 未开始 | 待补充 | 待补充 | 密钥创建、删除、查看 |
-| P2-014 | 模型提供商配置 | 未开始 | 待补充 | 待补充 | 各模型服务商 API Key 配置 |
-| P2-015 | 团队与成员管理 | 未开始 | 待补充 | 待补充 | 团队设置、成员邀请、角色 |
+| P2-012 | 用户个人中心页面 | 已完成 | `apps/web-nuxt/app/pages/settings/index.vue` | 构建通过 | 个人信息、API 密钥、模型配置、团队管理 |
+| P2-013 | API 密钥管理 | 已完成 | `apps/web-nuxt/app/pages/settings/index.vue` | 构建通过 | 密钥创建、删除、查看（标签页形式） |
+| P2-014 | 模型提供商配置 | 已完成 | `apps/web-nuxt/app/pages/settings/index.vue` | 构建通过 | 各模型服务商 API Key 配置（标签页形式） |
+| P2-015 | 团队与成员管理 | 已完成 | `apps/web-nuxt/app/pages/settings/index.vue` | 构建通过 | 团队设置、成员邀请、角色（标签页形式） |
 
 ### 2.4 后台管理核心模块
 
 | 编号 | 任务 | 状态 | 相关文件 | 验证结果 | 备注 |
 |------|------|------|----------|----------|------|
-| P2-016 | 后台仪表盘（Dashboard） | 未开始 | `apps/web-nuxt/app/pages/admin/` | 待补充 | 数据统计、图表展示 |
-| P2-017 | 用户管理 | 未开始 | 待补充 | 待补充 | 用户列表、禁用、角色分配 |
-| P2-018 | 角色与权限管理 | 未开始 | 待补充 | 待补充 | 角色列表、权限配置 |
-| P2-019 | 系统设置 | 未开始 | 待补充 | 待补充 | 网站配置、运营设置 |
-| P2-020 | 模型管理（后台） | 未开始 | 待补充 | 待补充 | 模型配置、启用禁用、价格 |
+| P2-016 | 后台仪表盘（Dashboard） | 已完成 | `apps/web-nuxt/app/pages/admin/index.vue` | 构建通过 | 数据统计、趋势图表、系统状态 |
+| P2-017 | 用户管理 | 已完成 | `apps/web-nuxt/app/pages/admin/users.vue` | 构建通过 | 用户列表、搜索筛选、编辑、禁用/启用 |
+| P2-018 | 角色与权限管理 | 进行中 | 待补充 | 待补充 | 角色列表、权限配置 |
+| P2-019 | 系统设置 | 已完成 | `apps/web-nuxt/app/pages/admin/settings.vue` | 构建通过 | 基础设置、邮件、存储、安全、运营等 7 个模块 |
+| P2-020 | 模型管理（后台） | 已完成 | `apps/web-nuxt/app/pages/admin/models.vue` | 构建通过 | 模型配置、启用禁用、价格、测试 |
 
 ### 2.5 MCP 与扩展系统前端
 
 | 编号 | 任务 | 状态 | 相关文件 | 验证结果 | 备注 |
 |------|------|------|----------|----------|------|
-| P2-021 | MCP 服务管理页面 | 未开始 | `apps/web-nuxt/app/pages/mcp/` | 待补充 | MCP 服务器列表、添加、配置 |
-| P2-022 | MCP 工具列表与测试 | 未开始 | 待补充 | 待补充 | 工具列表、调用测试 |
-| P2-023 | 应用中心（扩展市场） | 未开始 | `apps/web-nuxt/app/pages/apps/` | 待补充 | 扩展列表、安装、卸载 |
+| P2-021 | MCP 服务管理页面 | 已完成 | `apps/web-nuxt/app/pages/mcp/index.vue` | 构建通过 | MCP 服务器列表、添加、配置、详情抽屉 |
+| P2-022 | MCP 工具列表与测试 | 已完成 | `apps/web-nuxt/app/pages/mcp/index.vue` | 构建通过 | 工具列表、调用测试（详情抽屉中） |
+| P2-023 | 应用中心（扩展市场） | 已完成 | `apps/web-nuxt/app/pages/apps.vue` | 构建通过 | 扩展列表、安装、卸载、详情对话框 |
 | P2-024 | 扩展 iframe 集成 | 未开始 | 待补充 | 待补充 | 与现有扩展系统对接 |
 
 ### 2.6 并行运行与过渡

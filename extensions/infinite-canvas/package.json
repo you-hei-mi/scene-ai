@@ -51,20 +51,19 @@
         "@buildingai/stores": "workspace:*",
         "@buildingai/ui": "workspace:*",
         "@buildingai/utils": "workspace:*",
-        "@buildingai/web-core": "workspace:*",
-        "lucide-react": "catalog:web",
-        "react": "catalog:web",
-        "react-dom": "catalog:web",
-        "react-router-dom": "catalog:web",
+        "@buildingai/web-vue": "workspace:*",
+        "lucide-vue-next": "catalog:web",
+        "pinia": "catalog:web",
+        "vue": "catalog:web",
+        "vue-router": "catalog:web",
         "vite-tsconfig-paths": "catalog:web"
     },
     "devDependencies": {
         "@buildingai/eslint-config": "workspace:*",
         "@buildingai/typescript-config": "workspace:*",
         "@buildingai/web-types": "workspace:*",
-        "@types/react": "catalog:web",
-        "@types/react-dom": "catalog:web",
-        "eslint-plugin-react-refresh": "^0.4.26"
+        "@vitejs/plugin-vue": "^5.2.0",
+        "eslint-plugin-vue": "^9.32.0"
     },
     "engine": {
         "buildingai": ">=25.1.0"

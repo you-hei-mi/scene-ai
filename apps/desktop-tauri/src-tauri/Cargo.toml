@@ -1,0 +1,27 @@
+[package]
+name = "buildingai-desktop"
+version = "1.0.0"
+description = "BuildingAI Desktop Application"
+authors = ["BuildingAI Team <team@buildingai.com>"]
+license = "MIT"
+repository = "https://github.com/buildingai/desktop"
+default-run = "buildingai-desktop"
+edition = "2021"
+rust-version = "1.75"
+
+[[bin]]
+name = "buildingai-desktop"
+path = "src/main.rs"
+
+[dependencies]
+tauri = { version = "1.5", features = ["api-all", "tray-icon", "updater"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+tauri-plugin-window-state = "0.1"
+
+[build-dependencies]
+tauri-build = "1.5"
+
+[features]
+default = ["custom-protocol"]
+custom-protocol = ["tauri/custom-protocol"]

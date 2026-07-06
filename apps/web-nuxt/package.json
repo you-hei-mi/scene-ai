@@ -1,0 +1,42 @@
+{
+  "name": "@buildingai/web-nuxt",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "nuxt build",
+    "dev": "nuxt dev",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "typecheck": "nuxt typecheck",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "playwright test",
+    "test:a11y": "playwright test --grep @a11y"
+  },
+  "dependencies": {
+    "@buildingai/constants": "workspace:*",
+    "@buildingai/types": "workspace:*",
+    "@buildingai/utils": "workspace:*",
+    "@nuxt/ui": "^3.0.0",
+    "@vueuse/core": "catalog:web",
+    "@vueuse/nuxt": "^13.0.0",
+    "pinia": "catalog:web",
+    "vue": "catalog:web",
+    "vue-router": "catalog:web"
+  },
+  "devDependencies": {
+    "@buildingai/eslint-config": "workspace:*",
+    "@nuxt/test-utils": "^3.15.0",
+    "@playwright/test": "^1.45.0",
+    "@types/node": "^24.10.13",
+    "@vue/test-utils": "^2.4.6",
+    "jsdom": "^25.0.0",
+    "nuxt": "^4.4.0",
+    "typescript": "catalog:dev",
+    "vitest": "^2.1.0",
+    "vue-tsc": "catalog:dev"
+  }
+}

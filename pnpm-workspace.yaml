@@ -3,6 +3,7 @@ packages:
   - extensions/*
   - packages/@buildingai/*
   - packages/@buildingai/web/*
+  - apps/*
 
 catalog:
   '@types/ali-oss': 6.16.13

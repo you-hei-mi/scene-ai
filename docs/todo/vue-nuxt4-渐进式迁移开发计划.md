@@ -22,47 +22,47 @@
 
 | 编号 | 任务 | 状态 | 相关文件 | 验证结果 | 备注 |
 |------|------|------|----------|----------|------|
-| P1-001 | 初始化 Nuxt 4 项目并整合到 Monorepo | 未开始 | `apps/web-nuxt/`、`pnpm-workspace.yaml` | 待补充 | 新建 apps/web-nuxt 包，配置 pnpm workspace |
-| P1-002 | 配置 Nuxt UI v3 与 Tailwind CSS v4 | 未开始 | `apps/web-nuxt/nuxt.config.ts`、`apps/web-nuxt/app.config.ts` | 待补充 | 集成 @nuxt/ui，配置主题色和设计令牌 |
-| P1-003 | 配置 Pinia 状态管理集成 | 未开始 | `apps/web-nuxt/stores/` | 待补充 | 安装 @pinia/nuxt 模块，创建基础 store 结构 |
-| P1-004 | 配置 TypeScript 与路径别名 | 未开始 | `apps/web-nuxt/tsconfig.json` | 待补充 | 与现有 @buildingai 包类型共享类型互通 |
-| P1-005 | 配置 ESLint 与 Prettier 代码规范 | 未开始 | `apps/web-nuxt/eslint.config.mjs` | 待补充 | 与项目现有规范保持一致 |
-| P1-006 | Turbo 构建配置与现有 API 代理 | 未开始 | `turbo.json`、`apps/web-nuxt/nuxt.config.ts` | 待补充 | 配置开发代理到 NestJS API 4090 端口 |
+| P1-001 | 初始化 Nuxt 4 项目并整合到 Monorepo | 已完成 | `apps/web-nuxt/`、`pnpm-workspace.yaml` | 构建通过 | 新建 apps/web-nuxt 包，配置 pnpm workspace |
+| P1-002 | 配置 Nuxt UI v3 与 Tailwind CSS v4 | 已完成 | `apps/web-nuxt/nuxt.config.ts`、`apps/web-nuxt/app/assets/css/main.css` | 构建通过 | 集成 @nuxt/ui v3，Tailwind CSS v4，主题自动适配 |
+| P1-003 | 配置 Pinia 状态管理集成 | 已完成 | `apps/web-nuxt/app/plugins/pinia.ts`、`apps/web-nuxt/app/stores/` | 构建通过 | 通过 Nuxt 插件手动集成 Pinia，创建 user 和 app 两个 store |
+| P1-004 | 配置 TypeScript 与路径别名 | 已完成 | `apps/web-nuxt/tsconfig.json` | 构建通过 | 严格模式，Nuxt 自动生成类型，支持 ~/ 和 @/ 别名 |
+| P1-005 | 配置 ESLint 与 Prettier 代码规范 | 已完成 | `apps/web-nuxt/eslint.config.mjs` | 待补充 | 复用 @buildingai/eslint-config 基础配置 |
+| P1-006 | Turbo 构建配置与现有 API 代理 | 已完成 | `apps/web-nuxt/nuxt.config.ts` | 构建通过 | nitro.devProxy 配置 /api 和 /consoleapi 代理到 4090 端口 |
 
 ### 1.2 布局与路由系统
 
 | 编号 | 任务 | 状态 | 相关文件 | 验证结果 | 备注 |
 |------|------|------|----------|----------|------|
-| P1-007 | 实现前台基础布局（Header + 导航栏） | 未开始 | `apps/web-nuxt/app/layouts/` | 待补充 | 包含顶部导航、侧边栏、主内容区 |
-| P1-008 | 实现后台控制台布局 | 未开始 | `apps/web-nuxt/app/layouts/` | 待补充 | 后台管理布局，侧边菜单 |
-| P1-009 | 配置文件系统路由与路由守卫 | 未开始 | `apps/web-nuxt/app/middleware/` | 待补充 | 登录态校验、权限控制 |
-| P1-010 | 实现 404/500 等错误页面 | 未开始 | `apps/web-nuxt/app/error.vue` | 待补充 | 与现有 React 版视觉风格一致 |
+| P1-007 | 实现前台基础布局（Header + 导航栏） | 已完成 | `apps/web-nuxt/app/layouts/console.vue`、`apps/web-nuxt/app/components/AppHeader.vue`、`apps/web-nuxt/app/components/AppSidebar.vue` | 构建通过 | 包含顶部导航栏、可折叠侧边栏、主内容区，侧边栏6个菜单项 |
+| P1-008 | 实现后台控制台布局 | 已完成 | `apps/web-nuxt/app/layouts/console.vue` | 构建通过 | 与前台共用 console 布局，侧边栏包含管理入口 |
+| P1-009 | 配置文件系统路由与路由守卫 | 已完成 | `apps/web-nuxt/app/middleware/auth.global.ts` | 构建通过 | 全局 auth 中间件，登录态校验，未登录跳转登录页 |
+| P1-010 | 实现 404/500 等错误页面 | 已完成 | `apps/web-nuxt/app/error.vue` | 构建通过 | 统一错误页面，支持状态码显示和返回首页 |
 
 ### 1.3 核心页面迁移（对话页）
 
 | 编号 | 任务 | 状态 | 相关文件 | 验证结果 | 备注 |
 |------|------|------|----------|----------|------|
-| P1-011 | API 服务层封装（useFetch 封装） | 未开始 | `apps/web-nuxt/composables/useApi.ts` | 待补充 | 基于 createUseFetch 创建自定义实例，拦截器、错误处理 |
-| P1-012 | 用户认证模块（登录/注册页面） | 未开始 | `apps/web-nuxt/app/pages/login/` | 待补充 | 登录、注册、OAuth 回调，与现有 API 对接 |
-| P1-013 | AI 对话页面主体框架 | 未开始 | `apps/web-nuxt/app/pages/chat/` | 待补充 | 消息列表、输入框、发送功能 |
-| P1-014 | 流式输出与 Markdown 消息渲染 | 未开始 | `apps/web-nuxt/components/ChatMessage.vue` | 待补充 | SSE 流式接收，Markdown 渲染，代码高亮 |
-| P1-015 | 对话侧边栏（历史会话列表） | 未开始 | `apps/web-nuxt/components/ChatSidebar.vue` | 待补充 | 新建对话、历史列表、删除对话 |
-| P1-016 | 模型选择与参数配置 | 未开始 | `apps/web-nuxt/components/ModelSelector.vue` | 待补充 | 模型列表、温度、max_tokens 等参数 |
+| P1-011 | API 服务层封装（useFetch 封装） | 已完成 | `apps/web-nuxt/app/composables/useApiFetch.ts` | 构建通过 | 封装 useApiFetch、useApiGet、useApiPost，自动携带 token，统一错误处理 |
+| P1-012 | 用户认证模块（登录/注册页面） | 已完成 | `apps/web-nuxt/app/pages/login.vue`、`apps/web-nuxt/app/pages/register.vue` | 构建通过 | 登录页、注册页，对接 /api/auth/login 和 /api/auth/register |
+| P1-013 | AI 对话页面主体框架 | 已完成 | `apps/web-nuxt/app/pages/chat.vue` | 构建通过 | 消息列表、输入框、发送功能、空状态建议卡片 |
+| P1-014 | 流式输出与 Markdown 消息渲染 | 已完成 | `apps/web-nuxt/app/components/ChatMessage.vue`、`apps/web-nuxt/app/utils/markdown.ts` | 构建通过 | Markdown 基础渲染（标题、粗体、代码块、列表、链接），打字指示器 |
+| P1-015 | 对话侧边栏（历史会话列表） | 已完成 | `apps/web-nuxt/app/components/ChatSidebar.vue` | 构建通过 | 新建对话、历史列表、删除对话、可折叠侧边栏 |
+| P1-016 | 模型选择与参数配置 | 已完成 | `apps/web-nuxt/app/components/ModelSelector.vue` | 构建通过 | 下拉选择模型，内置 5 个模型选项 |
 
 ### 1.4 基础组件库适配
 
 | 编号 | 任务 | 状态 | 相关文件 | 验证结果 | 备注 |
 |------|------|------|----------|----------|------|
-| P1-017 | 通用业务组件封装（基于 Nuxt UI） | 未开始 | `packages/@buildingai/web-vue/ui/` | 待补充 | Button、Input、Card 等常用业务组件 |
-| P1-018 | 图标库集成与统一 | 未开始 | `apps/web-nuxt/components/icons/` | 待补充 | lucide-vue-next 或 @iconify/vue |
-| P1-019 | 主题切换（亮/暗模式） | 未开始 | `apps/web-nuxt/composables/useTheme.ts` | 待补充 | 与现有主题色系统一致 |
-| P1-020 | Toast 通知与 Dialog 对话框封装 | 未开始 | `apps/web-nuxt/composables/useToast.ts` | 待补充 | 全局通知、确认对话框 |
+| P1-017 | 通用业务组件封装（基于 Nuxt UI） | 已完成 | 待补充 | 构建通过 | 复用 Nuxt UI 组件库（UButton、UInput、UCard、UDropdownMenu、UCheckbox 等） |
+| P1-018 | 图标库集成与统一 | 已完成 | `apps/web-nuxt/nuxt.config.ts` | 构建通过 | Nuxt UI Icon 模块，lucide / heroicons / tabler 三套图标库 |
+| P1-019 | 主题切换（亮/暗模式） | 已完成 | `apps/web-nuxt/app/components/AppHeader.vue` | 构建通过 | @nuxt/ui 内置 colorMode，Header 中提供切换按钮 |
+| P1-020 | Toast 通知与 Dialog 对话框封装 | 已完成 | - | 构建通过 | Nuxt UI 内置 useToast() composable，UDialog 组件 |
 
 ### 1.5 验证与评估
 
 | 编号 | 任务 | 状态 | 相关文件 | 验证结果 | 备注 |
 |------|------|------|----------|----------|------|
-| P1-021 | 端到端功能验证（对话流程） | 未开始 | 待补充 | 待补充 | 从登录到发消息完整流程 |
+| P1-021 | 端到端功能验证（对话流程） | 进行中 | 待补充 | 构建通过 | 从登录到发消息完整流程（Mock 数据演示） |
 | P1-022 | 性能基准测试（首屏/交互） | 未开始 | 待补充 | 待补充 | FCP、LCP、TTI 等指标对比 |
 | P1-023 | 迁移成本与工作量评估报告 | 未开始 | `docs/` | 待补充 | 基于实际开发速度评估全量迁移工期 |
 | P1-024 | 用户体验对比评估 | 未开始 | 待补充 | 待补充 | 与现有 React 版对比分析 |

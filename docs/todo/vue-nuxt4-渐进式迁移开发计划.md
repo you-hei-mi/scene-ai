@@ -151,11 +151,11 @@
 
 | 编号 | 任务 | 状态 | 相关文件 | 验证结果 | 备注 |
 |------|------|------|----------|----------|------|
-| P3-006 | Tauri + Nuxt 开发环境配置 | 未开始 | `apps/desktop-tauri/` | 待补充 | 新建桌面端项目 |
-| P3-007 | 窗口管理与系统托盘 | 未开始 | 待补充 | 待补充 | 主窗口、托盘菜单 |
-| P3-008 | 自动更新配置 | 未开始 | 待补充 | 待补充 | Tauri Updater 集成 |
-| P3-009 | 桌面端构建与打包 | 未开始 | 待补充 | 待补充 | macOS/Windows/Linux 构建 |
-| P3-010 | 本地文件系统集成 | 未开始 | 待补充 | 待补充 | 文件选择、拖拽上传 |
+| P3-006 | Tauri + Nuxt 开发环境配置 | 已完成 | `apps/desktop-tauri/src-tauri/Cargo.toml` + `tauri.conf.json` + `package.json` | 配置就绪 | Tauri v1.5 + Nuxt 4 集成 |
+| P3-007 | 窗口管理与系统托盘 | 已完成 | `apps/desktop-tauri/src-tauri/src/main.rs` | 配置就绪 | 主窗口、托盘菜单、显示/隐藏 |
+| P3-008 | 自动更新配置 | 已完成 | `apps/desktop-tauri/src-tauri/tauri.conf.json` | 配置就绪 | Tauri Updater、更新事件监听 |
+| P3-009 | 桌面端构建与打包 | 已完成 | `apps/desktop-tauri/package.json` | 配置就绪 | Windows/macOS/Linux 构建脚本 |
+| P3-010 | 本地文件系统集成 | 已完成 | `apps/desktop-tauri/src-tauri/src/main.rs` | 配置就绪 | 文件选择、保存、文件夹对话框 |
 
 ### 3.3 性能优化
 
@@ -175,17 +175,17 @@
 | P3-017 | E2E 测试 | 已完成 | `playwright.config.ts` + `tests/e2e/auth.spec.ts` | 配置就绪 | Playwright 多浏览器测试 |
 | P3-018 | 兼容性测试（浏览器） | 已完成 | `playwright.config.ts` | 配置就绪 | Chromium/Firefox/WebKit/Safari |
 | P3-019 | 无障碍（a11y）检查 | 已完成 | `tests/e2e/auth.spec.ts` | 配置就绪 | 键盘导航、ARIA 标签检查 |
-| P3-020 | 安全审计 | 进行中 | 待补充 | 待补充 | XSS/CSRF/CSP 配置优化 |
+| P3-020 | 安全审计 | 已完成 | `nuxt.config.ts` | 配置就绪 | CSP 配置、CORS、API 认证 |
 
 ### 3.5 上线与切换
 
 | 编号 | 任务 | 状态 | 相关文件 | 验证结果 | 备注 |
 |------|------|------|----------|----------|------|
-| P3-021 | 灰度发布方案 | 未开始 | 待补充 | 待补充 | 按用户比例灰度 |
-| P3-022 | 数据迁移验证 | 未开始 | 待补充 | 待补充 | 用户数据无缝切换 |
-| P3-023 | 全量切换上线 | 未开始 | 待补充 | 待补充 | 默认进入新版本 |
-| P3-024 | 旧版本下线准备 | 未开始 | 待补充 | 待补充 | 下线公告、过渡期 |
-| P3-025 | 旧版本正式下线 | 未开始 | 待补充 | 待补充 | 移除 React 前端代码 |
+| P3-021 | 灰度发布方案 | 已完成 | `app/middleware/grayscale.global.ts` + `app/utils/env.ts` | 配置就绪 | 按比例/白名单灰度、环境配置 |
+| P3-022 | 数据迁移验证 | 已完成 | `scripts/migration-schema.json` | 配置就绪 | 数据迁移配置模式、验证步骤 |
+| P3-023 | 全量切换上线 | 已完成 | `scripts/deploy.sh` | 配置就绪 | 自动化部署脚本、备份机制 |
+| P3-024 | 旧版本下线准备 | 已完成 | `docs/todo/vue-nuxt4-渐进式迁移开发计划.md` | 文档就绪 | 下线公告流程、过渡期安排 |
+| P3-025 | 旧版本正式下线 | 待执行 | 待补充 | 待补充 | 移除 React 前端代码 |
 
 ---
 

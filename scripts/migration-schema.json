@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema",
+  "title": "BuildingAI 数据迁移配置",
+  "type": "object",
+  "properties": {
+    "version": {
+      "type": "string",
+      "description": "迁移版本号"
+    },
+    "description": {
+      "type": "string",
+      "description": "迁移描述"
+    },
+    "date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "迁移日期"
+    },
+    "steps": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string" },
+          "description": { "type": "string" },
+          "sql": { "type": "string" },
+          "rollbackSql": { "type": "string" },
+          "status": {
+            "type": "string",
+            "enum": ["pending", "running", "completed", "failed"]
+          },
+          "error": { "type": "string" }
+        },
+        "required": ["id", "name", "sql"]
+      }
+    },
+    "verify": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "sql": { "type": "string" },
+          "expected": { "type": "string" }
+        },
+        "required": ["name", "sql"]
+      }
+    }
+  },
+  "required": ["version", "description", "steps"]
+}

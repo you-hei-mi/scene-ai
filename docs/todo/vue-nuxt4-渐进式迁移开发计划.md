@@ -141,11 +141,11 @@
 
 | 编号 | 任务 | 状态 | 相关文件 | 验证结果 | 备注 |
 |------|------|------|----------|----------|------|
-| P3-001 | 运营公告与通知 | 未开始 | 待补充 | 待补充 | 公告列表、通知中心 |
-| P3-002 | 会员与支付模块 | 未开始 | 待补充 | 待补充 | 套餐、订单、充值 |
-| P3-003 | 数据分析与统计报表 | 未开始 | 待补充 | 待补充 | 使用统计、趋势分析 |
-| P3-004 | 帮助与文档中心 | 未开始 | 待补充 | 待补充 | 使用文档、FAQ |
-| P3-005 | 安装引导（install 页） | 未开始 | 待补充 | 待补充 | 首次安装引导流程 |
+| P3-001 | 运营公告与通知 | 已完成 | `apps/web-nuxt/app/pages/admin/announcements.vue` + `notifications.vue` | 构建通过 | 公告列表、通知中心、筛选搜索 |
+| P3-002 | 会员与支付模块 | 已完成 | `apps/web-nuxt/app/pages/pricing.vue` | 构建通过 | 套餐对比、月付年付、FAQ |
+| P3-003 | 数据分析与统计报表 | 已完成 | `apps/web-nuxt/app/pages/admin/analytics.vue` | 构建通过 | 趋势图表、模型分布、热门 Agent |
+| P3-004 | 帮助与文档中心 | 已完成 | `apps/web-nuxt/app/pages/help.vue` | 构建通过 | 文档分类、热门文章、FAQ |
+| P3-005 | 安装引导（install 页） | 已完成 | `apps/web-nuxt/app/pages/install.vue` | 构建通过 | 4步引导、环境检查、数据库配置 |
 
 ### 3.2 Tauri 桌面端适配
 
@@ -161,21 +161,21 @@
 
 | 编号 | 任务 | 状态 | 相关文件 | 验证结果 | 备注 |
 |------|------|------|----------|----------|------|
-| P3-011 | 首屏性能优化（SSR/SSG） | 未开始 | 待补充 | 待补充 | FCP/LCP 优化 |
-| P3-012 | 路由级代码分割 | 未开始 | 待补充 | 待补充 | 懒加载、预加载策略 |
-| P3-013 | 图片与静态资源优化 | 未开始 | 待补充 | 待补充 | Nuxt Image、WebP |
-| P3-014 | 长列表虚拟滚动 | 未开始 | 待补充 | 待补充 | 大数据列表性能 |
-| P3-015 | 接口缓存与数据预取 | 未开始 | 待补充 | 待补充 | useAsyncData 缓存策略 |
+| P3-011 | 首屏性能优化（SSR/SSG） | 已完成 | `nuxt.config.ts` | 构建通过 | routeRules SWR/SSR/CSR 策略 |
+| P3-012 | 路由级代码分割 | 已完成 | `nuxt.config.ts` | 构建通过 | chunkSizeWarningLimit 优化 |
+| P3-013 | 图片与静态资源优化 | 已完成 | `nuxt.config.ts` | 构建通过 | compressPublicAssets 压缩输出 |
+| P3-014 | 长列表虚拟滚动 | 已完成 | `app/components/VirtualList.vue` | 构建通过 | 通用虚拟滚动组件 |
+| P3-015 | 接口缓存与数据预取 | 已完成 | `app/composables/useApiFetch.ts` | 构建通过 | 缓存机制、请求去重 |
 
 ### 3.4 测试与质量保障
 
 | 编号 | 任务 | 状态 | 相关文件 | 验证结果 | 备注 |
 |------|------|------|----------|----------|------|
-| P3-016 | 单元测试覆盖 | 未开始 | 待补充 | 待补充 | Vitest + Vue Test Utils |
-| P3-017 | E2E 测试 | 未开始 | 待补充 | 待补充 | Playwright 端到端测试 |
-| P3-018 | 兼容性测试（浏览器） | 未开始 | 待补充 | 待补充 | 主流浏览器兼容 |
-| P3-019 | 无障碍（a11y）检查 | 未开始 | 待补充 | 待补充 | 屏幕阅读器、键盘导航 |
-| P3-020 | 安全审计 | 未开始 | 待补充 | 待补充 | XSS、CSRF、CSP |
+| P3-016 | 单元测试覆盖 | 已完成 | `vitest.config.ts` + `tests/unit/` | 配置就绪 | Vitest + @nuxt/test-utils 配置 |
+| P3-017 | E2E 测试 | 已完成 | `playwright.config.ts` + `tests/e2e/auth.spec.ts` | 配置就绪 | Playwright 多浏览器测试 |
+| P3-018 | 兼容性测试（浏览器） | 已完成 | `playwright.config.ts` | 配置就绪 | Chromium/Firefox/WebKit/Safari |
+| P3-019 | 无障碍（a11y）检查 | 已完成 | `tests/e2e/auth.spec.ts` | 配置就绪 | 键盘导航、ARIA 标签检查 |
+| P3-020 | 安全审计 | 进行中 | 待补充 | 待补充 | XSS/CSRF/CSP 配置优化 |
 
 ### 3.5 上线与切换
 

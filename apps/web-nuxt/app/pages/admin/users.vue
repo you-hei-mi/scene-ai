@@ -216,7 +216,6 @@
         </button>
       </template>
     </UDialog>
-  </div>
 </template>
 
 <script setup lang="ts">

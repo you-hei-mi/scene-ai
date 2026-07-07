@@ -1,36 +1,29 @@
 <template>
-  <div class="min-h-screen bg-background">
-    <header class="border-b border-border">
+  <div style="background: var(--bg-deep); min-height: 100vh">
+    <header style="border-bottom: 1px solid var(--glass-border); background: var(--glass-bg-nav)">
       <div class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
         <div class="flex items-center gap-3">
-          <div class="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-            <UIcon name="lucide:bot" class="w-5 h-5 text-primary" />
+          <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background: var(--accent-soft-bg)">
+            <UIcon name="lucide:bot" class="w-5 h-5" style="color: var(--accent-soft-text)" />
           </div>
-          <span class="font-semibold text-lg">BuildingAI Agents</span>
+          <span class="font-display font-semibold text-lg" style="color: var(--text-primary)">BuildingAI Agents</span>
         </div>
         <div class="flex items-center gap-3">
-          <UInput
+          <input
             v-model="keyword"
             placeholder="搜索智能体..."
-            class="w-64"
-          >
-            <template #leading>
-              <UIcon name="lucide:search" class="w-4 h-4 text-muted-foreground" />
-            </template>
-          </UInput>
-          <UButton @click="handleCreate">
-            <template #icon>
-              <UIcon name="lucide:plus" class="w-4 h-4" />
-            </template>
+            style="background: var(--glass-bg-1); border: 1px solid var(--glass-border); border-radius: 0.75rem; padding: 0.5rem 1rem; padding-left: 2.25rem; color: var(--text-primary); outline: none; width: 16rem; font-size: 0.875rem;"
+          />
+          <UIcon name="lucide:search" class="w-4 h-4 absolute" style="color: var(--text-secondary); margin-left: 0.75rem; pointer-events: none;" />
+          <button class="btn-glass btn-glass--primary" @click="handleCreate" style="display: inline-flex; align-items: center; gap: 0.375rem;">
+            <UIcon name="lucide:plus" class="w-4 h-4" />
             创建智能体
-          </UButton>
+          </button>
           <NuxtLink to="/chat">
-            <UButton variant="ghost">
-              <template #icon>
-                <UIcon name="lucide:message-square" class="w-4 h-4" />
-              </template>
+            <button class="btn-glass" style="display: inline-flex; align-items: center; gap: 0.375rem;">
+              <UIcon name="lucide:message-square" class="w-4 h-4" />
               对话
-            </UButton>
+            </button>
           </NuxtLink>
         </div>
       </div>
@@ -38,61 +31,62 @@
 
     <div class="max-w-7xl mx-auto px-4 py-8">
       <div class="mb-8">
-        <h1 class="text-3xl font-bold mb-2">智能体广场</h1>
-        <p class="text-muted-foreground">发现和使用各种专业的 AI 智能体</p>
+        <h1 class="font-display text-3xl font-bold mb-2 text-gradient">智能体广场</h1>
+        <p style="color: var(--text-secondary)">发现和使用各种专业的 AI 智能体</p>
       </div>
 
       <div class="flex gap-2 mb-6 flex-wrap">
-        <UButton
+        <button
           v-for="tag in tags"
           :key="tag.id"
-          :variant="selectedTagId === tag.id ? 'solid' : 'outline'"
-          size="sm"
+          :class="selectedTagId === tag.id ? 'btn-glass btn-glass--primary' : 'btn-glass'"
+          style="padding: 0.25rem 0.75rem; font-size: 0.875rem;"
           @click="toggleTag(tag.id)"
         >
           {{ tag.name }}
-        </UButton>
+        </button>
       </div>
 
       <div v-if="agentStore.loading" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-        <UCard v-for="i in 8" :key="i" class="animate-pulse">
+        <div v-for="i in 8" :key="i" class="glass-card p-4 animate-pulse">
           <div class="space-y-3">
-            <div class="h-12 w-12 rounded-lg bg-muted"></div>
-            <div class="h-5 w-2/3 bg-muted rounded"></div>
-            <div class="h-4 w-full bg-muted rounded"></div>
-            <div class="h-4 w-5/6 bg-muted rounded"></div>
+            <div class="h-12 w-12 rounded-lg" style="background: var(--glass-bg-1)"></div>
+            <div class="h-5 w-2/3 rounded" style="background: var(--glass-bg-1)"></div>
+            <div class="h-4 w-full rounded" style="background: var(--glass-bg-1)"></div>
+            <div class="h-4 w-5/6 rounded" style="background: var(--glass-bg-1)"></div>
           </div>
-        </UCard>
+        </div>
       </div>
 
       <div
         v-else
         class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
       >
-        <UCard
+        <div
           v-for="agent in filteredAgents"
           :key="agent.id"
-          class="cursor-pointer hover:border-primary transition-all hover:shadow-md group"
+          class="glass-card p-4 cursor-pointer group"
+          style="transition: all 0.2s;"
           @click="handleSelectAgent(agent)"
         >
           <div class="flex items-start gap-3 mb-3">
             <div
               class="w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0"
-              :class="getAvatarBg(agent.tags[0])"
+              :style="{ background: ({ '通用': '#3b82f6', '编程': '#16a34a', '写作': '#a855f7', '翻译': '#f97316', '数据': '#06b6d4', '产品': '#ec4899' } as Record<string, string>)[agent.tags[0]] || 'var(--accent-bright)' }"
             >
               <UIcon name="lucide:bot" class="w-6 h-6 text-white" />
             </div>
             <div class="flex-1 min-w-0">
-              <h3 class="font-semibold truncate group-hover:text-primary transition-colors">
+              <h3 class="font-semibold truncate" style="color: var(--text-primary); transition: color 0.2s;">
                 {{ agent.name }}
               </h3>
-              <div class="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
+              <div class="flex items-center gap-2 text-xs mt-0.5" style="color: var(--text-secondary)">
                 <UIcon name="lucide:zap" class="w-3 h-3" />
                 <span class="truncate">{{ agent.model }}</span>
               </div>
             </div>
           </div>
-          <p class="text-sm text-muted-foreground line-clamp-2 mb-3 min-h-[40px]">
+          <p class="text-sm line-clamp-2 mb-3 min-h-[40px]" style="color: var(--text-secondary)">
             {{ agent.description }}
           </p>
           <div class="flex items-center justify-between">
@@ -106,7 +100,7 @@
                 {{ tag }}
               </UBadge>
             </div>
-            <div class="flex items-center gap-3 text-xs text-muted-foreground">
+            <div class="flex items-center gap-3 text-xs" style="color: var(--text-secondary)">
               <span class="flex items-center gap-1">
                 <UIcon name="lucide:message-circle" class="w-3 h-3" />
                 {{ formatNumber(agent.usageCount || 0) }}
@@ -117,44 +111,48 @@
               </span>
             </div>
           </div>
-        </UCard>
+        </div>
       </div>
 
       <div v-if="filteredAgents.length === 0 && !agentStore.loading" class="text-center py-16">
-        <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-muted mb-4">
-          <UIcon name="lucide:search-x" class="w-8 h-8 text-muted-foreground" />
+        <div class="inline-flex items-center justify-center w-16 h-16 rounded-full mb-4" style="background: var(--glass-bg-1)">
+          <UIcon name="lucide:search-x" class="w-8 h-8" style="color: var(--text-secondary)" />
         </div>
-        <h3 class="text-lg font-medium mb-2">未找到智能体</h3>
-        <p class="text-muted-foreground">尝试使用其他关键词或标签搜索</p>
+        <h3 class="text-lg font-medium mb-2" style="color: var(--text-primary)">未找到智能体</h3>
+        <p style="color: var(--text-secondary)">尝试使用其他关键词或标签搜索</p>
       </div>
     </div>
 
     <UDialog v-model:open="showCreateDialog" title="创建智能体">
       <div class="space-y-4">
         <div>
-          <label class="block text-sm font-medium mb-1.5">智能体名称</label>
-          <UInput v-model="newAgent.name" placeholder="给你的智能体起个名字" />
+          <label class="block text-sm font-medium mb-1.5" style="color: var(--text-primary)">智能体名称</label>
+          <input
+            v-model="newAgent.name"
+            placeholder="给你的智能体起个名字"
+            style="background: var(--glass-bg-1); border: 1px solid var(--glass-border); border-radius: 0.75rem; padding: 0.5rem 1rem; color: var(--text-primary); outline: none; width: 100%"
+          />
         </div>
         <div>
-          <label class="block text-sm font-medium mb-1.5">描述</label>
+          <label class="block text-sm font-medium mb-1.5" style="color: var(--text-primary)">描述</label>
           <textarea
             v-model="newAgent.description"
             placeholder="简单描述一下这个智能体的用途"
-            class="w-full px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary min-h-[80px]"
+            style="width: 100%; padding: 0.5rem 0.75rem; border: 1px solid var(--glass-border); border-radius: 0.5rem; outline: none; min-height: 80px; background: var(--glass-bg-1); color: var(--text-primary); resize: vertical;"
           ></textarea>
         </div>
         <div>
-          <label class="block text-sm font-medium mb-1.5">可见性</label>
+          <label class="block text-sm font-medium mb-1.5" style="color: var(--text-primary)">可见性</label>
           <USelect v-model="newAgent.visibility" :options="visibilityOptions" />
         </div>
       </div>
       <template #footer>
-        <UButton variant="outline" @click="showCreateDialog = false">
+        <button class="btn-glass" @click="showCreateDialog = false">
           取消
-        </UButton>
-        <UButton @click="handleConfirmCreate">
+        </button>
+        <button class="btn-glass btn-glass--primary" @click="handleConfirmCreate">
           创建
-        </UButton>
+        </button>
       </template>
     </UDialog>
   </div>

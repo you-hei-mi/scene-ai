@@ -1,22 +1,22 @@
 <template>
-  <div>
+  <div style="background: var(--bg-deep); min-height: 100vh">
     <!-- 页面标题 -->
     <div class="text-center mb-8">
-      <h1 class="text-3xl font-bold">套餐与定价</h1>
-      <p class="text-muted-foreground text-sm mt-2">选择适合你的方案</p>
+      <h1 class="font-display text-3xl font-bold text-gradient">套餐与定价</h1>
+      <p class="text-sm mt-2" style="color: var(--text-secondary)">选择适合你的方案</p>
     </div>
 
     <!-- 月付/年付切换 -->
     <div class="flex items-center justify-center gap-3 mb-10">
       <span
         class="text-sm font-medium transition-colors"
-        :class="billingCycle === 'monthly' ? 'text-foreground' : 'text-muted-foreground'"
+        :style="{ color: billingCycle === 'monthly' ? 'var(--text-primary)' : 'var(--text-secondary)' }"
       >
         月付
       </span>
       <button
         class="relative inline-flex h-7 w-12 items-center rounded-full transition-colors"
-        :class="billingCycle === 'yearly' ? 'bg-primary' : 'bg-muted'"
+        :style="{ background: billingCycle === 'yearly' ? 'var(--accent-soft)' : 'var(--glass-bg-1)' }"
         @click="toggleBillingCycle"
       >
         <span
@@ -26,7 +26,7 @@
       </button>
       <span
         class="text-sm font-medium transition-colors"
-        :class="billingCycle === 'yearly' ? 'text-foreground' : 'text-muted-foreground'"
+        :style="{ color: billingCycle === 'yearly' ? 'var(--text-primary)' : 'var(--text-secondary)' }"
       >
         年付
       </span>
@@ -35,11 +35,11 @@
 
     <!-- 套餐卡片 -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-      <UCard
+      <div
         v-for="plan in plans"
         :key="plan.id"
-        class="relative flex flex-col transition-all"
-        :class="plan.isCurrent ? 'border-primary border-2 ring-2 ring-primary/20' : ''"
+        class="glass-card p-4 relative flex flex-col transition-all"
+        :style="plan.isCurrent ? { borderColor: 'var(--accent-soft)', borderWidth: '2px', borderStyle: 'solid', boxShadow: '0 0 0 4px var(--accent-soft-bg)' } : {}"
       >
         <!-- 当前套餐标识 -->
         <div v-if="plan.isCurrent" class="absolute -top-3 left-1/2 -translate-x-1/2">
@@ -50,23 +50,23 @@
         <div class="text-center mb-6">
           <div
             class="w-12 h-12 mx-auto rounded-full flex items-center justify-center mb-3"
-            :class="plan.iconBg"
+            :style="{ background: plan.id === 'free' ? 'var(--glass-bg-1)' : plan.id === 'pro' ? 'rgba(59, 130, 246, 0.12)' : 'rgba(168, 85, 247, 0.12)' }"
           >
-            <UIcon :name="plan.icon" class="w-6 h-6" :class="plan.iconColor" />
+            <UIcon :name="plan.icon" class="w-6 h-6" :style="{ color: plan.id === 'free' ? 'var(--text-secondary)' : plan.id === 'pro' ? '#3b82f6' : '#a855f7' }" />
           </div>
-          <h2 class="text-xl font-bold">{{ plan.name }}</h2>
-          <p class="text-xs text-muted-foreground mt-1">{{ plan.description }}</p>
+          <h2 class="text-xl font-bold" style="color: var(--text-primary)">{{ plan.name }}</h2>
+          <p class="text-xs mt-1" style="color: var(--text-secondary)">{{ plan.description }}</p>
         </div>
 
         <!-- 价格 -->
         <div class="text-center mb-6">
           <div class="flex items-end justify-center gap-1">
-            <span class="text-4xl font-bold">¥{{ getPlanPrice(plan) }}</span>
-            <span class="text-sm text-muted-foreground mb-1">
+            <span class="text-4xl font-bold" style="color: var(--text-primary)">¥{{ getPlanPrice(plan) }}</span>
+            <span class="text-sm mb-1" style="color: var(--text-secondary)">
               {{ plan.price === 0 ? '永久免费' : billingCycle === 'yearly' ? '/年' : '/月' }}
             </span>
           </div>
-          <p v-if="plan.price > 0 && billingCycle === 'yearly'" class="text-xs text-green-600 mt-1">
+          <p v-if="plan.price > 0 && billingCycle === 'yearly'" class="text-xs mt-1" style="color: #22c55e">
             相比月付节省 ¥{{ plan.price * 12 - getYearlyPrice(plan.price) }}
           </p>
         </div>
@@ -74,106 +74,104 @@
         <!-- 功能列表 -->
         <ul class="space-y-3 mb-6 flex-1">
           <li v-for="feature in plan.features" :key="feature" class="flex items-start gap-2">
-            <UIcon name="lucide:check" class="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />
-            <span class="text-sm">{{ feature }}</span>
+            <UIcon name="lucide:check" class="w-4 h-4 flex-shrink-0 mt-0.5" style="color: #22c55e" />
+            <span class="text-sm" style="color: var(--text-primary)">{{ feature }}</span>
           </li>
         </ul>
 
         <!-- 订阅/升级按钮 -->
-        <UButton
-          class="w-full"
-          :variant="plan.isCurrent ? 'outline' : 'solid'"
+        <button
+          class="btn-glass w-full"
+          :class="plan.isCurrent ? '' : 'btn-glass--primary'"
           :disabled="plan.isCurrent"
           @click="handleSubscribe(plan)"
         >
           {{ getButtonText(plan) }}
-        </UButton>
-      </UCard>
+        </button>
+      </div>
     </div>
 
     <!-- 功能对比表格 -->
     <div class="mb-12">
-      <h2 class="text-xl font-bold mb-6 text-center">功能对比</h2>
-      <UCard class="p-0">
+      <h2 class="font-display text-xl font-bold mb-6 text-center" style="color: var(--text-primary)">功能对比</h2>
+      <div class="glass-card" style="padding: 0">
         <div class="overflow-x-auto">
           <table class="w-full">
             <thead>
-              <tr class="border-b border-border">
-                <th class="text-left px-4 py-3 text-sm font-medium text-muted-foreground">功能</th>
-                <th class="text-center px-4 py-3 text-sm font-medium text-muted-foreground">免费版</th>
-                <th class="text-center px-4 py-3 text-sm font-medium text-muted-foreground">专业版</th>
-                <th class="text-center px-4 py-3 text-sm font-medium text-muted-foreground">团队版</th>
+              <tr style="border-bottom: 1px solid var(--glass-border)">
+                <th class="text-left px-4 py-3 text-sm font-medium" style="color: var(--text-secondary)">功能</th>
+                <th class="text-center px-4 py-3 text-sm font-medium" style="color: var(--text-secondary)">免费版</th>
+                <th class="text-center px-4 py-3 text-sm font-medium" style="color: var(--text-secondary)">专业版</th>
+                <th class="text-center px-4 py-3 text-sm font-medium" style="color: var(--text-secondary)">团队版</th>
               </tr>
             </thead>
             <tbody>
               <tr
                 v-for="row in comparisonRows"
                 :key="row.feature"
-                class="border-b border-border last:border-0 hover:bg-accent/30"
+                style="border-bottom: 1px solid var(--glass-border)"
+                :style="{ borderBottomWidth: row === comparisonRows[comparisonRows.length - 1] ? '0' : undefined }"
+                class="transition-colors"
               >
-                <td class="px-4 py-3 text-sm font-medium">{{ row.feature }}</td>
+                <td class="px-4 py-3 text-sm font-medium" style="color: var(--text-primary)">{{ row.feature }}</td>
                 <td class="px-4 py-3 text-center">
-                  <UIcon v-if="row.free === true" name="lucide:check" class="w-4 h-4 text-green-500 inline-block" />
-                  <UIcon v-else-if="row.free === false" name="lucide:x" class="w-4 h-4 text-muted-foreground inline-block" />
-                  <span v-else class="text-sm">{{ row.free }}</span>
+                  <UIcon v-if="row.free === true" name="lucide:check" class="w-4 h-4 inline-block" style="color: #22c55e" />
+                  <UIcon v-else-if="row.free === false" name="lucide:x" class="w-4 h-4 inline-block" style="color: var(--text-secondary)" />
+                  <span v-else class="text-sm" style="color: var(--text-primary)">{{ row.free }}</span>
                 </td>
-                <td class="px-4 py-3 text-center bg-primary/5">
-                  <UIcon v-if="row.pro === true" name="lucide:check" class="w-4 h-4 text-green-500 inline-block" />
-                  <UIcon v-else-if="row.pro === false" name="lucide:x" class="w-4 h-4 text-muted-foreground inline-block" />
-                  <span v-else class="text-sm">{{ row.pro }}</span>
+                <td class="px-4 py-3 text-center" style="background: var(--accent-soft-bg-subtle)">
+                  <UIcon v-if="row.pro === true" name="lucide:check" class="w-4 h-4 inline-block" style="color: #22c55e" />
+                  <UIcon v-else-if="row.pro === false" name="lucide:x" class="w-4 h-4 inline-block" style="color: var(--text-secondary)" />
+                  <span v-else class="text-sm" style="color: var(--text-primary)">{{ row.pro }}</span>
                 </td>
                 <td class="px-4 py-3 text-center">
-                  <UIcon v-if="row.team === true" name="lucide:check" class="w-4 h-4 text-green-500 inline-block" />
-                  <UIcon v-else-if="row.team === false" name="lucide:x" class="w-4 h-4 text-muted-foreground inline-block" />
-                  <span v-else class="text-sm">{{ row.team }}</span>
+                  <UIcon v-if="row.team === true" name="lucide:check" class="w-4 h-4 inline-block" style="color: #22c55e" />
+                  <UIcon v-else-if="row.team === false" name="lucide:x" class="w-4 h-4 inline-block" style="color: var(--text-secondary)" />
+                  <span v-else class="text-sm" style="color: var(--text-primary)">{{ row.team }}</span>
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
-      </UCard>
+      </div>
     </div>
 
     <!-- 常见问题 -->
     <div class="mb-6">
-      <h2 class="text-xl font-bold mb-6 text-center">常见问题</h2>
+      <h2 class="font-display text-xl font-bold mb-6 text-center" style="color: var(--text-primary)">常见问题</h2>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-4xl mx-auto">
-        <UCard v-for="faq in faqs" :key="faq.id">
+        <div v-for="faq in faqs" :key="faq.id" class="glass-card p-4">
           <div class="flex items-start gap-3">
-            <div class="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-              <UIcon name="lucide:help-circle" class="w-4 h-4 text-primary" />
+            <div class="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style="background: var(--accent-soft-bg)">
+              <UIcon name="lucide:help-circle" class="w-4 h-4" style="color: var(--accent-soft-text)" />
             </div>
             <div class="flex-1">
-              <h3 class="font-semibold text-sm mb-2">{{ faq.question }}</h3>
-              <p class="text-sm text-muted-foreground leading-relaxed">{{ faq.answer }}</p>
+              <h3 class="font-semibold text-sm mb-2" style="color: var(--text-primary)">{{ faq.question }}</h3>
+              <p class="text-sm leading-relaxed" style="color: var(--text-secondary)">{{ faq.answer }}</p>
             </div>
           </div>
-        </UCard>
+        </div>
       </div>
     </div>
 
     <!-- 底部联系区域 -->
-    <UCard class="text-center">
+    <div class="glass-card text-center p-4">
       <div class="py-6">
-        <UIcon name="lucide:headphones" class="w-10 h-10 mx-auto text-primary mb-3" />
-        <h3 class="text-lg font-bold mb-1">需要更多帮助？</h3>
-        <p class="text-sm text-muted-foreground mb-4">如果你有定制需求或团队规模超过 50 人，请联系我们的销售团队</p>
+        <UIcon name="lucide:headphones" class="w-10 h-10 mx-auto mb-3" style="color: var(--accent-soft-text)" />
+        <h3 class="font-display text-lg font-bold mb-1" style="color: var(--text-primary)">需要更多帮助？</h3>
+        <p class="text-sm mb-4" style="color: var(--text-secondary)">如果你有定制需求或团队规模超过 50 人，请联系我们的销售团队</p>
         <div class="flex items-center justify-center gap-3">
-          <UButton variant="outline">
-            <template #icon>
-              <UIcon name="lucide:mail" class="w-4 h-4" />
-            </template>
+          <button class="btn-glass">
+            <UIcon name="lucide:mail" class="w-4 h-4" />
             联系销售
-          </UButton>
-          <UButton variant="outline">
-            <template #icon>
-              <UIcon name="lucide:calendar" class="w-4 h-4" />
-            </template>
+          </button>
+          <button class="btn-glass">
+            <UIcon name="lucide:calendar" class="w-4 h-4" />
             预约演示
-          </UButton>
+          </button>
         </div>
       </div>
-    </UCard>
+    </div>
   </div>
 </template>
 

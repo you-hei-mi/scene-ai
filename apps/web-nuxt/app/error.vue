@@ -1,15 +1,15 @@
 <template>
-  <div class="min-h-screen flex items-center justify-center bg-background">
-    <div class="text-center p-8">
-      <h1 class="text-6xl font-bold text-primary mb-4">
+  <div style="background: var(--bg-deep); min-height: 100vh; display: flex; align-items: center; justify-content: center;">
+    <div style="text-align: center; padding: 2rem;">
+      <h1 class="font-display text-gradient" style="font-size: 3.75rem; font-weight: 700; margin-bottom: 1rem;">
         {{ error.statusCode || 500 }}
       </h1>
-      <p class="text-xl text-muted-foreground mb-8">
+      <p style="color: var(--text-secondary); font-size: 1.25rem; margin-bottom: 2rem;">
         {{ error.statusMessage || '发生错误' }}
       </p>
-      <UButton @click="handleError">
+      <button class="btn-glass btn-glass--primary" @click="handleError">
         返回首页
-      </UButton>
+      </button>
     </div>
   </div>
 </template>

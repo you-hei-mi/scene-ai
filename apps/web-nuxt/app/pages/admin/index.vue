@@ -1,85 +1,85 @@
 <template>
-  <div>
+  <div style="background: var(--bg-deep); min-height: 100vh">
     <!-- 页面标题 -->
     <div class="mb-6">
-      <h1 class="text-2xl font-bold">仪表盘</h1>
-      <p class="text-muted-foreground text-sm mt-1">系统运营数据概览</p>
+      <h1 class="font-display text-gradient text-2xl font-bold">仪表盘</h1>
+      <p class="text-sm mt-1" style="color: var(--text-secondary)">系统运营数据概览</p>
     </div>
 
     <!-- 统计卡片 -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-      <UCard>
+      <div class="glass-card p-4">
         <div class="flex items-center justify-between">
           <div>
-            <p class="text-sm text-muted-foreground">总用户数</p>
-            <p class="text-2xl font-bold mt-1">{{ stats.totalUsers }}</p>
-            <p class="text-xs text-green-600 mt-1 flex items-center gap-1">
+            <p class="text-sm" style="color: var(--text-secondary)">总用户数</p>
+            <p class="text-2xl font-bold mt-1" style="color: var(--text-primary)">{{ stats.totalUsers }}</p>
+            <p class="text-xs mt-1 flex items-center gap-1" style="color: #22c55e">
               <UIcon name="lucide:trending-up" class="w-3 h-3" />
               +12.5% 较上周
             </p>
           </div>
-          <div class="w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
-            <UIcon name="lucide:users" class="w-6 h-6 text-blue-600 dark:text-blue-400" />
+          <div class="w-12 h-12 rounded-full flex items-center justify-center" style="background: rgba(59, 130, 246, 0.12)">
+            <UIcon name="lucide:users" class="w-6 h-6" style="color: #3b82f6" />
           </div>
         </div>
-      </UCard>
+      </div>
 
-      <UCard>
+      <div class="glass-card p-4">
         <div class="flex items-center justify-between">
           <div>
-            <p class="text-sm text-muted-foreground">今日对话</p>
-            <p class="text-2xl font-bold mt-1">{{ stats.todayChats }}</p>
-            <p class="text-xs text-green-600 mt-1 flex items-center gap-1">
+            <p class="text-sm" style="color: var(--text-secondary)">今日对话</p>
+            <p class="text-2xl font-bold mt-1" style="color: var(--text-primary)">{{ stats.todayChats }}</p>
+            <p class="text-xs mt-1 flex items-center gap-1" style="color: #22c55e">
               <UIcon name="lucide:trending-up" class="w-3 h-3" />
               +8.3% 较昨日
             </p>
           </div>
-          <div class="w-12 h-12 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
-            <UIcon name="lucide:message-square" class="w-6 h-6 text-green-600 dark:text-green-400" />
+          <div class="w-12 h-12 rounded-full flex items-center justify-center" style="background: rgba(34, 197, 94, 0.12)">
+            <UIcon name="lucide:message-square" class="w-6 h-6" style="color: #22c55e" />
           </div>
         </div>
-      </UCard>
+      </div>
 
-      <UCard>
+      <div class="glass-card p-4">
         <div class="flex items-center justify-between">
           <div>
-            <p class="text-sm text-muted-foreground">智能体数量</p>
-            <p class="text-2xl font-bold mt-1">{{ stats.totalAgents }}</p>
-            <p class="text-xs text-green-600 mt-1 flex items-center gap-1">
+            <p class="text-sm" style="color: var(--text-secondary)">智能体数量</p>
+            <p class="text-2xl font-bold mt-1" style="color: var(--text-primary)">{{ stats.totalAgents }}</p>
+            <p class="text-xs mt-1 flex items-center gap-1" style="color: #22c55e">
               <UIcon name="lucide:trending-up" class="w-3 h-3" />
               +5.2% 较上周
             </p>
           </div>
-          <div class="w-12 h-12 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
-            <UIcon name="lucide:bot" class="w-6 h-6 text-purple-600 dark:text-purple-400" />
+          <div class="w-12 h-12 rounded-full flex items-center justify-center" style="background: rgba(168, 85, 247, 0.12)">
+            <UIcon name="lucide:bot" class="w-6 h-6" style="color: #a855f7" />
           </div>
         </div>
-      </UCard>
+      </div>
 
-      <UCard>
+      <div class="glass-card p-4">
         <div class="flex items-center justify-between">
           <div>
-            <p class="text-sm text-muted-foreground">知识库文档</p>
-            <p class="text-2xl font-bold mt-1">{{ stats.totalDocuments }}</p>
-            <p class="text-xs text-yellow-600 mt-1 flex items-center gap-1">
+            <p class="text-sm" style="color: var(--text-secondary)">知识库文档</p>
+            <p class="text-2xl font-bold mt-1" style="color: var(--text-primary)">{{ stats.totalDocuments }}</p>
+            <p class="text-xs mt-1 flex items-center gap-1" style="color: #eab308">
               <UIcon name="lucide:trending-down" class="w-3 h-3" />
               -2.1% 较上周
             </p>
           </div>
-          <div class="w-12 h-12 rounded-full bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center">
-            <UIcon name="lucide:database" class="w-6 h-6 text-orange-600 dark:text-orange-400" />
+          <div class="w-12 h-12 rounded-full flex items-center justify-center" style="background: rgba(249, 115, 22, 0.12)">
+            <UIcon name="lucide:database" class="w-6 h-6" style="color: #f97316" />
           </div>
         </div>
-      </UCard>
+      </div>
     </div>
 
     <!-- 图表区域 -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
       <!-- 对话趋势 -->
-      <UCard>
-        <template #header>
-          <h3 class="font-semibold">对话趋势</h3>
-        </template>
+      <div class="glass-card p-4">
+        <div class="mb-4">
+          <h3 class="font-semibold" style="color: var(--text-primary)">对话趋势</h3>
+        </div>
         <div class="h-64 flex items-end justify-between gap-2 px-4 py-8">
           <div
             v-for="(item, index) in chatTrendData"
@@ -87,19 +87,20 @@
             class="flex-1 flex flex-col items-center gap-2"
           >
             <div
-              class="w-full bg-primary/20 rounded-t transition-all hover:bg-primary/30"
+              class="w-full rounded-t transition-all"
+              style="background: var(--accent-soft-bg)"
               :style="{ height: (item.value / maxChatValue) * 100 + '%' }"
             ></div>
-            <span class="text-xs text-muted-foreground">{{ item.label }}</span>
+            <span class="text-xs" style="color: var(--text-secondary)">{{ item.label }}</span>
           </div>
         </div>
-      </UCard>
+      </div>
 
       <!-- 用户增长 -->
-      <UCard>
-        <template #header>
-          <h3 class="font-semibold">用户增长</h3>
-        </template>
+      <div class="glass-card p-4">
+        <div class="mb-4">
+          <h3 class="font-semibold" style="color: var(--text-primary)">用户增长</h3>
+        </div>
         <div class="h-64 flex items-end justify-between gap-2 px-4 py-8">
           <div
             v-for="(item, index) in userGrowthData"
@@ -107,51 +108,54 @@
             class="flex-1 flex flex-col items-center gap-2"
           >
             <div
-              class="w-full bg-green-500/20 rounded-t transition-all hover:bg-green-500/30"
+              class="w-full rounded-t transition-all"
+              style="background: rgba(34, 197, 94, 0.2)"
               :style="{ height: (item.value / maxUserValue) * 100 + '%' }"
             ></div>
-            <span class="text-xs text-muted-foreground">{{ item.label }}</span>
+            <span class="text-xs" style="color: var(--text-secondary)">{{ item.label }}</span>
           </div>
         </div>
-      </UCard>
+      </div>
     </div>
 
     <!-- 最近活动和系统状态 -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
       <!-- 最近活动 -->
       <div class="lg:col-span-2">
-        <UCard>
-          <template #header>
-            <h3 class="font-semibold">最近活动</h3>
-          </template>
+        <div class="glass-card p-4">
+          <div class="mb-4">
+            <h3 class="font-semibold" style="color: var(--text-primary)">最近活动</h3>
+          </div>
           <div class="space-y-4">
             <div
               v-for="activity in recentActivities"
               :key="activity.id"
-              class="flex items-start gap-3 p-3 rounded-lg hover:bg-accent/30"
+              class="flex items-start gap-3 p-3 rounded-lg"
             >
               <div
                 class="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
-                :class="getActivityIconBg(activity.type)"
+                :style="{
+                  background: { user: '#3b82f6', agent: '#a855f7', dataset: '#22c55e', system: '#f97316' }[activity.type] || '#6b7280'
+                }"
               >
-                <UIcon :name="getActivityIcon(activity.type)" class="w-4 h-4 text-white" />
+                <UIcon :name="getActivityIcon(activity.type)" class="w-4 h-4" style="color: white" />
               </div>
               <div class="flex-1 min-w-0">
-                <p class="text-sm font-medium">{{ activity.title }}</p>
-                <p class="text-xs text-muted-foreground mt-0.5">{{ activity.description }}</p>
+                <p class="text-sm font-medium" style="color: var(--text-primary)">{{ activity.title }}</p>
+                <p class="text-xs mt-0.5" style="color: var(--text-secondary)">{{ activity.description }}</p>
               </div>
-              <span class="text-xs text-muted-foreground flex-shrink-0">{{ activity.time }}</span>
+              <span class="text-xs flex-shrink-0" style="color: var(--text-secondary)">{{ activity.time }}</span>
             </div>
           </div>
-        </UCard>
+        </div>
       </div>
 
       <!-- 系统状态 -->
       <div>
-        <UCard>
-          <template #header>
-            <h3 class="font-semibold">系统状态</h3>
-          </template>
+        <div class="glass-card p-4">
+          <div class="mb-4">
+            <h3 class="font-semibold" style="color: var(--text-primary)">系统状态</h3>
+          </div>
           <div class="space-y-4">
             <div
               v-for="service in systemStatus"
@@ -161,56 +165,59 @@
               <div class="flex items-center gap-2">
                 <span
                   class="w-2 h-2 rounded-full"
-                  :class="service.status === 'online' ? 'bg-green-500' : 'bg-red-500'"
+                  :style="{ background: service.status === 'online' ? '#22c55e' : '#ef4444' }"
                 ></span>
-                <span class="text-sm">{{ service.name }}</span>
+                <span class="text-sm" style="color: var(--text-primary)">{{ service.name }}</span>
               </div>
-              <span class="text-xs text-muted-foreground">{{ service.latency }}</span>
+              <span class="text-xs" style="color: var(--text-secondary)">{{ service.latency }}</span>
             </div>
           </div>
 
-          <div class="mt-6 pt-6 border-t border-border">
-            <h4 class="font-medium text-sm mb-3">资源使用</h4>
+          <div class="mt-6 pt-6" style="border-top: 1px solid var(--glass-border)">
+            <h4 class="font-medium text-sm mb-3" style="color: var(--text-primary)">资源使用</h4>
             <div class="space-y-3">
               <div>
                 <div class="flex justify-between text-sm mb-1">
-                  <span class="text-muted-foreground">CPU</span>
-                  <span>{{ resourceUsage.cpu }}%</span>
+                  <span style="color: var(--text-secondary)">CPU</span>
+                  <span style="color: var(--text-primary)">{{ resourceUsage.cpu }}%</span>
                 </div>
-                <div class="h-2 bg-muted rounded-full overflow-hidden">
+                <div class="h-2 rounded-full overflow-hidden" style="background: var(--glass-bg-1)">
                   <div
-                    class="h-full bg-primary rounded-full transition-all"
+                    class="h-full rounded-full transition-all"
+                    style="background: var(--accent-soft)"
                     :style="{ width: resourceUsage.cpu + '%' }"
                   ></div>
                 </div>
               </div>
               <div>
                 <div class="flex justify-between text-sm mb-1">
-                  <span class="text-muted-foreground">内存</span>
-                  <span>{{ resourceUsage.memory }}%</span>
+                  <span style="color: var(--text-secondary)">内存</span>
+                  <span style="color: var(--text-primary)">{{ resourceUsage.memory }}%</span>
                 </div>
-                <div class="h-2 bg-muted rounded-full overflow-hidden">
+                <div class="h-2 rounded-full overflow-hidden" style="background: var(--glass-bg-1)">
                   <div
-                    class="h-full bg-green-500 rounded-full transition-all"
+                    class="h-full rounded-full transition-all"
+                    style="background: #22c55e"
                     :style="{ width: resourceUsage.memory + '%' }"
                   ></div>
                 </div>
               </div>
               <div>
                 <div class="flex justify-between text-sm mb-1">
-                  <span class="text-muted-foreground">存储</span>
-                  <span>{{ resourceUsage.disk }}%</span>
+                  <span style="color: var(--text-secondary)">存储</span>
+                  <span style="color: var(--text-primary)">{{ resourceUsage.disk }}%</span>
                 </div>
-                <div class="h-2 bg-muted rounded-full overflow-hidden">
+                <div class="h-2 rounded-full overflow-hidden" style="background: var(--glass-bg-1)">
                   <div
-                    class="h-full bg-orange-500 rounded-full transition-all"
+                    class="h-full rounded-full transition-all"
+                    style="background: #f97316"
                     :style="{ width: resourceUsage.disk + '%' }"
                   ></div>
                 </div>
               </div>
             </div>
           </div>
-        </UCard>
+        </div>
       </div>
     </div>
   </div>

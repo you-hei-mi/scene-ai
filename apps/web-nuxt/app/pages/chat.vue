@@ -11,16 +11,17 @@
     />
 
     <div class="flex-1 flex flex-col min-w-0">
-      <div class="h-12 border-b border-border flex items-center px-4 gap-2">
-        <UButton
+      <div class="h-12 flex items-center px-4 gap-2" style="border-bottom: 1px solid var(--glass-border); background: var(--glass-bg-nav)">
+        <button
           v-if="sidebarCollapsed"
-          variant="ghost"
-          size="sm"
-          icon="lucide:panel-left"
+          class="btn-glass"
+          style="padding: 0.25rem 0.5rem; font-size: 0.875rem;"
           @click="sidebarCollapsed = false"
-        />
+        >
+          <UIcon name="lucide:panel-left" class="w-4 h-4" />
+        </button>
         <div class="flex-1 flex items-center justify-center">
-          <h1 class="font-medium">
+          <h1 class="font-display font-medium" style="color: var(--text-primary)">
             {{ currentConversation?.title || '新对话' }}
           </h1>
         </div>
@@ -38,26 +39,26 @@
       >
         <div class="max-w-3xl mx-auto py-6 px-4">
           <div v-if="messages.length === 0" class="text-center py-20">
-            <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-6">
-              <UIcon name="lucide:message-square" class="w-8 h-8 text-primary" />
+            <div class="inline-flex items-center justify-center w-16 h-16 rounded-full mb-6" style="background: var(--accent-soft-bg)">
+              <UIcon name="lucide:message-square" class="w-8 h-8" style="color: var(--accent-soft-text)" />
             </div>
-            <h2 class="text-2xl font-semibold mb-2">有什么我可以帮您的？</h2>
-            <p class="text-muted-foreground mb-8">输入您的问题，开始与 AI 对话</p>
+            <h2 class="font-display text-2xl font-semibold mb-2 text-gradient">有什么我可以帮您的？</h2>
+            <p class="mb-8" style="color: var(--text-secondary)">输入您的问题，开始与 AI 对话</p>
             <div class="grid grid-cols-2 gap-4 max-w-lg mx-auto">
-              <UCard
+              <div
                 v-for="suggestion in suggestions"
                 :key="suggestion.title"
-                class="cursor-pointer hover:border-primary transition-colors text-left"
+                class="glass-card p-4 cursor-pointer text-left"
                 @click="sendMessage(suggestion.title)"
               >
                 <div class="flex items-start gap-3">
-                  <UIcon :name="suggestion.icon" class="w-5 h-5 text-primary mt-0.5" />
+                  <UIcon :name="suggestion.icon" class="w-5 h-5 mt-0.5" style="color: var(--accent-soft-text)" />
                   <div>
-                    <div class="font-medium mb-1">{{ suggestion.title }}</div>
-                    <div class="text-sm text-muted-foreground">{{ suggestion.desc }}</div>
+                    <div class="font-medium mb-1" style="color: var(--text-primary)">{{ suggestion.title }}</div>
+                    <div class="text-sm" style="color: var(--text-secondary)">{{ suggestion.desc }}</div>
                   </div>
                 </div>
-              </UCard>
+              </div>
             </div>
           </div>
 
@@ -82,7 +83,7 @@
         </div>
       </div>
 
-      <div class="border-t border-border p-4">
+      <div style="border-top: 1px solid var(--glass-border)" class="p-4">
         <div class="max-w-3xl mx-auto">
           <ChatInput
             v-model="inputValue"
@@ -90,7 +91,7 @@
             @send="handleSend"
             @stop="handleStop"
           />
-          <p class="text-xs text-center text-muted-foreground mt-2">
+          <p class="text-xs text-center mt-2" style="color: var(--text-secondary)">
             AI 可能会犯错，请核实重要信息
           </p>
         </div>

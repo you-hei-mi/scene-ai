@@ -1,80 +1,78 @@
 <template>
-  <div>
-    <div class="flex items-center justify-between mb-6">
+  <div style="background: var(--bg-deep); min-height: 100vh; padding: 1.5rem;">
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem;">
       <div>
-        <h1 class="text-2xl font-bold">知识库</h1>
-        <p class="text-muted-foreground text-sm mt-1">管理和维护您的知识库，为 AI 提供上下文信息</p>
+        <h1 class="font-display text-gradient" style="font-size: 1.5rem; font-weight: 700;">知识库</h1>
+        <p style="color: var(--text-secondary); font-size: 0.875rem; margin-top: 0.25rem;">管理和维护您的知识库，为 AI 提供上下文信息</p>
       </div>
-      <UButton @click="handleCreate">
-        <template #icon>
-          <UIcon name="lucide:plus" class="w-4 h-4" />
-        </template>
+      <button class="btn-glass btn-glass--primary" @click="handleCreate">
+        <UIcon name="lucide:plus" style="width: 1rem; height: 1rem;" />
         创建知识库
-      </UButton>
+      </button>
     </div>
 
-    <div class="flex items-center gap-4 mb-6">
-      <UInput v-model="keyword" placeholder="搜索知识库..." class="w-64">
-        <template #leading>
-          <UIcon name="lucide:search" class="w-4 h-4 text-muted-foreground" />
-        </template>
-      </UInput>
-      <div class="flex gap-2">
-        <UButton
-          :variant="filterType === 'all' ? 'solid' : 'outline'"
-          size="sm"
+    <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem;">
+      <div style="position: relative; width: 16rem;">
+        <UIcon name="lucide:search" style="position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); width: 1rem; height: 1rem; color: var(--text-secondary);" />
+        <input v-model="keyword" placeholder="搜索知识库..." style="background: var(--glass-bg-1); border: 1px solid var(--glass-border); border-radius: 0.75rem; padding: 0.5rem 1rem 0.5rem 2.25rem; color: var(--text-primary); outline: none; width: 100%;" />
+      </div>
+      <div style="display: flex; gap: 0.5rem;">
+        <button
+          :class="filterType === 'all' ? 'btn-glass btn-glass--primary' : 'btn-glass'"
+          style="font-size: 0.875rem; padding: 0.25rem 0.75rem;"
           @click="filterType = 'all'"
         >
           全部
-        </UButton>
-        <UButton
-          :variant="filterType === 'private' ? 'solid' : 'outline'"
-          size="sm"
+        </button>
+        <button
+          :class="filterType === 'private' ? 'btn-glass btn-glass--primary' : 'btn-glass'"
+          style="font-size: 0.875rem; padding: 0.25rem 0.75rem;"
           @click="filterType = 'private'"
         >
           私有
-        </UButton>
-        <UButton
-          :variant="filterType === 'public' ? 'solid' : 'outline'"
-          size="sm"
+        </button>
+        <button
+          :class="filterType === 'public' ? 'btn-glass btn-glass--primary' : 'btn-glass'"
+          style="font-size: 0.875rem; padding: 0.25rem 0.75rem;"
           @click="filterType = 'public'"
         >
           公开
-        </UButton>
+        </button>
       </div>
     </div>
 
-    <div v-if="datasetStore.loading" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-      <UCard v-for="i in 6" :key="i" class="animate-pulse">
-        <div class="space-y-3">
-          <div class="h-10 w-10 rounded-lg bg-muted"></div>
-          <div class="h-5 w-2/3 bg-muted rounded"></div>
-          <div class="h-4 w-full bg-muted rounded"></div>
-          <div class="flex gap-2 pt-2">
-            <div class="h-4 w-16 bg-muted rounded"></div>
-            <div class="h-4 w-16 bg-muted rounded"></div>
-            <div class="h-4 w-16 bg-muted rounded"></div>
+    <div v-if="datasetStore.loading" style="display: grid; grid-template-columns: repeat(1, 1fr); gap: 1rem;">
+      <div v-for="i in 6" :key="i" class="glass-card animate-pulse" style="padding: 1rem;">
+        <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+          <div style="height: 2.5rem; width: 2.5rem; border-radius: 0.5rem; background: var(--glass-bg-1);"></div>
+          <div style="height: 1.25rem; width: 66.66%; background: var(--glass-bg-1); border-radius: 0.25rem;"></div>
+          <div style="height: 1rem; width: 100%; background: var(--glass-bg-1); border-radius: 0.25rem;"></div>
+          <div style="display: flex; gap: 0.5rem; padding-top: 0.5rem;">
+            <div style="height: 1rem; width: 4rem; background: var(--glass-bg-1); border-radius: 0.25rem;"></div>
+            <div style="height: 1rem; width: 4rem; background: var(--glass-bg-1); border-radius: 0.25rem;"></div>
+            <div style="height: 1rem; width: 4rem; background: var(--glass-bg-1); border-radius: 0.25rem;"></div>
           </div>
         </div>
-      </UCard>
+      </div>
     </div>
 
-    <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-      <UCard
+    <div v-else style="display: grid; grid-template-columns: repeat(1, 1fr); gap: 1rem;">
+      <div
         v-for="dataset in filteredDatasets"
         :key="dataset.id"
-        class="cursor-pointer hover:border-primary transition-all hover:shadow-md group"
+        class="glass-card"
+        style="padding: 1rem; cursor: pointer;"
         @click="handleSelect(dataset)"
       >
-        <div class="flex items-start gap-3 mb-4">
+        <div style="display: flex; align-items: flex-start; gap: 0.75rem; margin-bottom: 1rem;">
           <div
-            class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
-            :class="getTypeBg(dataset.type)"
+            style="width: 2.5rem; height: 2.5rem; border-radius: 0.5rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0;"
+            :style="{ backgroundColor: dataset.type === 'public' ? '#22c55e' : '#3b82f6' }"
           >
-            <UIcon name="lucide:database" class="w-5 h-5 text-white" />
+            <UIcon name="lucide:database" style="width: 1.25rem; height: 1.25rem; color: white;" />
           </div>
-          <div class="flex-1 min-w-0">
-            <h3 class="font-semibold truncate group-hover:text-primary transition-colors flex items-center gap-2">
+          <div style="flex: 1; min-width: 0;">
+            <h3 style="font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: flex; align-items: center; gap: 0.5rem; color: var(--text-primary);">
               {{ dataset.name }}
               <UBadge
                 :variant="dataset.type === 'public' ? 'default' : 'secondary'"
@@ -83,20 +81,16 @@
                 {{ dataset.type === 'public' ? '公开' : '私有' }}
               </UBadge>
             </h3>
-            <p class="text-sm text-muted-foreground mt-1">
+            <p style="font-size: 0.875rem; margin-top: 0.25rem;">
               <span
-                class="inline-flex items-center gap-1"
-                :class="{
-                  'text-green-600': dataset.status === 'active',
-                  'text-yellow-600': dataset.status === 'indexing',
-                  'text-red-600': dataset.status === 'error',
+                style="display: inline-flex; align-items: center; gap: 0.25rem;"
+                :style="{
+                  color: dataset.status === 'active' ? '#22c55e' : dataset.status === 'indexing' ? '#eab308' : dataset.status === 'error' ? '#ef4444' : undefined,
                 }"
               >
-                <span class="w-2 h-2 rounded-full inline-block"
-                  :class="{
-                    'bg-green-600': dataset.status === 'active',
-                    'bg-yellow-600': dataset.status === 'indexing',
-                    'bg-red-600': dataset.status === 'error',
+                <span style="width: 0.5rem; height: 0.5rem; border-radius: 50%; display: inline-block;"
+                  :style="{
+                    backgroundColor: dataset.status === 'active' ? '#22c55e' : dataset.status === 'indexing' ? '#eab308' : dataset.status === 'error' ? '#ef4444' : undefined,
                   }"
                 ></span>
                 {{ statusText(dataset.status) }}
@@ -105,67 +99,65 @@
           </div>
         </div>
 
-        <p class="text-sm text-muted-foreground line-clamp-2 mb-4 min-h-[40px]">
+        <p style="font-size: 0.875rem; color: var(--text-secondary); overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; margin-bottom: 1rem; min-height: 40px;">
           {{ dataset.description }}
         </p>
 
-        <div class="flex items-center justify-between text-xs text-muted-foreground pt-3 border-t border-border">
-          <span class="flex items-center gap-1">
-            <UIcon name="lucide:file-text" class="w-3 h-3" />
+        <div style="display: flex; align-items: center; justify-content: space-between; font-size: 0.75rem; color: var(--text-secondary); padding-top: 0.75rem; border-top: 1px solid var(--glass-border);">
+          <span style="display: flex; align-items: center; gap: 0.25rem;">
+            <UIcon name="lucide:file-text" style="width: 0.75rem; height: 0.75rem;" />
             {{ dataset.docCount }} 文档
           </span>
-          <span class="flex items-center gap-1">
-            <UIcon name="lucide:layers" class="w-3 h-3" />
+          <span style="display: flex; align-items: center; gap: 0.25rem;">
+            <UIcon name="lucide:layers" style="width: 0.75rem; height: 0.75rem;" />
             {{ dataset.chunkCount }} 分段
           </span>
-          <span class="flex items-center gap-1">
-            <UIcon name="lucide:hard-drive" class="w-3 h-3" />
+          <span style="display: flex; align-items: center; gap: 0.25rem;">
+            <UIcon name="lucide:hard-drive" style="width: 0.75rem; height: 0.75rem;" />
             {{ datasetStore.formatSize(dataset.size) }}
           </span>
         </div>
-      </UCard>
+      </div>
     </div>
 
-    <div v-if="filteredDatasets.length === 0 && !datasetStore.loading" class="text-center py-16">
-      <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-muted mb-4">
-        <UIcon name="lucide:database" class="w-8 h-8 text-muted-foreground" />
+    <div v-if="filteredDatasets.length === 0 && !datasetStore.loading" style="text-align: center; padding-top: 4rem; padding-bottom: 4rem;">
+      <div style="display: inline-flex; align-items: center; justify-content: center; width: 4rem; height: 4rem; border-radius: 50%; background: var(--glass-bg-1); margin-bottom: 1rem;">
+        <UIcon name="lucide:database" style="width: 2rem; height: 2rem; color: var(--text-secondary);" />
       </div>
-      <h3 class="text-lg font-medium mb-2">暂无知识库</h3>
-      <p class="text-muted-foreground mb-4">创建您的第一个知识库，上传文档开始使用</p>
-      <UButton @click="handleCreate">
-        <template #icon>
-          <UIcon name="lucide:plus" class="w-4 h-4" />
-        </template>
+      <h3 style="font-size: 1.125rem; font-weight: 500; margin-bottom: 0.5rem; color: var(--text-primary);">暂无知识库</h3>
+      <p style="color: var(--text-secondary); margin-bottom: 1rem;">创建您的第一个知识库，上传文档开始使用</p>
+      <button class="btn-glass btn-glass--primary" @click="handleCreate">
+        <UIcon name="lucide:plus" style="width: 1rem; height: 1rem;" />
         创建知识库
-      </UButton>
+      </button>
     </div>
 
     <UDialog v-model:open="showCreateDialog" title="创建知识库">
-      <div class="space-y-4">
+      <div style="display: flex; flex-direction: column; gap: 1rem;">
         <div>
-          <label class="block text-sm font-medium mb-1.5">知识库名称</label>
-          <UInput v-model="newDataset.name" placeholder="输入知识库名称" />
+          <label style="display: block; font-size: 0.875rem; font-weight: 500; margin-bottom: 0.375rem; color: var(--text-primary);">知识库名称</label>
+          <input v-model="newDataset.name" placeholder="输入知识库名称" style="background: var(--glass-bg-1); border: 1px solid var(--glass-border); border-radius: 0.75rem; padding: 0.5rem 1rem; color: var(--text-primary); outline: none; width: 100%;" />
         </div>
         <div>
-          <label class="block text-sm font-medium mb-1.5">描述</label>
+          <label style="display: block; font-size: 0.875rem; font-weight: 500; margin-bottom: 0.375rem; color: var(--text-primary);">描述</label>
           <textarea
             v-model="newDataset.description"
             placeholder="简单描述知识库的用途和内容"
-            class="w-full px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary min-h-[80px] resize-none"
+            style="width: 100%; padding: 0.5rem 0.75rem; border: 1px solid var(--glass-border); border-radius: 0.5rem; outline: none; min-height: 80px; resize: none; background: var(--glass-bg-1); color: var(--text-primary);"
           ></textarea>
         </div>
         <div>
-          <label class="block text-sm font-medium mb-1.5">类型</label>
+          <label style="display: block; font-size: 0.875rem; font-weight: 500; margin-bottom: 0.375rem; color: var(--text-primary);">类型</label>
           <USelect v-model="newDataset.type" :options="typeOptions" />
         </div>
       </div>
       <template #footer>
-        <UButton variant="outline" @click="showCreateDialog = false">
+        <button class="btn-glass" @click="showCreateDialog = false">
           取消
-        </UButton>
-        <UButton @click="handleConfirmCreate">
+        </button>
+        <button class="btn-glass btn-glass--primary" @click="handleConfirmCreate">
           创建
-        </UButton>
+        </button>
       </template>
     </UDialog>
   </div>

@@ -111,8 +111,8 @@ export class ExtensionSeeder extends BaseSeeder {
 
             this.logSuccess("zhparser segmentation configuration and full-text index initialized");
         } catch (error) {
-            this.logError(`zhparser initialization failed: ${error.message}`);
-            throw error;
+            this.logError(`zhparser initialization failed: ${error.message}. Skipping zhparser setup (non-critical for development).`);
+            // Don't throw - zhparser is not critical for development
         }
     }
 
@@ -131,7 +131,8 @@ export class ExtensionSeeder extends BaseSeeder {
             return await fse.readJson(possiblePath);
         }
 
-        throw new Error("Unable to find extensions.json in project root extensions folder");
+        this.logInfo("extensions.json not found, skipping application extension initialization");
+        return { applications: {}, functionals: {} };
     }
 
     /**

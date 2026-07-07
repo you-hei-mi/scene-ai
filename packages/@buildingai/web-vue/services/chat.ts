@@ -1,26 +1,61 @@
-import type { Message } from '../types'
+import { apiGet, apiDelete, getApiBaseURL, getToken } from './client'
+
+interface Conversation {
+  id: string
+  title: string
+  agentId?: string
+  updatedAt: string
+  createdAt: string
+}
+
+interface Message {
+  id: string
+  content: string
+  isUser: boolean
+  timestamp: string
+}
 
 class ChatService {
-  async sendMessage(content: string, agentId?: string): Promise<Message> {
-    await new Promise(resolve => setTimeout(resolve, 1500))
-    return {
-      id: Date.now().toString(),
-      content: '这是模拟的 AI 回复。实际应用中会调用后端 API。',
-      isUser: false,
-      timestamp: new Date().toLocaleString('zh-CN'),
+  /**
+   * 发送聊天消息（SSE 流式响应）
+   * 返回一个 Response 对象，调用方负责读取流
+   */
+  async sendMessage(content: string, agentId?: string, conversationId?: string): Promise<Response> {
+    const baseURL = getApiBaseURL()
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
     }
+    const token = getToken()
+    if (token) {
+      headers.Authorization = `Bearer ${token}`
+    }
+
+    return fetch(`${baseURL}/api/ai-chat`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        modelId: agentId,
+        conversationId: conversationId || undefined,
+        messages: [{ role: 'user', content }],
+      }),
+    })
   }
 
-  async getHistory(agentId?: string, limit?: number): Promise<Message[]> {
-    await new Promise(resolve => setTimeout(resolve, 500))
-    return [
-      { id: '1', content: '你好！', isUser: true, timestamp: '2024-01-15 10:00' },
-      { id: '2', content: '你好！我是你的 AI 助手。', isUser: false, timestamp: '2024-01-15 10:00' },
-    ]
+  /** 获取聊天对话列表 */
+  async getHistory(agentId?: string, limit?: number): Promise<Conversation[]> {
+    return apiGet<Conversation[]>('/api/ai-conversations', {
+      query: { agentId, limit: limit || 20 },
+    })
   }
 
-  async clearHistory(agentId?: string): Promise<void> {
-    await new Promise(resolve => setTimeout(resolve, 200))
+  /** 获取对话详情（含消息） */
+  async getConversation(id: string): Promise<{ messages: Message[] }> {
+    return apiGet<{ messages: Message[] }>(`/api/ai-conversations/${id}`)
+  }
+
+  /** 删除对话 */
+  async deleteConversation(id: string): Promise<void> {
+    await apiDelete(`/api/ai-conversations/${id}`)
   }
 }
 

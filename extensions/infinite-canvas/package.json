@@ -43,13 +43,7 @@
         "@buildingai/dto": "workspace:*",
         "@buildingai/errors": "workspace:*",
         "@buildingai/extension-sdk": "workspace:*",
-        "@buildingai/hooks": "workspace:*",
-        "@buildingai/http": "workspace:*",
-        "@buildingai/i18n": "workspace:*",
         "@buildingai/pipe": "workspace:*",
-        "@buildingai/services": "workspace:*",
-        "@buildingai/stores": "workspace:*",
-        "@buildingai/ui": "workspace:*",
         "@buildingai/utils": "workspace:*",
         "@buildingai/web-vue": "workspace:*",
         "lucide-vue-next": "catalog:web",
@@ -61,7 +55,6 @@
     "devDependencies": {
         "@buildingai/eslint-config": "workspace:*",
         "@buildingai/typescript-config": "workspace:*",
-        "@buildingai/web-types": "workspace:*",
         "@vitejs/plugin-vue": "^5.2.0",
         "eslint-plugin-vue": "^9.32.0"
     },

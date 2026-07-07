@@ -1,55 +1,56 @@
 import type { User } from '../types'
+import { apiGet, apiPost } from './client'
+
+interface AuthResponse {
+  token: string
+  user: User
+}
 
 class UserService {
-  async login(email: string, password: string): Promise<{ token: string; user: User }> {
-    await new Promise(resolve => setTimeout(resolve, 500))
-    return {
-      token: 'mock-jwt-token',
-      user: {
-        id: '1',
-        username: 'testuser',
-        nickname: '测试用户',
-        email,
-        role: 'user',
-      },
-    }
+  /** 用户登录 */
+  async login(username: string, password: string): Promise<AuthResponse> {
+    return apiPost<AuthResponse>('/api/auth/login', {
+      username,
+      password,
+      terminal: 1, // PC
+    })
   }
 
-  async register(data: { username: string; email: string; password: string }): Promise<User> {
-    await new Promise(resolve => setTimeout(resolve, 500))
-    return {
-      id: Date.now().toString(),
-      username: data.username,
-      nickname: data.username,
-      email: data.email,
-      role: 'user',
-    }
+  /** 用户注册 */
+  async register(data: {
+    username: string
+    email: string
+    password: string
+    confirmPassword: string
+  }): Promise<{ user: User }> {
+    return apiPost<{ user: User }>('/api/auth/register', {
+      ...data,
+      terminal: 1, // PC
+    })
   }
 
+  /** 获取当前用户信息 */
   async getProfile(): Promise<User> {
-    await new Promise(resolve => setTimeout(resolve, 300))
-    return {
-      id: '1',
-      username: 'testuser',
-      nickname: '测试用户',
-      email: 'test@example.com',
-      role: 'user',
-    }
+    return apiGet<User>('/api/user/info')
   }
 
-  async updateProfile(data: Partial<User>): Promise<User> {
-    await new Promise(resolve => setTimeout(resolve, 300))
-    return {
-      id: '1',
-      username: data.username || 'testuser',
-      nickname: data.nickname || '测试用户',
-      email: data.email || 'test@example.com',
-      role: 'user',
-    }
+  /** 更新用户信息（单个字段） */
+  async updateProfile(data: { field: string; value: string }): Promise<{ user: User }> {
+    return apiPatch<{ user: User }>('/api/user/update-field', data)
   }
 
-  async changePassword(oldPassword: string, newPassword: string): Promise<void> {
-    await new Promise(resolve => setTimeout(resolve, 300))
+  /** 修改密码 */
+  async changePassword(oldPassword: string, newPassword: string, confirmPassword: string): Promise<void> {
+    await apiPost('/api/auth/change-password', {
+      oldPassword,
+      newPassword,
+      confirmPassword,
+    })
+  }
+
+  /** 退出登录 */
+  async logout(): Promise<void> {
+    await apiPost('/api/auth/logout')
   }
 }
 

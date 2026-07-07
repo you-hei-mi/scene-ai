@@ -1,115 +1,115 @@
 <template>
-  <div>
+  <div style="background: var(--bg-deep); min-height: 100vh">
     <!-- 页面标题和操作 -->
     <div class="flex items-center justify-between mb-6">
       <div>
-        <h1 class="text-2xl font-bold">运营公告管理</h1>
-        <p class="text-muted-foreground text-sm mt-1">管理系统公告和通知</p>
+        <h1 class="font-display text-gradient text-2xl font-bold">运营公告管理</h1>
+        <p class="text-sm mt-1" style="color: var(--text-secondary)">管理系统公告和通知</p>
       </div>
-      <UButton @click="openCreateDialog">
-        <template #icon>
-          <UIcon name="lucide:plus" class="w-4 h-4" />
-        </template>
+      <button class="btn-glass btn-glass--primary" @click="openCreateDialog">
+        <UIcon name="lucide:plus" class="w-4 h-4" />
         发布公告
-      </UButton>
+      </button>
     </div>
 
     <!-- 统计卡片 -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-      <UCard>
+      <div class="glass-card p-4">
         <div class="flex items-center justify-between">
           <div>
-            <p class="text-sm text-muted-foreground">总公告数</p>
-            <p class="text-2xl font-bold mt-1">{{ stats.total }}</p>
+            <p class="text-sm" style="color: var(--text-secondary)">总公告数</p>
+            <p class="text-2xl font-bold mt-1" style="color: var(--text-primary)">{{ stats.total }}</p>
           </div>
-          <div class="w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
-            <UIcon name="lucide:megaphone" class="w-6 h-6 text-blue-600 dark:text-blue-400" />
+          <div class="w-12 h-12 rounded-full flex items-center justify-center" style="background: rgba(59, 130, 246, 0.12)">
+            <UIcon name="lucide:megaphone" class="w-6 h-6" style="color: #3b82f6" />
           </div>
         </div>
-      </UCard>
+      </div>
 
-      <UCard>
+      <div class="glass-card p-4">
         <div class="flex items-center justify-between">
           <div>
-            <p class="text-sm text-muted-foreground">已发布</p>
-            <p class="text-2xl font-bold mt-1 text-green-600">{{ stats.published }}</p>
+            <p class="text-sm" style="color: var(--text-secondary)">已发布</p>
+            <p class="text-2xl font-bold mt-1" style="color: #22c55e">{{ stats.published }}</p>
           </div>
-          <div class="w-12 h-12 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
-            <UIcon name="lucide:check-circle" class="w-6 h-6 text-green-600 dark:text-green-400" />
+          <div class="w-12 h-12 rounded-full flex items-center justify-center" style="background: rgba(34, 197, 94, 0.12)">
+            <UIcon name="lucide:check-circle" class="w-6 h-6" style="color: #22c55e" />
           </div>
         </div>
-      </UCard>
+      </div>
 
-      <UCard>
+      <div class="glass-card p-4">
         <div class="flex items-center justify-between">
           <div>
-            <p class="text-sm text-muted-foreground">草稿</p>
-            <p class="text-2xl font-bold mt-1 text-yellow-600">{{ stats.draft }}</p>
+            <p class="text-sm" style="color: var(--text-secondary)">草稿</p>
+            <p class="text-2xl font-bold mt-1" style="color: #eab308">{{ stats.draft }}</p>
           </div>
-          <div class="w-12 h-12 rounded-full bg-yellow-100 dark:bg-yellow-900/30 flex items-center justify-center">
-            <UIcon name="lucide:file-edit" class="w-6 h-6 text-yellow-600 dark:text-yellow-400" />
+          <div class="w-12 h-12 rounded-full flex items-center justify-center" style="background: rgba(234, 179, 8, 0.12)">
+            <UIcon name="lucide:file-edit" class="w-6 h-6" style="color: #eab308" />
           </div>
         </div>
-      </UCard>
+      </div>
 
-      <UCard>
+      <div class="glass-card p-4">
         <div class="flex items-center justify-between">
           <div>
-            <p class="text-sm text-muted-foreground">今日浏览</p>
-            <p class="text-2xl font-bold mt-1">{{ stats.todayViews.toLocaleString() }}</p>
+            <p class="text-sm" style="color: var(--text-secondary)">今日浏览</p>
+            <p class="text-2xl font-bold mt-1" style="color: var(--text-primary)">{{ stats.todayViews.toLocaleString() }}</p>
           </div>
-          <div class="w-12 h-12 rounded-full bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center">
-            <UIcon name="lucide:eye" class="w-6 h-6 text-orange-600 dark:text-orange-400" />
+          <div class="w-12 h-12 rounded-full flex items-center justify-center" style="background: rgba(249, 115, 22, 0.12)">
+            <UIcon name="lucide:eye" class="w-6 h-6" style="color: #f97316" />
           </div>
         </div>
-      </UCard>
+      </div>
     </div>
 
     <!-- 筛选和搜索 -->
-    <UCard class="mb-6">
+    <div class="glass-card p-4 mb-6">
       <div class="flex flex-wrap items-center gap-4">
         <UInput v-model="searchKeyword" placeholder="搜索公告标题..." class="w-64">
           <template #leading>
-            <UIcon name="lucide:search" class="w-4 h-4 text-muted-foreground" />
+            <UIcon name="lucide:search" class="w-4 h-4" style="color: var(--text-secondary)" />
           </template>
         </UInput>
         <USelect v-model="statusFilter" :options="statusOptions" class="w-40" />
         <USelect v-model="typeFilter" :options="typeOptions" class="w-44" />
         <div class="flex-1"></div>
-        <UButton variant="outline" @click="resetFilters">
+        <button class="btn-glass" @click="resetFilters">
           重置筛选
-        </UButton>
+        </button>
       </div>
-    </UCard>
+    </div>
 
     <!-- 公告列表表格 -->
-    <UCard class="p-0">
+    <div class="glass-card" style="padding: 0">
       <div class="overflow-x-auto">
         <table class="w-full">
           <thead>
-            <tr class="border-b border-border">
-              <th class="text-left px-4 py-3 text-sm font-medium text-muted-foreground">标题</th>
-              <th class="text-left px-4 py-3 text-sm font-medium text-muted-foreground w-28">类型</th>
-              <th class="text-left px-4 py-3 text-sm font-medium text-muted-foreground w-24">状态</th>
-              <th class="text-left px-4 py-3 text-sm font-medium text-muted-foreground w-36">发布时间</th>
-              <th class="text-left px-4 py-3 text-sm font-medium text-muted-foreground w-24">浏览量</th>
-              <th class="text-right px-4 py-3 text-sm font-medium text-muted-foreground w-24">操作</th>
+            <tr style="border-bottom: 1px solid var(--glass-border)">
+              <th class="text-left px-4 py-3 text-sm font-medium" style="color: var(--text-secondary)">标题</th>
+              <th class="text-left px-4 py-3 text-sm font-medium w-28" style="color: var(--text-secondary)">类型</th>
+              <th class="text-left px-4 py-3 text-sm font-medium w-24" style="color: var(--text-secondary)">状态</th>
+              <th class="text-left px-4 py-3 text-sm font-medium w-36" style="color: var(--text-secondary)">发布时间</th>
+              <th class="text-left px-4 py-3 text-sm font-medium w-24" style="color: var(--text-secondary)">浏览量</th>
+              <th class="text-right px-4 py-3 text-sm font-medium w-24" style="color: var(--text-secondary)">操作</th>
             </tr>
           </thead>
           <tbody>
             <tr
               v-for="item in filteredAnnouncements"
               :key="item.id"
-              class="border-b border-border last:border-0 hover:bg-accent/30"
+              style="border-bottom: 1px solid var(--glass-border)"
+              :style="item === filteredAnnouncements[filteredAnnouncements.length - 1] ? { borderBottom: 'none' } : {}"
             >
               <td class="px-4 py-3">
                 <div class="flex items-center gap-2">
                   <UIcon
                     v-if="item.pinned"
                     name="lucide:pin"
-                    class="w-4 h-4 text-orange-500 flex-shrink-0"
+                    class="w-4 h-4 flex-shrink-0"
+                    style="color: #f97316"
                   />
-                  <span class="font-medium text-sm">{{ item.title }}</span>
+                  <span class="font-medium text-sm" style="color: var(--text-primary)">{{ item.title }}</span>
                 </div>
               </td>
               <td class="px-4 py-3">
@@ -122,15 +122,17 @@
                   {{ getStatusText(item.status) }}
                 </UBadge>
               </td>
-              <td class="px-4 py-3 text-sm text-muted-foreground">
+              <td class="px-4 py-3 text-sm" style="color: var(--text-secondary)">
                 {{ item.publishTime || '—' }}
               </td>
-              <td class="px-4 py-3 text-sm text-muted-foreground">
+              <td class="px-4 py-3 text-sm" style="color: var(--text-secondary)">
                 {{ item.views.toLocaleString() }}
               </td>
               <td class="px-4 py-3 text-right">
                 <UDropdownMenu>
-                  <UButton variant="ghost" size="sm" icon="lucide:more-horizontal" />
+                  <button class="btn-glass" style="font-size: 0.875rem; padding: 0.25rem">
+                    <UIcon name="lucide:more-horizontal" class="w-4 h-4" />
+                  </button>
                   <template #items>
                     <UDropdownMenuItem label="编辑公告" icon="lucide:edit" @click="openEditDialog(item)" />
                     <UDropdownMenuItem
@@ -152,63 +154,67 @@
 
       <!-- 空状态 -->
       <div v-if="filteredAnnouncements.length === 0" class="text-center py-12">
-        <UIcon name="lucide:megaphone" class="w-12 h-12 mx-auto text-muted-foreground mb-3" />
-        <p class="text-muted-foreground">未找到匹配的公告</p>
+        <UIcon name="lucide:megaphone" class="w-12 h-12 mx-auto mb-3" style="color: var(--text-secondary)" />
+        <p style="color: var(--text-secondary)">未找到匹配的公告</p>
       </div>
 
       <!-- 分页 -->
-      <div class="flex items-center justify-between px-4 py-3 border-t border-border">
-        <div class="text-sm text-muted-foreground">
+      <div class="flex items-center justify-between px-4 py-3" style="border-top: 1px solid var(--glass-border)">
+        <div class="text-sm" style="color: var(--text-secondary)">
           共 {{ filteredAnnouncements.length }} 条公告
         </div>
         <div class="flex items-center gap-2">
-          <UButton variant="outline" size="sm" icon="lucide:chevron-left" />
-          <span class="text-sm">第 {{ currentPage }} / {{ totalPages }} 页</span>
-          <UButton variant="outline" size="sm" icon="lucide:chevron-right" />
+          <button class="btn-glass" style="font-size: 0.875rem; padding: 0.25rem 0.5rem">
+            <UIcon name="lucide:chevron-left" class="w-4 h-4" />
+          </button>
+          <span class="text-sm" style="color: var(--text-primary)">第 {{ currentPage }} / {{ totalPages }} 页</span>
+          <button class="btn-glass" style="font-size: 0.875rem; padding: 0.25rem 0.5rem">
+            <UIcon name="lucide:chevron-right" class="w-4 h-4" />
+          </button>
         </div>
       </div>
-    </UCard>
+    </div>
 
     <!-- 添加/编辑公告对话框 -->
     <UDialog v-model="showDialog" :title="editingItem ? '编辑公告' : '发布公告'" size="xl">
       <div class="space-y-4">
         <div>
-          <label class="block text-sm font-medium mb-1.5">公告标题</label>
+          <label class="block text-sm font-medium mb-1.5" style="color: var(--text-primary)">公告标题</label>
           <UInput v-model="formData.title" placeholder="输入公告标题" />
         </div>
         <div class="grid grid-cols-2 gap-4">
           <div>
-            <label class="block text-sm font-medium mb-1.5">公告类型</label>
+            <label class="block text-sm font-medium mb-1.5" style="color: var(--text-primary)">公告类型</label>
             <USelect v-model="formData.type" :options="typeSelectOptions" />
           </div>
           <div>
-            <label class="block text-sm font-medium mb-1.5">状态</label>
+            <label class="block text-sm font-medium mb-1.5" style="color: var(--text-primary)">状态</label>
             <USelect v-model="formData.status" :options="statusSelectOptions" />
           </div>
         </div>
         <div>
-          <label class="block text-sm font-medium mb-1.5">公告内容</label>
+          <label class="block text-sm font-medium mb-1.5" style="color: var(--text-primary)">公告内容</label>
           <UTextarea v-model="formData.content" placeholder="输入公告内容..." rows="5" />
         </div>
         <div>
-          <label class="block text-sm font-medium mb-1.5">定时发布时间</label>
+          <label class="block text-sm font-medium mb-1.5" style="color: var(--text-primary)">定时发布时间</label>
           <UInput v-model="formData.scheduledAt" type="datetime-local" />
-          <p class="text-xs text-muted-foreground mt-1">留空表示立即发布（仅草稿状态生效）</p>
+          <p class="text-xs mt-1" style="color: var(--text-secondary)">留空表示立即发布（仅草稿状态生效）</p>
         </div>
         <div class="flex items-center gap-6">
           <label class="flex items-center gap-2 cursor-pointer">
             <UCheckbox v-model="formData.pinned" />
-            <span class="text-sm">置顶公告</span>
+            <span class="text-sm" style="color: var(--text-primary)">置顶公告</span>
           </label>
           <label class="flex items-center gap-2 cursor-pointer">
             <UCheckbox v-model="formData.sendNotification" />
-            <span class="text-sm">发送站内通知</span>
+            <span class="text-sm" style="color: var(--text-primary)">发送站内通知</span>
           </label>
         </div>
       </div>
       <template #footer>
-        <UButton variant="outline" @click="showDialog = false">取消</UButton>
-        <UButton @click="saveAnnouncement">{{ editingItem ? '保存' : '发布' }}</UButton>
+        <button class="btn-glass" @click="showDialog = false">取消</button>
+        <button class="btn-glass btn-glass--primary" @click="saveAnnouncement">{{ editingItem ? '保存' : '发布' }}</button>
       </template>
     </UDialog>
   </div>

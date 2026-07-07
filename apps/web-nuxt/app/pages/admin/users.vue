@@ -1,58 +1,57 @@
 <template>
-  <div>
+  <div style="background: var(--bg-deep); min-height: 100vh">
     <!-- 页面标题和操作 -->
     <div class="flex items-center justify-between mb-6">
       <div>
-        <h1 class="text-2xl font-bold">用户管理</h1>
-        <p class="text-muted-foreground text-sm mt-1">管理系统用户和权限</p>
+        <h1 class="font-display text-gradient text-2xl font-bold">用户管理</h1>
+        <p class="text-sm mt-1" style="color: var(--text-secondary)">管理系统用户和权限</p>
       </div>
-      <UButton>
-        <template #icon>
-          <UIcon name="lucide:user-plus" class="w-4 h-4" />
-        </template>
+      <button class="btn-glass btn-glass--primary">
+        <UIcon name="lucide:user-plus" class="w-4 h-4" />
         添加用户
-      </UButton>
+      </button>
     </div>
 
     <!-- 筛选和搜索 -->
-    <UCard class="mb-6">
+    <div class="glass-card p-4 mb-6">
       <div class="flex flex-wrap items-center gap-4">
         <UInput v-model="searchKeyword" placeholder="搜索用户名/邮箱..." class="w-64">
           <template #leading>
-            <UIcon name="lucide:search" class="w-4 h-4 text-muted-foreground" />
+            <UIcon name="lucide:search" class="w-4 h-4" style="color: var(--text-secondary)" />
           </template>
         </UInput>
         <USelect v-model="roleFilter" :options="roleOptions" class="w-40" />
         <USelect v-model="statusFilter" :options="statusOptions" class="w-40" />
         <div class="flex-1"></div>
-        <UButton variant="outline" @click="resetFilters">
+        <button class="btn-glass" @click="resetFilters">
           重置筛选
-        </UButton>
+        </button>
       </div>
-    </UCard>
+    </div>
 
     <!-- 用户列表表格 -->
-    <UCard class="p-0">
+    <div class="glass-card" style="padding: 0">
       <div class="overflow-x-auto">
         <table class="w-full">
           <thead>
-            <tr class="border-b border-border">
-              <th class="text-left px-4 py-3 text-sm font-medium text-muted-foreground w-12">
+            <tr style="border-bottom: 1px solid var(--glass-border)">
+              <th class="text-left px-4 py-3 text-sm font-medium w-12" style="color: var(--text-secondary)">
                 <UCheckbox />
               </th>
-              <th class="text-left px-4 py-3 text-sm font-medium text-muted-foreground">用户</th>
-              <th class="text-left px-4 py-3 text-sm font-medium text-muted-foreground w-24">角色</th>
-              <th class="text-left px-4 py-3 text-sm font-medium text-muted-foreground w-24">状态</th>
-              <th class="text-left px-4 py-3 text-sm font-medium text-muted-foreground w-32">注册时间</th>
-              <th class="text-left px-4 py-3 text-sm font-medium text-muted-foreground w-32">最后登录</th>
-              <th class="text-right px-4 py-3 text-sm font-medium text-muted-foreground w-24">操作</th>
+              <th class="text-left px-4 py-3 text-sm font-medium" style="color: var(--text-secondary)">用户</th>
+              <th class="text-left px-4 py-3 text-sm font-medium w-24" style="color: var(--text-secondary)">角色</th>
+              <th class="text-left px-4 py-3 text-sm font-medium w-24" style="color: var(--text-secondary)">状态</th>
+              <th class="text-left px-4 py-3 text-sm font-medium w-32" style="color: var(--text-secondary)">注册时间</th>
+              <th class="text-left px-4 py-3 text-sm font-medium w-32" style="color: var(--text-secondary)">最后登录</th>
+              <th class="text-right px-4 py-3 text-sm font-medium w-24" style="color: var(--text-secondary)">操作</th>
             </tr>
           </thead>
           <tbody>
             <tr
               v-for="user in filteredUsers"
               :key="user.id"
-              class="border-b border-border last:border-0 hover:bg-accent/30"
+              style="border-bottom: 1px solid var(--glass-border)"
+              :style="user === filteredUsers[filteredUsers.length - 1] ? { borderBottom: 'none' } : {}"
             >
               <td class="px-4 py-3">
                 <UCheckbox />
@@ -61,8 +60,8 @@
                 <div class="flex items-center gap-3">
                   <UAvatar :text="user.nickname?.charAt(0) || user.username.charAt(0)" size="sm" />
                   <div>
-                    <div class="font-medium text-sm">{{ user.nickname || user.username }}</div>
-                    <div class="text-xs text-muted-foreground">{{ user.email }}</div>
+                    <div class="font-medium text-sm" style="color: var(--text-primary)">{{ user.nickname || user.username }}</div>
+                    <div class="text-xs" style="color: var(--text-secondary)">{{ user.email }}</div>
                   </div>
                 </div>
               </td>
@@ -74,20 +73,22 @@
               <td class="px-4 py-3">
                 <span
                   class="inline-flex items-center gap-1.5 text-sm"
-                  :class="user.status === 'active' ? 'text-green-600' : 'text-red-600'"
+                  :style="{ color: user.status === 'active' ? '#22c55e' : '#ef4444' }"
                 >
                   <span
                     class="w-2 h-2 rounded-full"
-                    :class="user.status === 'active' ? 'bg-green-500' : 'bg-red-500'"
+                    :style="{ background: user.status === 'active' ? '#22c55e' : '#ef4444' }"
                   ></span>
                   {{ user.status === 'active' ? '正常' : '禁用' }}
                 </span>
               </td>
-              <td class="px-4 py-3 text-sm text-muted-foreground">{{ user.createdAt }}</td>
-              <td class="px-4 py-3 text-sm text-muted-foreground">{{ user.lastLogin || '从未' }}</td>
+              <td class="px-4 py-3 text-sm" style="color: var(--text-secondary)">{{ user.createdAt }}</td>
+              <td class="px-4 py-3 text-sm" style="color: var(--text-secondary)">{{ user.lastLogin || '从未' }}</td>
               <td class="px-4 py-3 text-right">
                 <UDropdownMenu>
-                  <UButton variant="ghost" size="sm" icon="lucide:more-horizontal" />
+                  <button class="btn-glass" style="font-size: 0.875rem; padding: 0.25rem">
+                    <UIcon name="lucide:more-horizontal" class="w-4 h-4" />
+                  </button>
                   <template #items>
                     <UDropdownMenuItem label="编辑用户" icon="lucide:edit" />
                     <UDropdownMenuItem label="重置密码" icon="lucide:key" />
@@ -114,22 +115,26 @@
 
       <!-- 空状态 -->
       <div v-if="filteredUsers.length === 0" class="text-center py-12">
-        <UIcon name="lucide:users" class="w-12 h-12 mx-auto text-muted-foreground mb-3" />
-        <p class="text-muted-foreground">未找到匹配的用户</p>
+        <UIcon name="lucide:users" class="w-12 h-12 mx-auto mb-3" style="color: var(--text-secondary)" />
+        <p style="color: var(--text-secondary)">未找到匹配的用户</p>
       </div>
 
       <!-- 分页 -->
-      <div class="flex items-center justify-between px-4 py-3 border-t border-border">
-        <div class="text-sm text-muted-foreground">
+      <div class="flex items-center justify-between px-4 py-3" style="border-top: 1px solid var(--glass-border)">
+        <div class="text-sm" style="color: var(--text-secondary)">
           共 {{ totalUsers }} 位用户
         </div>
         <div class="flex items-center gap-2">
-          <UButton variant="outline" size="sm" icon="lucide:chevron-left" />
-          <span class="text-sm">第 {{ currentPage }} / {{ totalPages }} 页</span>
-          <UButton variant="outline" size="sm" icon="lucide:chevron-right" />
+          <button class="btn-glass" style="font-size: 0.875rem; padding: 0.25rem 0.5rem">
+            <UIcon name="lucide:chevron-left" class="w-4 h-4" />
+          </button>
+          <span class="text-sm" style="color: var(--text-primary)">第 {{ currentPage }} / {{ totalPages }} 页</span>
+          <button class="btn-glass" style="font-size: 0.875rem; padding: 0.25rem 0.5rem">
+            <UIcon name="lucide:chevron-right" class="w-4 h-4" />
+          </button>
         </div>
       </div>
-    </UCard>
+    </div>
   </div>
 </template>
 

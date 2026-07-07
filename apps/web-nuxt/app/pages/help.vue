@@ -1,33 +1,34 @@
 <template>
-  <div>
+  <div style="background: var(--bg-deep); min-height: 100vh">
     <!-- 页面标题 -->
     <div class="text-center mb-8">
-      <h1 class="text-3xl font-bold">帮助中心</h1>
-      <p class="text-muted-foreground text-sm mt-2">在这里找到使用指南和常见问题解答</p>
+      <h1 class="font-display text-3xl font-bold text-gradient">帮助中心</h1>
+      <p class="text-sm mt-2" style="color: var(--text-secondary)">在这里找到使用指南和常见问题解答</p>
     </div>
 
     <!-- 搜索框 -->
     <div class="max-w-2xl mx-auto mb-10">
       <UInput v-model="searchKeyword" placeholder="搜索文档、教程或问题..." size="xl" class="w-full">
         <template #leading>
-          <UIcon name="lucide:search" class="w-5 h-5 text-muted-foreground" />
+          <UIcon name="lucide:search" class="w-5 h-5" style="color: var(--text-secondary)" />
         </template>
         <template #trailing>
-          <UButton
+          <button
             v-if="searchKeyword"
-            variant="ghost"
-            size="sm"
-            icon="lucide:x"
+            class="btn-glass"
             @click="searchKeyword = ''"
-          />
+          >
+            <UIcon name="lucide:x" class="w-4 h-4" />
+          </button>
         </template>
       </UInput>
       <div class="flex items-center justify-center gap-2 mt-3">
-        <span class="text-xs text-muted-foreground">热门搜索：</span>
+        <span class="text-xs" style="color: var(--text-secondary)">热门搜索：</span>
         <button
           v-for="tag in hotTags"
           :key="tag"
-          class="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+          class="text-xs px-2 py-0.5 rounded-full transition-colors"
+          style="background: var(--glass-bg-1); color: var(--text-secondary)"
           @click="searchKeyword = tag"
         >
           {{ tag }}
@@ -37,31 +38,31 @@
 
     <!-- 文档分类卡片 -->
     <div class="mb-12">
-      <h2 class="text-lg font-bold mb-4">文档分类</h2>
+      <h2 class="font-display text-lg font-bold mb-4" style="color: var(--text-primary)">文档分类</h2>
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        <UCard
+        <div
           v-for="category in categories"
           :key="category.id"
-          class="hover:shadow-md hover:border-primary/50 transition-all cursor-pointer group"
+          class="glass-card p-4 cursor-pointer group"
           @click="goToCategory(category)"
         >
           <div class="flex items-start gap-4">
             <div
               class="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 transition-transform group-hover:scale-110"
-              :class="category.iconBg"
+              :style="{ background: category.id === 'quickstart' ? 'rgba(59, 130, 246, 0.12)' : category.id === 'chat' ? 'rgba(34, 197, 94, 0.12)' : category.id === 'agent' ? 'rgba(168, 85, 247, 0.12)' : category.id === 'knowledge' ? 'rgba(249, 115, 22, 0.12)' : category.id === 'api' ? 'rgba(6, 182, 212, 0.12)' : 'rgba(236, 72, 153, 0.12)' }"
             >
-              <UIcon :name="category.icon" class="w-6 h-6" :class="category.iconColor" />
+              <UIcon :name="category.icon" class="w-6 h-6" :style="{ color: category.id === 'quickstart' ? '#3b82f6' : category.id === 'chat' ? '#22c55e' : category.id === 'agent' ? '#a855f7' : category.id === 'knowledge' ? '#f97316' : category.id === 'api' ? '#06b6d4' : '#ec4899' }" />
             </div>
             <div class="flex-1 min-w-0">
               <div class="flex items-center justify-between">
-                <h3 class="font-semibold">{{ category.title }}</h3>
-                <UIcon name="lucide:arrow-right" class="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                <h3 class="font-semibold" style="color: var(--text-primary)">{{ category.title }}</h3>
+                <UIcon name="lucide:arrow-right" class="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" style="color: var(--text-secondary)" />
               </div>
-              <p class="text-sm text-muted-foreground mt-1 line-clamp-2">{{ category.description }}</p>
-              <p class="text-xs text-muted-foreground mt-2">{{ category.articleCount }} 篇文章</p>
+              <p class="text-sm mt-1 line-clamp-2" style="color: var(--text-secondary)">{{ category.description }}</p>
+              <p class="text-xs mt-2" style="color: var(--text-secondary)">{{ category.articleCount }} 篇文章</p>
             </div>
           </div>
-        </UCard>
+        </div>
       </div>
     </div>
 
@@ -69,27 +70,26 @@
       <!-- 左侧：热门文章 -->
       <div class="lg:col-span-2">
         <div class="flex items-center justify-between mb-4">
-          <h2 class="text-lg font-bold">热门文章</h2>
-          <UButton variant="ghost" size="sm">
+          <h2 class="font-display text-lg font-bold" style="color: var(--text-primary)">热门文章</h2>
+          <button class="btn-glass">
             查看全部
-            <template #trailing>
-              <UIcon name="lucide:arrow-right" class="w-4 h-4" />
-            </template>
-          </UButton>
+            <UIcon name="lucide:arrow-right" class="w-4 h-4" />
+          </button>
         </div>
 
-        <UCard class="p-0">
+        <div class="glass-card" style="padding: 0">
           <ul>
             <li
               v-for="(article, index) in filteredArticles"
               :key="article.id"
-              class="flex items-center gap-4 px-4 py-3 border-b border-border last:border-0 hover:bg-accent/30 cursor-pointer transition-colors"
+              class="flex items-center gap-4 px-4 py-3 cursor-pointer transition-colors"
+              :style="{ borderBottom: index < filteredArticles.length - 1 ? '1px solid var(--glass-border)' : 'none' }"
               @click="openArticle(article)"
             >
               <!-- 排名 -->
               <div
                 class="w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0"
-                :class="index < 3 ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'"
+                :style="index < 3 ? { background: 'var(--accent-soft)', color: 'white' } : { background: 'var(--glass-bg-1)', color: 'var(--text-secondary)' }"
               >
                 {{ index + 1 }}
               </div>
@@ -97,88 +97,89 @@
               <!-- 文章信息 -->
               <div class="flex-1 min-w-0">
                 <div class="flex items-center gap-2">
-                  <h3 class="text-sm font-medium truncate">{{ article.title }}</h3>
+                  <h3 class="text-sm font-medium truncate" style="color: var(--text-primary)">{{ article.title }}</h3>
                   <UBadge v-if="article.isHot" color="error" size="sm">热</UBadge>
                   <UBadge v-if="article.isNew" color="success" size="sm">新</UBadge>
                 </div>
                 <div class="flex items-center gap-3 mt-1">
                   <UBadge variant="outline" size="sm">{{ getCategoryLabel(article.category) }}</UBadge>
-                  <span class="text-xs text-muted-foreground flex items-center gap-1">
+                  <span class="text-xs flex items-center gap-1" style="color: var(--text-secondary)">
                     <UIcon name="lucide:eye" class="w-3 h-3" />
                     {{ article.viewCount.toLocaleString() }} 阅读
                   </span>
-                  <span class="text-xs text-muted-foreground flex items-center gap-1">
+                  <span class="text-xs flex items-center gap-1" style="color: var(--text-secondary)">
                     <UIcon name="lucide:clock" class="w-3 h-3" />
                     {{ article.updatedAt }}
                   </span>
                 </div>
               </div>
 
-              <UIcon name="lucide:chevron-right" class="w-4 h-4 text-muted-foreground flex-shrink-0" />
+              <UIcon name="lucide:chevron-right" class="w-4 h-4 flex-shrink-0" style="color: var(--text-secondary)" />
             </li>
           </ul>
 
           <!-- 空状态 -->
           <div v-if="filteredArticles.length === 0" class="text-center py-12">
-            <UIcon name="lucide:file-search" class="w-12 h-12 mx-auto text-muted-foreground mb-3" />
-            <p class="text-muted-foreground">未找到匹配的文章</p>
+            <UIcon name="lucide:file-search" class="w-12 h-12 mx-auto mb-3" style="color: var(--text-secondary)" />
+            <p style="color: var(--text-secondary)">未找到匹配的文章</p>
           </div>
-        </UCard>
+        </div>
       </div>
 
       <!-- 右侧：FAQ 手风琴 -->
       <div>
         <div class="flex items-center justify-between mb-4">
-          <h2 class="text-lg font-bold">常见问题</h2>
-          <UButton variant="ghost" size="sm" to="/pricing">
+          <h2 class="font-display text-lg font-bold" style="color: var(--text-primary)">常见问题</h2>
+          <button class="btn-glass" @click="navigateTo('/pricing')">
             套餐
-            <template #trailing>
-              <UIcon name="lucide:external-link" class="w-3.5 h-3.5" />
-            </template>
-          </UButton>
+            <UIcon name="lucide:external-link" class="w-3.5 h-3.5" />
+          </button>
         </div>
 
-        <UCard class="p-0">
-          <div class="divide-y divide-border">
-            <div v-for="faq in faqs" :key="faq.id">
+        <div class="glass-card" style="padding: 0">
+          <div>
+            <div v-for="(faq, faqIndex) in faqs" :key="faq.id" :style="{ borderBottom: faqIndex < faqs.length - 1 ? '1px solid var(--glass-border)' : 'none' }">
               <button
-                class="w-full flex items-center justify-between gap-3 px-4 py-3 text-left hover:bg-accent/30 transition-colors"
+                class="w-full flex items-center justify-between gap-3 px-4 py-3 text-left transition-colors"
                 @click="toggleFaq(faq.id)"
               >
-                <span class="text-sm font-medium flex-1">{{ faq.question }}</span>
+                <span class="text-sm font-medium flex-1" style="color: var(--text-primary)">{{ faq.question }}</span>
                 <UIcon
                   :name="expandedFaq === faq.id ? 'lucide:chevron-down' : 'lucide:chevron-right'"
-                  class="w-4 h-4 text-muted-foreground flex-shrink-0 transition-transform"
+                  class="w-4 h-4 flex-shrink-0 transition-transform"
+                  style="color: var(--text-secondary)"
                 />
               </button>
               <div v-show="expandedFaq === faq.id" class="px-4 pb-3">
-                <p class="text-sm text-muted-foreground leading-relaxed">{{ faq.answer }}</p>
+                <p class="text-sm leading-relaxed" style="color: var(--text-secondary)">{{ faq.answer }}</p>
                 <div class="flex items-center gap-2 mt-3">
-                  <span class="text-xs text-muted-foreground">是否解决了你的问题？</span>
-                  <UButton variant="ghost" size="xs" icon="lucide:thumbs-up" />
-                  <UButton variant="ghost" size="xs" icon="lucide:thumbs-down" />
+                  <span class="text-xs" style="color: var(--text-secondary)">是否解决了你的问题？</span>
+                  <button class="btn-glass">
+                    <UIcon name="lucide:thumbs-up" class="w-3 h-3" />
+                  </button>
+                  <button class="btn-glass">
+                    <UIcon name="lucide:thumbs-down" class="w-3 h-3" />
+                  </button>
                 </div>
               </div>
             </div>
           </div>
-        </UCard>
+        </div>
 
         <!-- 联系支持卡片 -->
-        <UCard class="mt-4">
+        <div class="glass-card mt-4 p-4">
           <div class="text-center">
-            <div class="w-12 h-12 mx-auto rounded-full bg-primary/10 flex items-center justify-center mb-3">
-              <UIcon name="lucide:headphones" class="w-6 h-6 text-primary" />
+            <div class="w-12 h-12 mx-auto rounded-full flex items-center justify-center mb-3" style="background: var(--accent-soft-bg)">
+              <UIcon name="lucide:headphones" class="w-6 h-6" style="color: var(--accent-soft-text)" />
             </div>
-            <h3 class="font-semibold text-sm mb-1">没有找到答案？</h3>
-            <p class="text-xs text-muted-foreground mb-3">联系我们的技术支持团队获取帮助</p>
-            <UButton size="sm" class="w-full">
-              <template #icon>
-                <UIcon name="lucide:message-circle" class="w-4 h-4" />
-              </template>
+            <h3 class="font-semibold text-sm mb-1" style="color: var(--text-primary)">没有找到答案？</h3>
+            <p class="text-xs mb-3" style="color: var(--text-secondary)">联系我们的技术支持团队获取帮助</p>
+            <button class="btn-glass btn-glass--primary w-full">
+              <UIcon name="lucide:message-circle" class="w-4 h-4" />
               联系客服
-            </UButton>
+            </button>
           </div>
-        </UCard>
+        </div>
       </div>
     </div>
   </div>

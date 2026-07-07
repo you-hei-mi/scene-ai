@@ -1,117 +1,114 @@
 <template>
-  <div>
+  <div style="background: var(--bg-deep); min-height: 100vh">
     <!-- 页面标题和操作 -->
     <div class="flex items-center justify-between mb-6">
       <div>
-        <h1 class="text-2xl font-bold">模型管理</h1>
-        <p class="text-muted-foreground text-sm mt-1">管理系统可用的 AI 模型和提供商配置</p>
+        <h1 class="font-display text-gradient text-2xl font-bold">模型管理</h1>
+        <p class="text-sm mt-1" style="color: var(--text-secondary)">管理系统可用的 AI 模型和提供商配置</p>
       </div>
       <div class="flex items-center gap-3">
-        <UButton variant="outline" @click="syncModels">
-          <template #icon>
-            <UIcon name="lucide:refresh-cw" class="w-4 h-4" />
-          </template>
+        <button class="btn-glass" @click="syncModels">
+          <UIcon name="lucide:refresh-cw" class="w-4 h-4" />
           同步模型
-        </UButton>
-        <UButton @click="showAddDialog = true">
-          <template #icon>
-            <UIcon name="lucide:plus" class="w-4 h-4" />
-          </template>
+        </button>
+        <button class="btn-glass btn-glass--primary" @click="showAddDialog = true">
+          <UIcon name="lucide:plus" class="w-4 h-4" />
           添加模型
-        </UButton>
+        </button>
       </div>
     </div>
 
     <!-- 统计卡片 -->
     <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-      <UCard>
+      <div class="glass-card p-4">
         <div class="flex items-center justify-between">
           <div>
-            <p class="text-sm text-muted-foreground">模型总数</p>
-            <p class="text-2xl font-bold mt-1">{{ stats.totalModels }}</p>
+            <p class="text-sm" style="color: var(--text-secondary)">模型总数</p>
+            <p class="text-2xl font-bold mt-1" style="color: var(--text-primary)">{{ stats.totalModels }}</p>
           </div>
-          <div class="w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
-            <UIcon name="lucide:brain" class="w-6 h-6 text-blue-600 dark:text-blue-400" />
+          <div class="w-12 h-12 rounded-full flex items-center justify-center" style="background: rgba(59, 130, 246, 0.12)">
+            <UIcon name="lucide:brain" class="w-6 h-6" style="color: #3b82f6" />
           </div>
         </div>
-      </UCard>
-      <UCard>
+      </div>
+      <div class="glass-card p-4">
         <div class="flex items-center justify-between">
           <div>
-            <p class="text-sm text-muted-foreground">已启用</p>
-            <p class="text-2xl font-bold mt-1 text-green-600">{{ stats.enabled }}</p>
+            <p class="text-sm" style="color: var(--text-secondary)">已启用</p>
+            <p class="text-2xl font-bold mt-1" style="color: #22c55e">{{ stats.enabled }}</p>
           </div>
-          <div class="w-12 h-12 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
-            <UIcon name="lucide:check-circle" class="w-6 h-6 text-green-600 dark:text-green-400" />
+          <div class="w-12 h-12 rounded-full flex items-center justify-center" style="background: rgba(34, 197, 94, 0.12)">
+            <UIcon name="lucide:check-circle" class="w-6 h-6" style="color: #22c55e" />
           </div>
         </div>
-      </UCard>
-      <UCard>
+      </div>
+      <div class="glass-card p-4">
         <div class="flex items-center justify-between">
           <div>
-            <p class="text-sm text-muted-foreground">提供商数量</p>
-            <p class="text-2xl font-bold mt-1">{{ stats.providers }}</p>
+            <p class="text-sm" style="color: var(--text-secondary)">提供商数量</p>
+            <p class="text-2xl font-bold mt-1" style="color: var(--text-primary)">{{ stats.providers }}</p>
           </div>
-          <div class="w-12 h-12 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
-            <UIcon name="lucide:building-2" class="w-6 h-6 text-purple-600 dark:text-purple-400" />
+          <div class="w-12 h-12 rounded-full flex items-center justify-center" style="background: rgba(168, 85, 247, 0.12)">
+            <UIcon name="lucide:building-2" class="w-6 h-6" style="color: #a855f7" />
           </div>
         </div>
-      </UCard>
-      <UCard>
+      </div>
+      <div class="glass-card p-4">
         <div class="flex items-center justify-between">
           <div>
-            <p class="text-sm text-muted-foreground">今日调用</p>
-            <p class="text-2xl font-bold mt-1">{{ stats.todayCalls.toLocaleString() }}</p>
+            <p class="text-sm" style="color: var(--text-secondary)">今日调用</p>
+            <p class="text-2xl font-bold mt-1" style="color: var(--text-primary)">{{ stats.todayCalls.toLocaleString() }}</p>
           </div>
-          <div class="w-12 h-12 rounded-full bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center">
-            <UIcon name="lucide:activity" class="w-6 h-6 text-orange-600 dark:text-orange-400" />
+          <div class="w-12 h-12 rounded-full flex items-center justify-center" style="background: rgba(249, 115, 22, 0.12)">
+            <UIcon name="lucide:activity" class="w-6 h-6" style="color: #f97316" />
           </div>
         </div>
-      </UCard>
+      </div>
     </div>
 
     <!-- 筛选和搜索 -->
-    <UCard class="mb-6">
+    <div class="glass-card p-4 mb-6">
       <div class="flex flex-wrap items-center gap-4">
         <UInput v-model="searchKeyword" placeholder="搜索模型名称..." class="w-64">
           <template #leading>
-            <UIcon name="lucide:search" class="w-4 h-4 text-muted-foreground" />
+            <UIcon name="lucide:search" class="w-4 h-4" style="color: var(--text-secondary)" />
           </template>
         </UInput>
         <USelect v-model="providerFilter" :options="providerOptions" class="w-44" />
         <USelect v-model="typeFilter" :options="typeOptions" class="w-40" />
         <USelect v-model="statusFilter" :options="statusOptions" class="w-36" />
         <div class="flex-1"></div>
-        <UButton variant="outline" @click="resetFilters">
+        <button class="btn-glass" @click="resetFilters">
           重置筛选
-        </UButton>
+        </button>
       </div>
-    </UCard>
+    </div>
 
     <!-- 模型列表表格 -->
-    <UCard class="p-0">
+    <div class="glass-card" style="padding: 0">
       <div class="overflow-x-auto">
         <table class="w-full">
           <thead>
-            <tr class="border-b border-border">
-              <th class="text-left px-4 py-3 text-sm font-medium text-muted-foreground w-12">
+            <tr style="border-bottom: 1px solid var(--glass-border)">
+              <th class="text-left px-4 py-3 text-sm font-medium w-12" style="color: var(--text-secondary)">
                 <UCheckbox />
               </th>
-              <th class="text-left px-4 py-3 text-sm font-medium text-muted-foreground">模型</th>
-              <th class="text-left px-4 py-3 text-sm font-medium text-muted-foreground w-32">提供商</th>
-              <th class="text-left px-4 py-3 text-sm font-medium text-muted-foreground w-28">类型</th>
-              <th class="text-left px-4 py-3 text-sm font-medium text-muted-foreground w-36">上下文长度</th>
-              <th class="text-left px-4 py-3 text-sm font-medium text-muted-foreground w-32">输入价格</th>
-              <th class="text-left px-4 py-3 text-sm font-medium text-muted-foreground w-32">输出价格</th>
-              <th class="text-left px-4 py-3 text-sm font-medium text-muted-foreground w-24">状态</th>
-              <th class="text-right px-4 py-3 text-sm font-medium text-muted-foreground w-24">操作</th>
+              <th class="text-left px-4 py-3 text-sm font-medium" style="color: var(--text-secondary)">模型</th>
+              <th class="text-left px-4 py-3 text-sm font-medium w-32" style="color: var(--text-secondary)">提供商</th>
+              <th class="text-left px-4 py-3 text-sm font-medium w-28" style="color: var(--text-secondary)">类型</th>
+              <th class="text-left px-4 py-3 text-sm font-medium w-36" style="color: var(--text-secondary)">上下文长度</th>
+              <th class="text-left px-4 py-3 text-sm font-medium w-32" style="color: var(--text-secondary)">输入价格</th>
+              <th class="text-left px-4 py-3 text-sm font-medium w-32" style="color: var(--text-secondary)">输出价格</th>
+              <th class="text-left px-4 py-3 text-sm font-medium w-24" style="color: var(--text-secondary)">状态</th>
+              <th class="text-right px-4 py-3 text-sm font-medium w-24" style="color: var(--text-secondary)">操作</th>
             </tr>
           </thead>
           <tbody>
             <tr
               v-for="model in filteredModels"
               :key="model.id"
-              class="border-b border-border last:border-0 hover:bg-accent/30"
+              style="border-bottom: 1px solid var(--glass-border)"
+              :style="model === filteredModels[filteredModels.length - 1] ? { borderBottom: 'none' } : {}"
             >
               <td class="px-4 py-3">
                 <UCheckbox />
@@ -120,34 +117,60 @@
                 <div class="flex items-center gap-3">
                   <div
                     class="w-10 h-10 rounded-lg flex items-center justify-center"
-                    :class="getProviderIconBg(model.provider)"
+                    :style="{
+                      background: {
+                        openai: 'rgba(34, 197, 94, 0.12)',
+                        anthropic: 'rgba(249, 115, 22, 0.12)',
+                        google: 'rgba(59, 130, 246, 0.12)',
+                        deepseek: 'rgba(168, 85, 247, 0.12)',
+                        zhipu: 'rgba(6, 182, 212, 0.12)',
+                        qwen: 'rgba(99, 102, 241, 0.12)',
+                        moonshot: 'rgba(236, 72, 153, 0.12)',
+                        local: 'rgba(107, 114, 128, 0.12)'
+                      }[model.provider]
+                    }"
                   >
-                    <UIcon :name="getProviderIcon(model.provider)" class="w-5 h-5" :class="getProviderIconColor(model.provider)" />
+                    <UIcon
+                      :name="getProviderIcon(model.provider)"
+                      class="w-5 h-5"
+                      :style="{
+                        color: {
+                          openai: '#22c55e',
+                          anthropic: '#f97316',
+                          google: '#3b82f6',
+                          deepseek: '#a855f7',
+                          zhipu: '#06b6d4',
+                          qwen: '#6366f1',
+                          moonshot: '#ec4899',
+                          local: '#6b7280'
+                        }[model.provider]
+                      }"
+                    />
                   </div>
                   <div>
-                    <div class="font-medium text-sm">{{ model.name }}</div>
-                    <div class="text-xs text-muted-foreground">{{ model.modelId }}</div>
+                    <div class="font-medium text-sm" style="color: var(--text-primary)">{{ model.name }}</div>
+                    <div class="text-xs" style="color: var(--text-secondary)">{{ model.modelId }}</div>
                   </div>
                 </div>
               </td>
               <td class="px-4 py-3">
-                <span class="text-sm">{{ model.providerName }}</span>
+                <span class="text-sm" style="color: var(--text-primary)">{{ model.providerName }}</span>
               </td>
               <td class="px-4 py-3">
                 <UBadge :variant="getTypeBadgeVariant(model.type)" size="sm">
                   {{ getTypeText(model.type) }}
                 </UBadge>
               </td>
-              <td class="px-4 py-3 text-sm text-muted-foreground">
+              <td class="px-4 py-3 text-sm" style="color: var(--text-secondary)">
                 {{ formatContextLength(model.contextLength) }}
               </td>
               <td class="px-4 py-3 text-sm">
-                <span class="text-muted-foreground">¥{{ model.inputPrice }}</span>
-                <span class="text-xs text-muted-foreground">/M tokens</span>
+                <span style="color: var(--text-secondary)">¥{{ model.inputPrice }}</span>
+                <span class="text-xs" style="color: var(--text-secondary)">/M tokens</span>
               </td>
               <td class="px-4 py-3 text-sm">
-                <span class="text-muted-foreground">¥{{ model.outputPrice }}</span>
-                <span class="text-xs text-muted-foreground">/M tokens</span>
+                <span style="color: var(--text-secondary)">¥{{ model.outputPrice }}</span>
+                <span class="text-xs" style="color: var(--text-secondary)">/M tokens</span>
               </td>
               <td class="px-4 py-3">
                 <label class="inline-flex items-center cursor-pointer">
@@ -156,7 +179,9 @@
               </td>
               <td class="px-4 py-3 text-right">
                 <UDropdownMenu>
-                  <UButton variant="ghost" size="sm" icon="lucide:more-horizontal" />
+                  <button class="btn-glass" style="font-size: 0.875rem; padding: 0.25rem">
+                    <UIcon name="lucide:more-horizontal" class="w-4 h-4" />
+                  </button>
                   <template #items>
                     <UDropdownMenuItem label="编辑模型" icon="lucide:edit" @click="editModel(model)" />
                     <UDropdownMenuItem label="测试模型" icon="lucide:play" @click="testModel(model)" />
@@ -184,94 +209,98 @@
 
       <!-- 空状态 -->
       <div v-if="filteredModels.length === 0" class="text-center py-12">
-        <UIcon name="lucide:brain-circuit" class="w-12 h-12 mx-auto text-muted-foreground mb-3" />
-        <p class="text-muted-foreground">未找到匹配的模型</p>
+        <UIcon name="lucide:brain-circuit" class="w-12 h-12 mx-auto mb-3" style="color: var(--text-secondary)" />
+        <p style="color: var(--text-secondary)">未找到匹配的模型</p>
       </div>
 
       <!-- 分页 -->
-      <div class="flex items-center justify-between px-4 py-3 border-t border-border">
-        <div class="text-sm text-muted-foreground">
+      <div class="flex items-center justify-between px-4 py-3" style="border-top: 1px solid var(--glass-border)">
+        <div class="text-sm" style="color: var(--text-secondary)">
           共 {{ totalModels }} 个模型
         </div>
         <div class="flex items-center gap-2">
-          <UButton variant="outline" size="sm" icon="lucide:chevron-left" />
-          <span class="text-sm">第 {{ currentPage }} / {{ totalPages }} 页</span>
-          <UButton variant="outline" size="sm" icon="lucide:chevron-right" />
+          <button class="btn-glass" style="font-size: 0.875rem; padding: 0.25rem 0.5rem">
+            <UIcon name="lucide:chevron-left" class="w-4 h-4" />
+          </button>
+          <span class="text-sm" style="color: var(--text-primary)">第 {{ currentPage }} / {{ totalPages }} 页</span>
+          <button class="btn-glass" style="font-size: 0.875rem; padding: 0.25rem 0.5rem">
+            <UIcon name="lucide:chevron-right" class="w-4 h-4" />
+          </button>
         </div>
       </div>
-    </UCard>
+    </div>
 
     <!-- 添加/编辑模型对话框 -->
     <UDialog v-model="showAddDialog" :title="editingModel ? '编辑模型' : '添加模型'" size="xl">
       <div class="space-y-4">
         <div class="grid grid-cols-2 gap-4">
           <div>
-            <label class="block text-sm font-medium mb-1.5">模型名称</label>
+            <label class="block text-sm font-medium mb-1.5" style="color: var(--text-primary)">模型名称</label>
             <UInput v-model="formData.name" placeholder="输入模型显示名称" />
           </div>
           <div>
-            <label class="block text-sm font-medium mb-1.5">模型 ID</label>
+            <label class="block text-sm font-medium mb-1.5" style="color: var(--text-primary)">模型 ID</label>
             <UInput v-model="formData.modelId" placeholder="例如: gpt-4" />
           </div>
         </div>
         <div class="grid grid-cols-2 gap-4">
           <div>
-            <label class="block text-sm font-medium mb-1.5">提供商</label>
+            <label class="block text-sm font-medium mb-1.5" style="color: var(--text-primary)">提供商</label>
             <USelect v-model="formData.provider" :options="providerSelectOptions" />
           </div>
           <div>
-            <label class="block text-sm font-medium mb-1.5">模型类型</label>
+            <label class="block text-sm font-medium mb-1.5" style="color: var(--text-primary)">模型类型</label>
             <USelect v-model="formData.type" :options="typeSelectOptions" />
           </div>
         </div>
         <div class="grid grid-cols-2 gap-4">
           <div>
-            <label class="block text-sm font-medium mb-1.5">上下文长度</label>
+            <label class="block text-sm font-medium mb-1.5" style="color: var(--text-primary)">上下文长度</label>
             <UInput v-model.number="formData.contextLength" placeholder="例如: 128000" type="number" />
-            <p class="text-xs text-muted-foreground mt-1">最大 token 数量</p>
+            <p class="text-xs mt-1" style="color: var(--text-secondary)">最大 token 数量</p>
           </div>
           <div>
-            <label class="block text-sm font-medium mb-1.5">最大输出长度</label>
+            <label class="block text-sm font-medium mb-1.5" style="color: var(--text-primary)">最大输出长度</label>
             <UInput v-model.number="formData.maxOutput" placeholder="例如: 4096" type="number" />
-            <p class="text-xs text-muted-foreground mt-1">单次输出最大 token 数</p>
+            <p class="text-xs mt-1" style="color: var(--text-secondary)">单次输出最大 token 数</p>
           </div>
         </div>
         <div class="grid grid-cols-2 gap-4">
           <div>
-            <label class="block text-sm font-medium mb-1.5">输入价格 (元/M tokens)</label>
+            <label class="block text-sm font-medium mb-1.5" style="color: var(--text-primary)">输入价格 (元/M tokens)</label>
             <UInput v-model.number="formData.inputPrice" placeholder="例如: 0.15" type="number" step="0.01" />
           </div>
           <div>
-            <label class="block text-sm font-medium mb-1.5">输出价格 (元/M tokens)</label>
+            <label class="block text-sm font-medium mb-1.5" style="color: var(--text-primary)">输出价格 (元/M tokens)</label>
             <UInput v-model.number="formData.outputPrice" placeholder="例如: 0.6" type="number" step="0.01" />
           </div>
         </div>
         <div>
-          <label class="block text-sm font-medium mb-1.5">模型描述</label>
+          <label class="block text-sm font-medium mb-1.5" style="color: var(--text-primary)">模型描述</label>
           <UTextarea v-model="formData.description" placeholder="输入模型描述信息" rows="3" />
         </div>
         <div class="flex items-center gap-6">
           <label class="flex items-center gap-2 cursor-pointer">
             <UCheckbox v-model="formData.enabled" />
-            <span class="text-sm">启用模型</span>
+            <span class="text-sm" style="color: var(--text-primary)">启用模型</span>
           </label>
           <label class="flex items-center gap-2 cursor-pointer">
             <UCheckbox v-model="formData.isDefault" />
-            <span class="text-sm">设为默认</span>
+            <span class="text-sm" style="color: var(--text-primary)">设为默认</span>
           </label>
           <label class="flex items-center gap-2 cursor-pointer">
             <UCheckbox v-model="formData.supportVision" />
-            <span class="text-sm">支持视觉</span>
+            <span class="text-sm" style="color: var(--text-primary)">支持视觉</span>
           </label>
           <label class="flex items-center gap-2 cursor-pointer">
             <UCheckbox v-model="formData.supportStreaming" />
-            <span class="text-sm">支持流式输出</span>
+            <span class="text-sm" style="color: var(--text-primary)">支持流式输出</span>
           </label>
         </div>
       </div>
       <template #footer>
-        <UButton variant="outline" @click="showAddDialog = false">取消</UButton>
-        <UButton @click="saveModel">{{ editingModel ? '保存' : '添加' }}</UButton>
+        <button class="btn-glass" @click="showAddDialog = false">取消</button>
+        <button class="btn-glass btn-glass--primary" @click="saveModel">{{ editingModel ? '保存' : '添加' }}</button>
       </template>
     </UDialog>
 
@@ -279,40 +308,38 @@
     <UDialog v-model="showTestDialog" :title="`测试模型 - ${testingModel?.name || ''}`" size="lg">
       <div class="space-y-4">
         <div>
-          <label class="block text-sm font-medium mb-1.5">测试输入</label>
+          <label class="block text-sm font-medium mb-1.5" style="color: var(--text-primary)">测试输入</label>
           <UTextarea v-model="testInput" placeholder="输入测试问题..." rows="4" />
         </div>
         <div>
-          <label class="block text-sm font-medium mb-1.5">模型响应</label>
-          <UCard class="min-h-32 bg-muted/50">
-            <p v-if="testResponse" class="text-sm whitespace-pre-wrap">{{ testResponse }}</p>
-            <p v-else-if="isTesting" class="text-sm text-muted-foreground">正在测试...</p>
-            <p v-else class="text-sm text-muted-foreground">点击下方按钮开始测试</p>
-          </UCard>
+          <label class="block text-sm font-medium mb-1.5" style="color: var(--text-primary)">模型响应</label>
+          <div class="glass-panel min-h-32 p-4" style="background: var(--glass-bg-1)">
+            <p v-if="testResponse" class="text-sm whitespace-pre-wrap" style="color: var(--text-primary)">{{ testResponse }}</p>
+            <p v-else-if="isTesting" class="text-sm" style="color: var(--text-secondary)">正在测试...</p>
+            <p v-else class="text-sm" style="color: var(--text-secondary)">点击下方按钮开始测试</p>
+          </div>
         </div>
         <div v-if="testResult" class="grid grid-cols-3 gap-4">
           <div class="text-center">
-            <p class="text-xs text-muted-foreground">输入 tokens</p>
-            <p class="text-lg font-bold">{{ testResult.inputTokens }}</p>
+            <p class="text-xs" style="color: var(--text-secondary)">输入 tokens</p>
+            <p class="text-lg font-bold" style="color: var(--text-primary)">{{ testResult.inputTokens }}</p>
           </div>
           <div class="text-center">
-            <p class="text-xs text-muted-foreground">输出 tokens</p>
-            <p class="text-lg font-bold">{{ testResult.outputTokens }}</p>
+            <p class="text-xs" style="color: var(--text-secondary)">输出 tokens</p>
+            <p class="text-lg font-bold" style="color: var(--text-primary)">{{ testResult.outputTokens }}</p>
           </div>
           <div class="text-center">
-            <p class="text-xs text-muted-foreground">响应时间</p>
-            <p class="text-lg font-bold">{{ testResult.duration }}ms</p>
+            <p class="text-xs" style="color: var(--text-secondary)">响应时间</p>
+            <p class="text-lg font-bold" style="color: var(--text-primary)">{{ testResult.duration }}ms</p>
           </div>
         </div>
       </div>
       <template #footer>
-        <UButton variant="outline" @click="showTestDialog = false">关闭</UButton>
-        <UButton @click="runTest" :disabled="isTesting || !testInput.trim()">
-          <template #icon>
-            <UIcon name="lucide:play" class="w-4 h-4" />
-          </template>
+        <button class="btn-glass" @click="showTestDialog = false">关闭</button>
+        <button class="btn-glass btn-glass--primary" @click="runTest" :disabled="isTesting || !testInput.trim()">
+          <UIcon name="lucide:play" class="w-4 h-4" />
           运行测试
-        </UButton>
+        </button>
       </template>
     </UDialog>
   </div>

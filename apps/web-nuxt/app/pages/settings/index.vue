@@ -1,28 +1,27 @@
 <template>
-  <div class="h-screen flex flex-col bg-background">
+  <div class="h-screen flex flex-col" style="background: var(--bg-deep)">
     <!-- 顶部导航栏 -->
-    <header class="h-14 border-b border-border flex items-center justify-between px-4">
+    <header class="h-14 flex items-center justify-between px-4" style="border-bottom: 1px solid var(--glass-border); background: var(--glass-bg-nav)">
       <div class="flex items-center gap-3">
-        <UButton variant="ghost" size="sm" @click="navigateTo('/chat')">
-          <template #icon>
-            <UIcon name="lucide:arrow-left" class="w-4 h-4" />
-          </template>
+        <button class="btn-glass" @click="navigateTo('/chat')">
+          <UIcon name="lucide:arrow-left" class="w-4 h-4" />
           返回
-        </UButton>
-        <h1 class="font-semibold">设置</h1>
+        </button>
+        <h1 class="font-display font-semibold text-gradient" style="color: var(--text-primary)">设置</h1>
       </div>
     </header>
 
     <div class="flex-1 flex overflow-hidden">
       <!-- 左侧设置菜单 -->
-      <aside class="w-56 border-r border-border bg-card/30">
-        <nav class="p-2">
+      <aside class="w-56 border-r p-2" style="border-color: var(--glass-border); background: var(--glass-bg-nav)">
+        <nav>
           <ul class="space-y-1">
             <li
               v-for="item in menuItems"
               :key="item.id"
-              class="flex items-center gap-2 px-3 py-2 rounded-md text-sm cursor-pointer transition-colors"
-              :class="activeTab === item.id ? 'bg-accent text-accent-foreground' : 'hover:bg-accent/50'"
+              class="nav-item flex items-center gap-2 px-3 py-2 rounded-md text-sm cursor-pointer transition-colors"
+              :class="activeTab === item.id ? 'nav-item--active' : ''"
+              :style="activeTab === item.id ? { background: 'var(--nav-active-bg)', color: 'var(--text-primary)' } : { color: 'var(--text-secondary)' }"
               @click="activeTab = item.id"
             >
               <UIcon :name="item.icon" class="w-4 h-4" />
@@ -37,197 +36,193 @@
         <div class="max-w-3xl mx-auto p-6">
           <!-- 个人信息 -->
           <template v-if="activeTab === 'profile'">
-            <h2 class="text-xl font-semibold mb-6">个人信息</h2>
-            <UCard class="mb-6">
-              <div class="flex items-center gap-6 mb-6 pb-6 border-b border-border">
+            <h2 class="font-display text-xl font-semibold mb-6" style="color: var(--text-primary)">个人信息</h2>
+            <div class="glass-card mb-6 p-4">
+              <div class="flex items-center gap-6 mb-6 pb-6" style="border-bottom: 1px solid var(--glass-border)">
                 <!-- 头像上传 -->
                 <div class="relative">
-                  <div class="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center">
-                    <span class="text-2xl font-semibold text-primary">
+                  <div class="w-20 h-20 rounded-full flex items-center justify-center" style="background: var(--accent-soft-bg)">
+                    <span class="text-2xl font-semibold" style="color: var(--accent-soft-text)">
                       {{ userStore.userInfo?.nickname?.charAt(0) || userStore.userInfo?.username?.charAt(0) || 'U' }}
                     </span>
                   </div>
-                  <UButton
-                    variant="outline"
-                    size="sm"
-                    class="absolute -bottom-2 -right-2 w-8 h-8 rounded-full p-0"
-                    icon="lucide:camera"
-                  />
+                  <button
+                    class="btn-glass absolute -bottom-2 -right-2 w-8 h-8 rounded-full p-0"
+                  >
+                    <UIcon name="lucide:camera" class="w-4 h-4" />
+                  </button>
                 </div>
                 <div>
-                  <h3 class="text-lg font-medium">{{ userStore.userInfo?.nickname || userStore.userInfo?.username }}</h3>
-                  <p class="text-sm text-muted-foreground">{{ userStore.userInfo?.email }}</p>
+                  <h3 class="text-lg font-medium" style="color: var(--text-primary)">{{ userStore.userInfo?.nickname || userStore.userInfo?.username }}</h3>
+                  <p class="text-sm" style="color: var(--text-secondary)">{{ userStore.userInfo?.email }}</p>
                 </div>
               </div>
 
               <div class="space-y-4">
                 <div>
-                  <label class="block text-sm font-medium mb-1.5">用户名</label>
+                  <label class="block text-sm font-medium mb-1.5" style="color: var(--text-primary)">用户名</label>
                   <UInput v-model="profileForm.username" placeholder="请输入用户名" />
                 </div>
                 <div>
-                  <label class="block text-sm font-medium mb-1.5">昵称</label>
+                  <label class="block text-sm font-medium mb-1.5" style="color: var(--text-primary)">昵称</label>
                   <UInput v-model="profileForm.nickname" placeholder="请输入昵称" />
                 </div>
                 <div>
-                  <label class="block text-sm font-medium mb-1.5">邮箱</label>
+                  <label class="block text-sm font-medium mb-1.5" style="color: var(--text-primary)">邮箱</label>
                   <UInput v-model="profileForm.email" type="email" placeholder="请输入邮箱" />
                 </div>
                 <div>
-                  <label class="block text-sm font-medium mb-1.5">个人简介</label>
+                  <label class="block text-sm font-medium mb-1.5" style="color: var(--text-primary)">个人简介</label>
                   <textarea
                     v-model="profileForm.bio"
                     placeholder="介绍一下自己..."
-                    class="w-full px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary min-h-[80px] resize-none"
+                    class="w-full px-3 py-2 rounded-md focus:outline-none resize-none"
+                    style="background: var(--glass-bg-1); border: 1px solid var(--glass-border); color: var(--text-primary); min-height: 80px"
                   ></textarea>
                 </div>
               </div>
-            </UCard>
+            </div>
 
             <div class="flex justify-end">
-              <UButton @click="saveProfile" :loading="saving">
-                保存修改
-              </UButton>
+              <button class="btn-glass btn-glass--primary" :disabled="saving" @click="saveProfile">
+                {{ saving ? '保存中...' : '保存修改' }}
+              </button>
             </div>
           </template>
 
           <!-- 安全设置 -->
           <template v-if="activeTab === 'security'">
-            <h2 class="text-xl font-semibold mb-6">安全设置</h2>
-            <UCard class="mb-4">
+            <h2 class="font-display text-xl font-semibold mb-6" style="color: var(--text-primary)">安全设置</h2>
+            <div class="glass-card mb-4 p-4">
               <div class="flex items-center justify-between py-3">
                 <div>
-                  <div class="font-medium">修改密码</div>
-                  <div class="text-sm text-muted-foreground">定期修改密码可以提高账户安全性</div>
+                  <div class="font-medium" style="color: var(--text-primary)">修改密码</div>
+                  <div class="text-sm" style="color: var(--text-secondary)">定期修改密码可以提高账户安全性</div>
                 </div>
-                <UButton variant="outline" size="sm">修改</UButton>
+                <button class="btn-glass">修改</button>
               </div>
-            </UCard>
-            <UCard class="mb-4">
+            </div>
+            <div class="glass-card mb-4 p-4">
               <div class="flex items-center justify-between py-3">
                 <div>
-                  <div class="font-medium">两步验证</div>
-                  <div class="text-sm text-muted-foreground">使用手机验证码或身份验证器增强安全性</div>
+                  <div class="font-medium" style="color: var(--text-primary)">两步验证</div>
+                  <div class="text-sm" style="color: var(--text-secondary)">使用手机验证码或身份验证器增强安全性</div>
                 </div>
                 <UBadge variant="outline" size="sm">未开启</UBadge>
               </div>
-            </UCard>
-            <UCard>
+            </div>
+            <div class="glass-card p-4">
               <div class="flex items-center justify-between py-3">
                 <div>
-                  <div class="font-medium">登录设备管理</div>
-                  <div class="text-sm text-muted-foreground">查看和管理当前登录的设备</div>
+                  <div class="font-medium" style="color: var(--text-primary)">登录设备管理</div>
+                  <div class="text-sm" style="color: var(--text-secondary)">查看和管理当前登录的设备</div>
                 </div>
-                <UButton variant="outline" size="sm">管理</UButton>
+                <button class="btn-glass">管理</button>
               </div>
-            </UCard>
+            </div>
           </template>
 
           <!-- API 密钥 -->
           <template v-if="activeTab === 'api-keys'">
             <div class="flex items-center justify-between mb-6">
-              <h2 class="text-xl font-semibold">API 密钥</h2>
-              <UButton @click="showCreateKeyDialog = true">
-                <template #icon>
-                  <UIcon name="lucide:plus" class="w-4 h-4" />
-                </template>
+              <h2 class="font-display text-xl font-semibold" style="color: var(--text-primary)">API 密钥</h2>
+              <button class="btn-glass btn-glass--primary" @click="showCreateKeyDialog = true">
+                <UIcon name="lucide:plus" class="w-4 h-4" />
                 创建新密钥
-              </UButton>
+              </button>
             </div>
 
-            <p class="text-sm text-muted-foreground mb-4">
+            <p class="text-sm mb-4" style="color: var(--text-secondary)">
               API 密钥用于通过编程方式访问 BuildingAI API。请妥善保管您的密钥，不要泄露给他人。
             </p>
 
-            <UCard class="p-0">
+            <div class="glass-card" style="padding: 0">
               <table class="w-full">
                 <thead>
-                  <tr class="border-b border-border">
-                    <th class="text-left px-4 py-3 text-sm font-medium text-muted-foreground">名称</th>
-                    <th class="text-left px-4 py-3 text-sm font-medium text-muted-foreground">密钥</th>
-                    <th class="text-left px-4 py-3 text-sm font-medium text-muted-foreground">创建时间</th>
-                    <th class="text-left px-4 py-3 text-sm font-medium text-muted-foreground">最后使用</th>
-                    <th class="text-right px-4 py-3 text-sm font-medium text-muted-foreground">操作</th>
+                  <tr style="border-bottom: 1px solid var(--glass-border)">
+                    <th class="text-left px-4 py-3 text-sm font-medium" style="color: var(--text-secondary)">名称</th>
+                    <th class="text-left px-4 py-3 text-sm font-medium" style="color: var(--text-secondary)">密钥</th>
+                    <th class="text-left px-4 py-3 text-sm font-medium" style="color: var(--text-secondary)">创建时间</th>
+                    <th class="text-left px-4 py-3 text-sm font-medium" style="color: var(--text-secondary)">最后使用</th>
+                    <th class="text-right px-4 py-3 text-sm font-medium" style="color: var(--text-secondary)">操作</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr
-                    v-for="key in apiKeys"
+                    v-for="(key, keyIndex) in apiKeys"
                     :key="key.id"
-                    class="border-b border-border last:border-0 hover:bg-accent/30"
+                    :style="{ borderBottom: keyIndex < apiKeys.length - 1 ? '1px solid var(--glass-border)' : 'none' }"
                   >
-                    <td class="px-4 py-3 font-medium">{{ key.name }}</td>
+                    <td class="px-4 py-3 font-medium" style="color: var(--text-primary)">{{ key.name }}</td>
                     <td class="px-4 py-3">
-                      <code class="text-sm font-mono text-muted-foreground">
+                      <code class="text-sm font-mono" style="color: var(--text-secondary)">
                         {{ showKeyId === key.id ? key.value : maskKey(key.value) }}
                       </code>
-                      <UButton
-                        variant="ghost"
-                        size="sm"
-                        :icon="showKeyId === key.id ? 'lucide:eye-off' : 'lucide:eye'"
-                        class="ml-2"
+                      <button
+                        class="btn-glass ml-2"
                         @click="toggleKeyVisibility(key.id)"
-                      />
+                      >
+                        <UIcon :name="showKeyId === key.id ? 'lucide:eye-off' : 'lucide:eye'" class="w-4 h-4" />
+                      </button>
                     </td>
-                    <td class="px-4 py-3 text-sm text-muted-foreground">{{ key.createdAt }}</td>
-                    <td class="px-4 py-3 text-sm text-muted-foreground">{{ key.lastUsed || '从未' }}</td>
+                    <td class="px-4 py-3 text-sm" style="color: var(--text-secondary)">{{ key.createdAt }}</td>
+                    <td class="px-4 py-3 text-sm" style="color: var(--text-secondary)">{{ key.lastUsed || '从未' }}</td>
                     <td class="px-4 py-3 text-right">
-                      <UButton
-                        variant="ghost"
-                        size="sm"
-                        icon="lucide:trash-2"
-                        color="red"
+                      <button
+                        class="btn-glass"
                         @click="deleteApiKey(key.id)"
-                      />
+                      >
+                        <UIcon name="lucide:trash-2" class="w-4 h-4" style="color: #ef4444" />
+                      </button>
                     </td>
                   </tr>
                 </tbody>
               </table>
               <div v-if="apiKeys.length === 0" class="text-center py-12">
-                <UIcon name="lucide:key" class="w-12 h-12 mx-auto text-muted-foreground mb-3" />
-                <p class="text-muted-foreground">暂无 API 密钥</p>
+                <UIcon name="lucide:key" class="w-12 h-12 mx-auto mb-3" style="color: var(--text-secondary)" />
+                <p style="color: var(--text-secondary)">暂无 API 密钥</p>
               </div>
-            </UCard>
+            </div>
 
             <UDialog v-model:open="showCreateKeyDialog" title="创建 API 密钥">
               <div class="space-y-4">
                 <div>
-                  <label class="block text-sm font-medium mb-1.5">密钥名称</label>
+                  <label class="block text-sm font-medium mb-1.5" style="color: var(--text-primary)">密钥名称</label>
                   <UInput v-model="newKeyName" placeholder="给密钥起个名字，方便识别" />
                 </div>
               </div>
               <template #footer>
-                <UButton variant="outline" @click="showCreateKeyDialog = false">
+                <button class="btn-glass" @click="showCreateKeyDialog = false">
                   取消
-                </UButton>
-                <UButton @click="createApiKey">
+                </button>
+                <button class="btn-glass btn-glass--primary" @click="createApiKey">
                   创建
-                </UButton>
+                </button>
               </template>
             </UDialog>
           </template>
 
           <!-- 模型设置 -->
           <template v-if="activeTab === 'models'">
-            <h2 class="text-xl font-semibold mb-6">模型提供商</h2>
-            <p class="text-sm text-muted-foreground mb-4">
+            <h2 class="font-display text-xl font-semibold mb-6" style="color: var(--text-primary)">模型提供商</h2>
+            <p class="text-sm mb-4" style="color: var(--text-secondary)">
               配置您的模型提供商 API Key，系统将使用您的密钥进行 API 调用。
             </p>
 
             <div class="space-y-4">
-              <UCard
+              <div
                 v-for="provider in modelProviders"
                 :key="provider.id"
-                class="cursor-pointer hover:border-primary/50 transition-colors"
+                class="glass-card p-4 cursor-pointer"
               >
                 <div class="flex items-center justify-between">
                   <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-lg bg-muted flex items-center justify-center">
-                      <UIcon :name="provider.icon" class="w-5 h-5" />
+                    <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background: var(--glass-bg-1)">
+                      <UIcon :name="provider.icon" class="w-5 h-5" style="color: var(--text-primary)" />
                     </div>
                     <div>
-                      <div class="font-medium">{{ provider.name }}</div>
-                      <div class="text-sm text-muted-foreground">
+                      <div class="font-medium" style="color: var(--text-primary)">{{ provider.name }}</div>
+                      <div class="text-sm" style="color: var(--text-secondary)">
                         {{ provider.status === 'configured' ? '已配置' : '未配置' }}
                       </div>
                     </div>
@@ -239,55 +234,53 @@
                     {{ provider.status === 'configured' ? '已启用' : '未启用' }}
                   </UBadge>
                 </div>
-                <div v-if="provider.status === 'configured'" class="mt-4 pt-4 border-t border-border">
+                <div v-if="provider.status === 'configured'" class="mt-4 pt-4" style="border-top: 1px solid var(--glass-border)">
                   <div class="flex items-center gap-2">
                     <UInput
                       :value="maskApiKey(provider.apiKey || '')"
                       readonly
                       class="flex-1"
                     />
-                    <UButton variant="outline" @click="editProvider(provider.id)">编辑</UButton>
+                    <button class="btn-glass" @click="editProvider(provider.id)">编辑</button>
                   </div>
                 </div>
-              </UCard>
+              </div>
             </div>
           </template>
 
           <!-- 团队管理 -->
           <template v-if="activeTab === 'team'">
             <div class="flex items-center justify-between mb-6">
-              <h2 class="text-xl font-semibold">团队成员</h2>
-              <UButton>
-                <template #icon>
-                  <UIcon name="lucide:user-plus" class="w-4 h-4" />
-                </template>
+              <h2 class="font-display text-xl font-semibold" style="color: var(--text-primary)">团队成员</h2>
+              <button class="btn-glass btn-glass--primary">
+                <UIcon name="lucide:user-plus" class="w-4 h-4" />
                 邀请成员
-              </UButton>
+              </button>
             </div>
 
-            <UCard class="p-0">
+            <div class="glass-card" style="padding: 0">
               <table class="w-full">
                 <thead>
-                  <tr class="border-b border-border">
-                    <th class="text-left px-4 py-3 text-sm font-medium text-muted-foreground">成员</th>
-                    <th class="text-left px-4 py-3 text-sm font-medium text-muted-foreground">角色</th>
-                    <th class="text-left px-4 py-3 text-sm font-medium text-muted-foreground">加入时间</th>
-                    <th class="text-left px-4 py-3 text-sm font-medium text-muted-foreground">状态</th>
-                    <th class="text-right px-4 py-3 text-sm font-medium text-muted-foreground">操作</th>
+                  <tr style="border-bottom: 1px solid var(--glass-border)">
+                    <th class="text-left px-4 py-3 text-sm font-medium" style="color: var(--text-secondary)">成员</th>
+                    <th class="text-left px-4 py-3 text-sm font-medium" style="color: var(--text-secondary)">角色</th>
+                    <th class="text-left px-4 py-3 text-sm font-medium" style="color: var(--text-secondary)">加入时间</th>
+                    <th class="text-left px-4 py-3 text-sm font-medium" style="color: var(--text-secondary)">状态</th>
+                    <th class="text-right px-4 py-3 text-sm font-medium" style="color: var(--text-secondary)">操作</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr
-                    v-for="member in teamMembers"
+                    v-for="(member, memberIndex) in teamMembers"
                     :key="member.id"
-                    class="border-b border-border last:border-0 hover:bg-accent/30"
+                    :style="{ borderBottom: memberIndex < teamMembers.length - 1 ? '1px solid var(--glass-border)' : 'none' }"
                   >
                     <td class="px-4 py-3">
                       <div class="flex items-center gap-3">
                         <UAvatar :text="member.name.charAt(0)" size="sm" />
                         <div>
-                          <div class="font-medium text-sm">{{ member.name }}</div>
-                          <div class="text-xs text-muted-foreground">{{ member.email }}</div>
+                          <div class="font-medium text-sm" style="color: var(--text-primary)">{{ member.name }}</div>
+                          <div class="text-xs" style="color: var(--text-secondary)">{{ member.email }}</div>
                         </div>
                       </div>
                     </td>
@@ -296,18 +289,21 @@
                         {{ roleText(member.role) }}
                       </UBadge>
                     </td>
-                    <td class="px-4 py-3 text-sm text-muted-foreground">{{ member.joinedAt }}</td>
+                    <td class="px-4 py-3 text-sm" style="color: var(--text-secondary)">{{ member.joinedAt }}</td>
                     <td class="px-4 py-3">
-                      <span class="inline-flex items-center gap-1.5 text-sm">
+                      <span class="inline-flex items-center gap-1.5 text-sm" style="color: var(--text-primary)">
                         <span
-                          class="w-2 h-2 rounded-full bg-green-500"
+                          class="w-2 h-2 rounded-full"
+                          style="background: #22c55e"
                         ></span>
                         {{ member.status }}
                       </span>
                     </td>
                     <td class="px-4 py-3 text-right">
                       <UDropdownMenu>
-                        <UButton variant="ghost" size="sm" icon="lucide:more-horizontal" />
+                        <button class="btn-glass">
+                          <UIcon name="lucide:more-horizontal" class="w-4 h-4" />
+                        </button>
                         <template #items>
                           <UDropdownMenuItem label="更改角色" icon="lucide:shield" />
                           <UDropdownMenuItem label="移除成员" icon="lucide:user-minus" color="red" />
@@ -317,7 +313,7 @@
                   </tr>
                 </tbody>
               </table>
-            </UCard>
+            </div>
           </template>
         </div>
       </div>

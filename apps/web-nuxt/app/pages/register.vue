@@ -1,45 +1,45 @@
 <template>
-  <div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-muted p-4">
-    <div class="w-full max-w-md">
-      <UCard class="p-8">
-        <div class="text-center mb-8">
-          <h1 class="text-2xl font-bold mb-2">创建账户</h1>
-          <p class="text-muted-foreground">注册 BuildingAI 新账户</p>
+  <div style="background: var(--bg-deep); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 1rem;">
+    <div style="width: 100%; max-width: 28rem;">
+      <div class="glass-card" style="padding: 2rem;">
+        <div style="text-align: center; margin-bottom: 2rem;">
+          <h1 class="font-display text-gradient" style="font-size: 1.5rem; font-weight: 700; margin-bottom: 0.5rem;">创建账户</h1>
+          <p style="color: var(--text-secondary);">注册 BuildingAI 新账户</p>
         </div>
 
-        <form @submit.prevent="handleRegister" class="space-y-4">
+        <form @submit.prevent="handleRegister" style="display: flex; flex-direction: column; gap: 1rem;">
           <div>
-            <label class="block text-sm font-medium mb-1.5">用户名</label>
-            <UInput v-model="formState.username" placeholder="请输入用户名" />
+            <label style="display: block; font-size: 0.875rem; font-weight: 500; margin-bottom: 0.375rem; color: var(--text-primary);">用户名</label>
+            <input v-model="formState.username" placeholder="请输入用户名" style="background: var(--glass-bg-1); border: 1px solid var(--glass-border); border-radius: 0.75rem; padding: 0.5rem 1rem; color: var(--text-primary); outline: none; width: 100%;" />
           </div>
 
           <div>
-            <label class="block text-sm font-medium mb-1.5">邮箱</label>
-            <UInput v-model="formState.email" type="email" placeholder="请输入邮箱" />
+            <label style="display: block; font-size: 0.875rem; font-weight: 500; margin-bottom: 0.375rem; color: var(--text-primary);">邮箱</label>
+            <input v-model="formState.email" type="email" placeholder="请输入邮箱" style="background: var(--glass-bg-1); border: 1px solid var(--glass-border); border-radius: 0.75rem; padding: 0.5rem 1rem; color: var(--text-primary); outline: none; width: 100%;" />
           </div>
 
           <div>
-            <label class="block text-sm font-medium mb-1.5">密码</label>
-            <UInput v-model="formState.password" type="password" placeholder="请输入密码" />
+            <label style="display: block; font-size: 0.875rem; font-weight: 500; margin-bottom: 0.375rem; color: var(--text-primary);">密码</label>
+            <input v-model="formState.password" type="password" placeholder="请输入密码" style="background: var(--glass-bg-1); border: 1px solid var(--glass-border); border-radius: 0.75rem; padding: 0.5rem 1rem; color: var(--text-primary); outline: none; width: 100%;" />
           </div>
 
           <div>
-            <label class="block text-sm font-medium mb-1.5">确认密码</label>
-            <UInput v-model="formState.confirmPassword" type="password" placeholder="请再次输入密码" />
+            <label style="display: block; font-size: 0.875rem; font-weight: 500; margin-bottom: 0.375rem; color: var(--text-primary);">确认密码</label>
+            <input v-model="formState.confirmPassword" type="password" placeholder="请再次输入密码" style="background: var(--glass-bg-1); border: 1px solid var(--glass-border); border-radius: 0.75rem; padding: 0.5rem 1rem; color: var(--text-primary); outline: none; width: 100%;" />
           </div>
 
-          <UButton type="submit" class="w-full" :loading="loading">
+          <button type="submit" class="btn-glass btn-glass--primary" :loading="loading" style="width: 100%;">
             注册
-          </UButton>
+          </button>
         </form>
 
-        <div class="mt-6 text-center text-sm">
-          <span class="text-muted-foreground">已有账户？</span>
-          <NuxtLink to="/login" class="text-primary hover:underline ml-1">
+        <div style="margin-top: 1.5rem; text-align: center; font-size: 0.875rem;">
+          <span style="color: var(--text-secondary);">已有账户？</span>
+          <NuxtLink to="/login" style="color: var(--accent-soft-text); text-decoration: underline; margin-left: 0.25rem;">
             立即登录
           </NuxtLink>
         </div>
-      </UCard>
+      </div>
     </div>
   </div>
 </template>

@@ -1,10 +1,10 @@
 <template>
-  <div>
+  <div style="background: var(--bg-deep); min-height: 100vh">
     <!-- 页面标题和操作 -->
     <div class="flex items-center justify-between mb-6">
       <div>
-        <h1 class="text-2xl font-bold">应用中心</h1>
-        <p class="text-muted-foreground text-sm mt-1">发现和管理扩展应用，丰富你的 AI 体验</p>
+        <h1 class="font-display text-2xl font-bold text-gradient">应用中心</h1>
+        <p class="text-sm mt-1" style="color: var(--text-secondary)">发现和管理扩展应用，丰富你的 AI 体验</p>
       </div>
       <div class="flex items-center gap-3">
         <USelect v-model="activeTab" :options="tabOptions" class="w-36" />
@@ -13,116 +13,113 @@
 
     <!-- 分类标签 -->
     <div class="flex flex-wrap gap-2 mb-6">
-      <UButton
+      <button
         v-for="cat in categories"
         :key="cat.value"
-        :variant="selectedCategory === cat.value ? 'default' : 'outline'"
-        size="sm"
+        :class="selectedCategory === cat.value ? 'btn-glass btn-glass--primary' : 'btn-glass'"
+        style="padding: 0.25rem 0.75rem; font-size: 0.875rem; display: inline-flex; align-items: center; gap: 0.25rem;"
         @click="selectedCategory = cat.value"
       >
-        <template #icon v-if="cat.icon">
-          <UIcon :name="cat.icon" class="w-4 h-4" />
-        </template>
+        <UIcon v-if="cat.icon" :name="cat.icon" class="w-4 h-4" />
         {{ cat.label }}
-      </UButton>
+      </button>
     </div>
 
     <!-- 搜索栏 -->
-    <UCard class="mb-6">
+    <div class="glass-card p-4 mb-6">
       <div class="flex flex-wrap items-center gap-4">
-        <UInput v-model="searchKeyword" placeholder="搜索应用名称或描述..." class="flex-1 min-w-64">
-          <template #leading>
-            <UIcon name="lucide:search" class="w-4 h-4 text-muted-foreground" />
-          </template>
-        </UInput>
+        <input
+          v-model="searchKeyword"
+          placeholder="搜索应用名称或描述..."
+          style="background: var(--glass-bg-1); border: 1px solid var(--glass-border); border-radius: 0.75rem; padding: 0.5rem 1rem; padding-left: 2.25rem; color: var(--text-primary); outline: none; flex: 1; min-width: 16rem; font-size: 0.875rem;"
+        />
+        <UIcon name="lucide:search" class="w-4 h-4 absolute" style="color: var(--text-secondary); margin-left: 0.75rem; pointer-events: none;" />
         <USelect v-model="sortBy" :options="sortOptions" class="w-40" />
       </div>
-    </UCard>
+    </div>
 
     <!-- 应用列表 -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-      <UCard
+      <div
         v-for="app in filteredApps"
         :key="app.id"
-        class="hover:shadow-md transition-shadow group"
+        class="glass-card p-4 group"
+        style="transition: box-shadow 0.2s;"
       >
         <div class="flex items-start gap-4 mb-4">
           <div
             class="w-14 h-14 rounded-xl flex items-center justify-center flex-shrink-0"
-            :class="getAppIconBg(app.category)"
+            :style="{ background: ({ 'productivity': 'rgba(59, 130, 246, 0.12)', 'development': 'rgba(168, 85, 247, 0.12)', 'design': 'rgba(236, 72, 153, 0.12)', 'communication': 'rgba(34, 197, 94, 0.12)', 'data': 'rgba(249, 115, 22, 0.12)', 'utilities': 'rgba(107, 114, 128, 0.12)' } as Record<string, string>)[app.category] }"
           >
-            <UIcon :name="app.icon" class="w-7 h-7" :class="getAppIconColor(app.category)" />
+            <UIcon :name="app.icon" class="w-7 h-7" :style="{ color: ({ 'productivity': '#3b82f6', 'development': '#a855f7', 'design': '#ec4899', 'communication': '#22c55e', 'data': '#f97316', 'utilities': '#9ca3af' } as Record<string, string>)[app.category] }" />
           </div>
           <div class="flex-1 min-w-0">
             <div class="flex items-start justify-between">
-              <h3 class="font-semibold truncate">{{ app.name }}</h3>
+              <h3 class="font-semibold truncate" style="color: var(--text-primary)">{{ app.name }}</h3>
               <UBadge v-if="isInstalled(app.id)" variant="outline" size="sm">已安装</UBadge>
               <UBadge v-else-if="app.isNew" color="green" size="sm">NEW</UBadge>
             </div>
-            <p class="text-xs text-muted-foreground mt-0.5">{{ app.developer }}</p>
+            <p class="text-xs mt-0.5" style="color: var(--text-secondary)">{{ app.developer }}</p>
             <div class="flex items-center gap-2 mt-1.5">
               <div class="flex items-center gap-0.5">
                 <UIcon name="lucide:star" class="w-3.5 h-3.5 text-yellow-500 fill-yellow-500" />
-                <span class="text-xs font-medium">{{ app.rating }}</span>
+                <span class="text-xs font-medium" style="color: var(--text-primary)">{{ app.rating }}</span>
               </div>
-              <span class="text-xs text-muted-foreground">·</span>
-              <span class="text-xs text-muted-foreground">{{ app.installCount }} 安装</span>
+              <span class="text-xs" style="color: var(--text-secondary)">·</span>
+              <span class="text-xs" style="color: var(--text-secondary)">{{ app.installCount }} 安装</span>
             </div>
           </div>
         </div>
 
-        <p class="text-sm text-muted-foreground mb-4 line-clamp-2">{{ app.description }}</p>
+        <p class="text-sm mb-4 line-clamp-2" style="color: var(--text-secondary)">{{ app.description }}</p>
 
         <div class="flex flex-wrap gap-1.5 mb-4">
           <span
             v-for="tag in app.tags.slice(0, 3)"
             :key="tag"
-            class="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground"
+            class="text-xs px-2 py-0.5 rounded-full"
+            style="background: var(--glass-bg-1); color: var(--text-secondary)"
           >
             {{ tag }}
           </span>
         </div>
 
-        <div class="flex items-center justify-between pt-3 border-t border-border">
+        <div class="flex items-center justify-between pt-3" style="border-top: 1px solid var(--glass-border)">
           <div class="text-sm">
-            <span v-if="app.price === 0" class="text-green-600 font-medium">免费</span>
-            <span v-else class="font-medium">¥{{ app.price }}</span>
+            <span v-if="app.price === 0" style="color: #22c55e; font-weight: 500;">免费</span>
+            <span v-else class="font-medium" style="color: var(--text-primary)">¥{{ app.price }}</span>
           </div>
           <div class="flex items-center gap-2">
-            <UButton variant="outline" size="sm" @click="viewAppDetail(app)">
+            <button class="btn-glass" style="padding: 0.25rem 0.75rem; font-size: 0.875rem;" @click="viewAppDetail(app)">
               详情
-            </UButton>
-            <UButton
+            </button>
+            <button
               v-if="!isInstalled(app.id)"
-              size="sm"
+              class="btn-glass btn-glass--primary"
+              style="padding: 0.25rem 0.75rem; font-size: 0.875rem; display: inline-flex; align-items: center; gap: 0.25rem;"
               @click="installApp(app)"
             >
-              <template #icon>
-                <UIcon name="lucide:download" class="w-4 h-4" />
-              </template>
+              <UIcon name="lucide:download" class="w-4 h-4" />
               安装
-            </UButton>
-            <UButton
+            </button>
+            <button
               v-else
-              variant="outline"
-              size="sm"
-              color="red"
+              class="btn-glass"
+              style="padding: 0.25rem 0.75rem; font-size: 0.875rem; display: inline-flex; align-items: center; gap: 0.25rem; color: #ef4444;"
               @click="uninstallApp(app)"
             >
-              <template #icon>
-                <UIcon name="lucide:trash-2" class="w-4 h-4" />
-              </template>
+              <UIcon name="lucide:trash-2" class="w-4 h-4" />
               卸载
-            </UButton>
+            </button>
           </div>
         </div>
-      </UCard>
+      </div>
     </div>
 
     <!-- 空状态 -->
     <div v-if="filteredApps.length === 0" class="text-center py-12">
-      <UIcon name="lucide:package-search" class="w-12 h-12 mx-auto text-muted-foreground mb-3" />
-      <p class="text-muted-foreground">未找到匹配的应用</p>
+      <UIcon name="lucide:package-search" class="w-12 h-12 mx-auto mb-3" style="color: var(--text-secondary)" />
+      <p style="color: var(--text-secondary)">未找到匹配的应用</p>
     </div>
 
     <!-- 应用详情对话框 -->
@@ -132,89 +129,87 @@
         <div class="flex items-start gap-4">
           <div
             class="w-20 h-20 rounded-2xl flex items-center justify-center flex-shrink-0"
-            :class="getAppIconBg(selectedApp.category)"
+            :style="{ background: ({ 'productivity': 'rgba(59, 130, 246, 0.12)', 'development': 'rgba(168, 85, 247, 0.12)', 'design': 'rgba(236, 72, 153, 0.12)', 'communication': 'rgba(34, 197, 94, 0.12)', 'data': 'rgba(249, 115, 22, 0.12)', 'utilities': 'rgba(107, 114, 128, 0.12)' } as Record<string, string>)[selectedApp.category] }"
           >
-            <UIcon :name="selectedApp.icon" class="w-10 h-10" :class="getAppIconColor(selectedApp.category)" />
+            <UIcon :name="selectedApp.icon" class="w-10 h-10" :style="{ color: ({ 'productivity': '#3b82f6', 'development': '#a855f7', 'design': '#ec4899', 'communication': '#22c55e', 'data': '#f97316', 'utilities': '#9ca3af' } as Record<string, string>)[selectedApp.category] }" />
           </div>
           <div class="flex-1">
-            <h2 class="text-xl font-bold">{{ selectedApp.name }}</h2>
-            <p class="text-sm text-muted-foreground mt-1">{{ selectedApp.developer }}</p>
+            <h2 class="font-display text-xl font-bold" style="color: var(--text-primary)">{{ selectedApp.name }}</h2>
+            <p class="text-sm mt-1" style="color: var(--text-secondary)">{{ selectedApp.developer }}</p>
             <div class="flex items-center gap-4 mt-2">
               <div class="flex items-center gap-1">
                 <UIcon name="lucide:star" class="w-4 h-4 text-yellow-500 fill-yellow-500" />
-                <span class="text-sm font-medium">{{ selectedApp.rating }}</span>
-                <span class="text-xs text-muted-foreground">({{ selectedApp.reviewCount }} 评价)</span>
+                <span class="text-sm font-medium" style="color: var(--text-primary)">{{ selectedApp.rating }}</span>
+                <span class="text-xs" style="color: var(--text-secondary)">({{ selectedApp.reviewCount }} 评价)</span>
               </div>
-              <span class="text-sm text-muted-foreground">{{ selectedApp.installCount }} 安装</span>
-              <span class="text-sm" :class="selectedApp.price === 0 ? 'text-green-600' : ''">
+              <span class="text-sm" style="color: var(--text-secondary)">{{ selectedApp.installCount }} 安装</span>
+              <span class="text-sm" :style="selectedApp.price === 0 ? { color: '#22c55e' } : { color: 'var(--text-primary)' }">
                 {{ selectedApp.price === 0 ? '免费' : '¥' + selectedApp.price }}
               </span>
             </div>
           </div>
-          <UButton
+          <button
             v-if="!isInstalled(selectedApp.id)"
+            class="btn-glass btn-glass--primary"
+            style="display: inline-flex; align-items: center; gap: 0.25rem;"
             @click="installApp(selectedApp)"
           >
-            <template #icon>
-              <UIcon name="lucide:download" class="w-4 h-4" />
-            </template>
+            <UIcon name="lucide:download" class="w-4 h-4" />
             安装
-          </UButton>
-          <UButton
+          </button>
+          <button
             v-else
-            variant="outline"
-            color="red"
+            class="btn-glass"
+            style="display: inline-flex; align-items: center; gap: 0.25rem; color: #ef4444;"
             @click="uninstallApp(selectedApp)"
           >
-            <template #icon>
-              <UIcon name="lucide:trash-2" class="w-4 h-4" />
-            </template>
+            <UIcon name="lucide:trash-2" class="w-4 h-4" />
             卸载
-          </UButton>
+          </button>
         </div>
 
         <!-- 应用描述 -->
         <div>
-          <h3 class="text-sm font-medium mb-2">应用介绍</h3>
-          <UCard>
-            <p class="text-sm text-muted-foreground whitespace-pre-line">{{ selectedApp.fullDescription }}</p>
-          </UCard>
+          <h3 class="text-sm font-medium mb-2" style="color: var(--text-primary)">应用介绍</h3>
+          <div class="glass-card p-4">
+            <p class="text-sm whitespace-pre-line" style="color: var(--text-secondary)">{{ selectedApp.fullDescription }}</p>
+          </div>
         </div>
 
         <!-- 功能特性 -->
         <div>
-          <h3 class="text-sm font-medium mb-2">主要功能</h3>
+          <h3 class="text-sm font-medium mb-2" style="color: var(--text-primary)">主要功能</h3>
           <div class="grid grid-cols-2 gap-3">
-            <UCard v-for="feature in selectedApp.features" :key="feature" class="flex items-center gap-3">
-              <UIcon name="lucide:check-circle-2" class="w-5 h-5 text-green-500 flex-shrink-0" />
-              <span class="text-sm">{{ feature }}</span>
-            </UCard>
+            <div v-for="feature in selectedApp.features" :key="feature" class="glass-card p-3 flex items-center gap-3">
+              <UIcon name="lucide:check-circle-2" class="w-5 h-5 flex-shrink-0" style="color: #22c55e" />
+              <span class="text-sm" style="color: var(--text-primary)">{{ feature }}</span>
+            </div>
           </div>
         </div>
 
         <!-- 应用信息 -->
         <div>
-          <h3 class="text-sm font-medium mb-2">应用信息</h3>
-          <UCard>
+          <h3 class="text-sm font-medium mb-2" style="color: var(--text-primary)">应用信息</h3>
+          <div class="glass-card p-4">
             <div class="grid grid-cols-2 gap-4">
               <div>
-                <p class="text-xs text-muted-foreground">版本</p>
-                <p class="text-sm font-medium mt-1">{{ selectedApp.version }}</p>
+                <p class="text-xs" style="color: var(--text-secondary)">版本</p>
+                <p class="text-sm font-medium mt-1" style="color: var(--text-primary)">{{ selectedApp.version }}</p>
               </div>
               <div>
-                <p class="text-xs text-muted-foreground">大小</p>
-                <p class="text-sm font-medium mt-1">{{ selectedApp.size }}</p>
+                <p class="text-xs" style="color: var(--text-secondary)">大小</p>
+                <p class="text-sm font-medium mt-1" style="color: var(--text-primary)">{{ selectedApp.size }}</p>
               </div>
               <div>
-                <p class="text-xs text-muted-foreground">更新时间</p>
-                <p class="text-sm font-medium mt-1">{{ selectedApp.updatedAt }}</p>
+                <p class="text-xs" style="color: var(--text-secondary)">更新时间</p>
+                <p class="text-sm font-medium mt-1" style="color: var(--text-primary)">{{ selectedApp.updatedAt }}</p>
               </div>
               <div>
-                <p class="text-xs text-muted-foreground">类别</p>
-                <p class="text-sm font-medium mt-1">{{ getCategoryLabel(selectedApp.category) }}</p>
+                <p class="text-xs" style="color: var(--text-secondary)">类别</p>
+                <p class="text-sm font-medium mt-1" style="color: var(--text-primary)">{{ getCategoryLabel(selectedApp.category) }}</p>
               </div>
             </div>
-          </UCard>
+          </div>
         </div>
       </div>
     </UDialog>

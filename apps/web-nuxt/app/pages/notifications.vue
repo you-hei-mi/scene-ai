@@ -1,26 +1,24 @@
 <template>
-  <div>
+  <div style="background: var(--bg-deep); min-height: 100vh">
     <!-- 页面标题和操作 -->
     <div class="flex items-center justify-between mb-6">
       <div>
-        <h1 class="text-2xl font-bold">通知中心</h1>
-        <p class="text-muted-foreground text-sm mt-1">查看你的所有通知消息</p>
+        <h1 class="font-display text-2xl font-bold text-gradient">通知中心</h1>
+        <p class="text-sm mt-1" style="color: var(--text-secondary)">查看你的所有通知消息</p>
       </div>
-      <UButton variant="outline" @click="markAllRead">
-        <template #icon>
-          <UIcon name="lucide:check-check" class="w-4 h-4" />
-        </template>
+      <button class="btn-glass" @click="markAllRead">
+        <UIcon name="lucide:check-check" class="w-4 h-4" />
         全部标记已读
-      </UButton>
+      </button>
     </div>
 
     <!-- 顶部标签页切换 -->
-    <div class="flex items-center gap-2 mb-6 border-b border-border">
+    <div class="flex items-center gap-2 mb-6" style="border-bottom: 1px solid var(--glass-border)">
       <button
         v-for="tab in tabs"
         :key="tab.id"
-        class="relative px-4 py-2.5 text-sm font-medium transition-colors -mb-px border-b-2"
-        :class="activeTab === tab.id ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'"
+        class="relative px-4 py-2.5 text-sm font-medium transition-colors -mb-px"
+        :style="{ borderBottom: activeTab === tab.id ? '2px solid var(--accent-soft)' : '2px solid transparent', color: activeTab === tab.id ? 'var(--accent-soft-text)' : 'var(--text-secondary)' }"
         @click="activeTab = tab.id"
       >
         {{ tab.label }}
@@ -37,55 +35,54 @@
 
     <!-- 通知类型筛选 -->
     <div class="flex flex-wrap items-center gap-2 mb-6">
-      <UButton
+      <button
         v-for="filter in typeFilters"
         :key="filter.id"
-        :variant="activeType === filter.id ? 'solid' : 'outline'"
-        size="sm"
+        class="btn-glass"
+        :class="activeType === filter.id ? 'btn-glass--primary' : ''"
         @click="activeType = filter.id"
       >
-        <template #icon>
-          <UIcon :name="filter.icon" class="w-4 h-4" />
-        </template>
+        <UIcon :name="filter.icon" class="w-4 h-4" />
         {{ filter.label }}
-      </UButton>
+      </button>
       <div class="flex-1"></div>
-      <span class="text-sm text-muted-foreground">
+      <span class="text-sm" style="color: var(--text-secondary)">
         共 {{ filteredNotifications.length }} 条通知
       </span>
     </div>
 
     <!-- 通知列表 -->
-    <UCard v-if="filteredNotifications.length > 0" class="p-0">
-      <div class="divide-y divide-border">
+    <div v-if="filteredNotifications.length > 0" class="glass-card" style="padding: 0">
+      <div>
         <div
-          v-for="item in filteredNotifications"
+          v-for="(item, itemIndex) in filteredNotifications"
           :key="item.id"
-          class="flex items-start gap-3 px-4 py-4 hover:bg-accent/30 transition-colors"
-          :class="!item.read ? 'bg-blue-50/50 dark:bg-blue-950/20' : ''"
+          class="flex items-start gap-3 px-4 py-4 transition-colors"
+          :style="{ borderBottom: itemIndex < filteredNotifications.length - 1 ? '1px solid var(--glass-border)' : 'none', background: !item.read ? 'var(--glass-bg-1)' : 'transparent' }"
         >
           <!-- 通知图标 -->
           <div
             class="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
-            :class="getTypeIconBg(item.type)"
+            :style="{ background: item.type === 'system' ? 'rgba(59, 130, 246, 0.12)' : item.type === 'chat' ? 'rgba(34, 197, 94, 0.12)' : item.type === 'agent' ? 'rgba(168, 85, 247, 0.12)' : item.type === 'dataset' ? 'rgba(249, 115, 22, 0.12)' : 'rgba(6, 182, 212, 0.12)' }"
           >
-            <UIcon :name="getTypeIcon(item.type)" class="w-5 h-5" :class="getTypeIconColor(item.type)" />
+            <UIcon :name="getTypeIcon(item.type)" class="w-5 h-5" :style="{ color: item.type === 'system' ? '#3b82f6' : item.type === 'chat' ? '#22c55e' : item.type === 'agent' ? '#a855f7' : item.type === 'dataset' ? '#f97316' : '#06b6d4' }" />
           </div>
 
           <!-- 通知内容 -->
           <div class="flex-1 min-w-0">
             <div class="flex items-center gap-2">
-              <p class="font-medium text-sm" :class="!item.read ? 'text-foreground' : 'text-muted-foreground'">
+              <p class="font-medium text-sm" :style="{ color: !item.read ? 'var(--text-primary)' : 'var(--text-secondary)' }">
                 {{ item.title }}
               </p>
               <span
                 v-if="!item.read"
-                class="w-2 h-2 rounded-full bg-blue-500 flex-shrink-0"
+                class="w-2 h-2 rounded-full flex-shrink-0"
+                style="background: #3b82f6"
               ></span>
             </div>
-            <p class="text-sm text-muted-foreground mt-1 line-clamp-2">{{ item.summary }}</p>
+            <p class="text-sm mt-1 line-clamp-2" style="color: var(--text-secondary)">{{ item.summary }}</p>
             <div class="flex items-center gap-3 mt-2">
-              <span class="text-xs text-muted-foreground flex items-center gap-1">
+              <span class="text-xs flex items-center gap-1" style="color: var(--text-secondary)">
                 <UIcon name="lucide:clock" class="w-3 h-3" />
                 {{ item.time }}
               </span>
@@ -97,35 +94,34 @@
 
           <!-- 操作按钮 -->
           <div class="flex items-center gap-1 flex-shrink-0">
-            <UButton
+            <button
               v-if="!item.read"
-              variant="ghost"
-              size="sm"
-              icon="lucide:check"
+              class="btn-glass"
               @click="markAsRead(item)"
-            />
-            <UButton
-              variant="ghost"
-              size="sm"
-              icon="lucide:trash-2"
-              color="red"
+            >
+              <UIcon name="lucide:check" class="w-4 h-4" />
+            </button>
+            <button
+              class="btn-glass"
               @click="deleteNotification(item)"
-            />
+            >
+              <UIcon name="lucide:trash-2" class="w-4 h-4" style="color: #ef4444" />
+            </button>
           </div>
         </div>
       </div>
-    </UCard>
+    </div>
 
     <!-- 空状态 -->
-    <UCard v-else>
+    <div v-else class="glass-card p-4">
       <div class="text-center py-16">
-        <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-muted mb-4">
-          <UIcon name="lucide:bell-off" class="w-8 h-8 text-muted-foreground" />
+        <div class="inline-flex items-center justify-center w-16 h-16 rounded-full mb-4" style="background: var(--glass-bg-1)">
+          <UIcon name="lucide:bell-off" class="w-8 h-8" style="color: var(--text-secondary)" />
         </div>
-        <h3 class="text-lg font-medium mb-2">暂无通知</h3>
-        <p class="text-muted-foreground">当前筛选条件下没有通知消息</p>
+        <h3 class="text-lg font-medium mb-2" style="color: var(--text-primary)">暂无通知</h3>
+        <p style="color: var(--text-secondary)">当前筛选条件下没有通知消息</p>
       </div>
-    </UCard>
+    </div>
   </div>
 </template>
 

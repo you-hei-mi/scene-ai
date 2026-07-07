@@ -17,7 +17,7 @@
             <button
               class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 w-full text-left"
               :class="[
-                isActive(item.to!)
+                hasActiveChild(item)
                   ? 'text-primary'
                   : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700/50 hover:text-slate-900 dark:hover:text-white',
                 collapsed ? 'justify-center' : ''
@@ -164,6 +164,11 @@ const menuItems: MenuItem[] = [
 
 function isActive(path: string) {
   return route.path.startsWith(path)
+}
+
+function hasActiveChild(item: MenuItem) {
+  if (!item.children) return false
+  return item.children.some(child => route.path.startsWith(child.to))
 }
 
 function toggleSubmenu(label: string) {

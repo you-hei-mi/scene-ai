@@ -1,10 +1,12 @@
 <template>
-  <div style="background: var(--bg-deep); min-height: 100vh">
-    <!-- 页面标题和操作 -->
+  <div class="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50/30 dark:from-slate-900 dark:via-slate-800 dark:to-indigo-950/30">
     <div class="flex items-center justify-between mb-6">
       <div>
-        <h1 class="font-display text-2xl font-bold text-gradient">MCP 服务管理</h1>
-        <p class="text-sm mt-1" style="color: var(--text-secondary)">管理模型上下文协议服务和工具</p>
+        <div class="flex items-center gap-4 mb-2">
+          <div class="w-1 h-8 bg-gradient-to-b from-primary to-accent rounded-full"></div>
+          <h1 class="font-display text-3xl font-bold text-slate-900 dark:text-white">MCP 服务管理</h1>
+        </div>
+        <p class="text-slate-600 dark:text-slate-400 ml-5">管理模型上下文协议服务和工具</p>
       </div>
       <button class="btn-glass btn-glass--primary" @click="showAddDialog = true">
         <UIcon name="lucide:plus" class="w-4 h-4" />
@@ -12,108 +14,103 @@
       </button>
     </div>
 
-    <!-- 统计卡片 -->
     <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-      <div class="glass-card p-4">
+      <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 p-5">
         <div class="flex items-center justify-between">
           <div>
-            <p class="text-sm" style="color: var(--text-secondary)">总服务数</p>
-            <p class="text-2xl font-bold mt-1" style="color: var(--text-primary)">{{ stats.totalServices }}</p>
+            <p class="text-sm text-slate-500">总服务数</p>
+            <p class="text-2xl font-bold mt-1 text-slate-900 dark:text-white">{{ stats.totalServices }}</p>
           </div>
-          <div class="w-12 h-12 rounded-full flex items-center justify-center" style="background: rgba(59, 130, 246, 0.12)">
-            <UIcon name="lucide:server" class="w-6 h-6" style="color: #3b82f6" />
+          <div class="w-12 h-12 rounded-full flex items-center justify-center bg-blue-100 dark:bg-blue-900/30">
+            <UIcon name="lucide:server" class="w-6 h-6 text-blue-600 dark:text-blue-400" />
           </div>
         </div>
       </div>
-      <div class="glass-card p-4">
+      <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 p-5">
         <div class="flex items-center justify-between">
           <div>
-            <p class="text-sm" style="color: var(--text-secondary)">运行中</p>
-            <p class="text-2xl font-bold mt-1" style="color: #22c55e">{{ stats.running }}</p>
+            <p class="text-sm text-slate-500">运行中</p>
+            <p class="text-2xl font-bold mt-1 text-green-600 dark:text-green-400">{{ stats.running }}</p>
           </div>
-          <div class="w-12 h-12 rounded-full flex items-center justify-center" style="background: rgba(34, 197, 94, 0.12)">
-            <UIcon name="lucide:check-circle" class="w-6 h-6" style="color: #22c55e" />
+          <div class="w-12 h-12 rounded-full flex items-center justify-center bg-green-100 dark:bg-green-900/30">
+            <UIcon name="lucide:check-circle" class="w-6 h-6 text-green-600 dark:text-green-400" />
           </div>
         </div>
       </div>
-      <div class="glass-card p-4">
+      <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 p-5">
         <div class="flex items-center justify-between">
           <div>
-            <p class="text-sm" style="color: var(--text-secondary)">已停止</p>
-            <p class="text-2xl font-bold mt-1" style="color: #eab308">{{ stats.stopped }}</p>
+            <p class="text-sm text-slate-500">已停止</p>
+            <p class="text-2xl font-bold mt-1 text-yellow-600 dark:text-yellow-400">{{ stats.stopped }}</p>
           </div>
-          <div class="w-12 h-12 rounded-full flex items-center justify-center" style="background: rgba(234, 179, 8, 0.12)">
-            <UIcon name="lucide:pause-circle" class="w-6 h-6" style="color: #eab308" />
+          <div class="w-12 h-12 rounded-full flex items-center justify-center bg-yellow-100 dark:bg-yellow-900/30">
+            <UIcon name="lucide:pause-circle" class="w-6 h-6 text-yellow-600 dark:text-yellow-400" />
           </div>
         </div>
       </div>
-      <div class="glass-card p-4">
+      <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 p-5">
         <div class="flex items-center justify-between">
           <div>
-            <p class="text-sm" style="color: var(--text-secondary)">工具总数</p>
-            <p class="text-2xl font-bold mt-1" style="color: var(--text-primary)">{{ stats.totalTools }}</p>
+            <p class="text-sm text-slate-500">工具总数</p>
+            <p class="text-2xl font-bold mt-1 text-slate-900 dark:text-white">{{ stats.totalTools }}</p>
           </div>
-          <div class="w-12 h-12 rounded-full flex items-center justify-center" style="background: rgba(168, 85, 247, 0.12)">
-            <UIcon name="lucide:wrench" class="w-6 h-6" style="color: #a855f7" />
+          <div class="w-12 h-12 rounded-full flex items-center justify-center bg-purple-100 dark:bg-purple-900/30">
+            <UIcon name="lucide:wrench" class="w-6 h-6 text-purple-600 dark:text-purple-400" />
           </div>
         </div>
       </div>
     </div>
 
-    <!-- 筛选和搜索 -->
-    <div class="glass-card mb-6 p-4">
+    <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 p-5 mb-6">
       <div class="flex flex-wrap items-center gap-4">
         <UInput v-model="searchKeyword" placeholder="搜索服务名称..." class="w-64">
           <template #leading>
-            <UIcon name="lucide:search" class="w-4 h-4" style="color: var(--text-secondary)" />
+            <UIcon name="lucide:search" class="w-4 h-4 text-slate-400" />
           </template>
         </UInput>
         <USelect v-model="statusFilter" :options="statusOptions" class="w-40" />
         <USelect v-model="typeFilter" :options="typeOptions" class="w-40" />
         <div class="flex-1"></div>
-        <button class="btn-glass" @click="resetFilters">
-          重置筛选
-        </button>
+        <button class="btn-glass" @click="resetFilters">重置筛选</button>
       </div>
     </div>
 
-    <!-- 服务列表 -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       <div
         v-for="service in filteredServices"
         :key="service.id"
-        class="glass-card p-4 cursor-pointer"
+        class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 p-5 cursor-pointer transition-all duration-300 hover:shadow-lg hover:shadow-primary/5"
         @click="viewServiceDetail(service)"
       >
         <div class="flex items-start justify-between mb-4">
           <div class="flex items-center gap-3">
             <div
               class="w-10 h-10 rounded-lg flex items-center justify-center"
-              :style="{ background: service.type === 'stdio' ? 'rgba(59, 130, 246, 0.12)' : service.type === 'sse' ? 'rgba(34, 197, 94, 0.12)' : service.type === 'websocket' ? 'rgba(234, 179, 8, 0.12)' : 'rgba(168, 85, 247, 0.12)' }"
+              :class="service.type === 'stdio' ? 'bg-blue-100 dark:bg-blue-900/30' : service.type === 'sse' ? 'bg-green-100 dark:bg-green-900/30' : service.type === 'websocket' ? 'bg-yellow-100 dark:bg-yellow-900/30' : 'bg-purple-100 dark:bg-purple-900/30'"
             >
-              <UIcon :name="getServiceIcon(service.type)" class="w-5 h-5" :style="{ color: service.type === 'stdio' ? '#3b82f6' : service.type === 'sse' ? '#22c55e' : service.type === 'websocket' ? '#eab308' : '#a855f7' }" />
+              <UIcon :name="getServiceIcon(service.type)" class="w-5 h-5" :class="service.type === 'stdio' ? 'text-blue-600 dark:text-blue-400' : service.type === 'sse' ? 'text-green-600 dark:text-green-400' : service.type === 'websocket' ? 'text-yellow-600 dark:text-yellow-400' : 'text-purple-600 dark:text-purple-400'" />
             </div>
             <div>
-              <h3 class="font-semibold" style="color: var(--text-primary)">{{ service.name }}</h3>
-              <p class="text-xs" style="color: var(--text-secondary)">{{ service.type }}</p>
+              <h3 class="font-semibold text-slate-900 dark:text-white">{{ service.name }}</h3>
+              <p class="text-xs text-slate-500">{{ service.type }}</p>
             </div>
           </div>
           <span
             class="inline-flex items-center gap-1.5 text-xs px-2 py-1 rounded-full"
-            :style="{ background: service.status === 'running' ? 'rgba(34, 197, 94, 0.12)' : service.status === 'stopped' ? 'rgba(234, 179, 8, 0.12)' : 'rgba(239, 68, 68, 0.12)', color: service.status === 'running' ? '#22c55e' : service.status === 'stopped' ? '#eab308' : '#ef4444' }"
+            :class="service.status === 'running' ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400' : service.status === 'stopped' ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400' : 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400'"
           >
             <span
               class="w-1.5 h-1.5 rounded-full"
-              :style="{ background: service.status === 'running' ? '#22c55e' : service.status === 'stopped' ? '#eab308' : '#ef4444' }"
+              :class="service.status === 'running' ? 'bg-green-500' : service.status === 'stopped' ? 'bg-yellow-500' : 'bg-red-500'"
             ></span>
             {{ getStatusText(service.status) }}
           </span>
         </div>
 
-        <p class="text-sm mb-4 line-clamp-2" style="color: var(--text-secondary)">{{ service.description }}</p>
+        <p class="text-sm mb-4 line-clamp-2 text-slate-600 dark:text-slate-400">{{ service.description }}</p>
 
         <div class="flex items-center justify-between text-sm">
-          <div class="flex items-center gap-1" style="color: var(--text-secondary)">
+          <div class="flex items-center gap-1 text-slate-500">
             <UIcon name="lucide:wrench" class="w-4 h-4" />
             <span>{{ service.toolCount }} 个工具</span>
           </div>
@@ -148,50 +145,48 @@
       </div>
     </div>
 
-    <!-- 空状态 -->
     <div v-if="filteredServices.length === 0" class="text-center py-12">
-      <UIcon name="lucide:server-off" class="w-12 h-12 mx-auto mb-3" style="color: var(--text-secondary)" />
-      <p class="mb-4" style="color: var(--text-secondary)">未找到匹配的 MCP 服务</p>
+      <UIcon name="lucide:server-off" class="w-12 h-12 mx-auto mb-3 text-slate-400" />
+      <p class="mb-4 text-slate-500">未找到匹配的 MCP 服务</p>
       <button class="btn-glass btn-glass--primary" @click="showAddDialog = true">
         <UIcon name="lucide:plus" class="w-4 h-4" />
         添加第一个服务
       </button>
     </div>
 
-    <!-- 添加服务对话框 -->
     <UDialog v-model="showAddDialog" :title="editingService ? '编辑 MCP 服务' : '添加 MCP 服务'" size="lg">
       <div class="space-y-4">
         <div>
-          <label class="block text-sm font-medium mb-1.5" style="color: var(--text-primary)">服务名称</label>
+          <label class="block text-sm font-medium mb-1.5 text-slate-700 dark:text-slate-300">服务名称</label>
           <UInput v-model="formData.name" placeholder="输入服务名称" />
         </div>
         <div>
-          <label class="block text-sm font-medium mb-1.5" style="color: var(--text-primary)">服务类型</label>
+          <label class="block text-sm font-medium mb-1.5 text-slate-700 dark:text-slate-300">服务类型</label>
           <USelect v-model="formData.type" :options="serviceTypeOptions" />
         </div>
         <div>
-          <label class="block text-sm font-medium mb-1.5" style="color: var(--text-primary)">服务描述</label>
+          <label class="block text-sm font-medium mb-1.5 text-slate-700 dark:text-slate-300">服务描述</label>
           <UTextarea v-model="formData.description" placeholder="输入服务描述" rows="3" />
         </div>
         <div v-if="formData.type === 'stdio'">
-          <label class="block text-sm font-medium mb-1.5" style="color: var(--text-primary)">启动命令</label>
+          <label class="block text-sm font-medium mb-1.5 text-slate-700 dark:text-slate-300">启动命令</label>
           <UInput v-model="formData.command" placeholder="例如: npx -y @modelcontextprotocol/server-filesystem /path/to/files" />
-          <p class="text-xs mt-1" style="color: var(--text-secondary)">用于启动 MCP 服务器的命令</p>
+          <p class="text-xs mt-1 text-slate-500">用于启动 MCP 服务器的命令</p>
         </div>
         <div v-else-if="formData.type === 'sse'">
-          <label class="block text-sm font-medium mb-1.5" style="color: var(--text-primary)">SSE 端点 URL</label>
+          <label class="block text-sm font-medium mb-1.5 text-slate-700 dark:text-slate-300">SSE 端点 URL</label>
           <UInput v-model="formData.url" placeholder="https://example.com/mcp/sse" />
-          <p class="text-xs mt-1" style="color: var(--text-secondary)">MCP SSE 服务器的完整 URL</p>
+          <p class="text-xs mt-1 text-slate-500">MCP SSE 服务器的完整 URL</p>
         </div>
         <div v-else-if="formData.type === 'websocket'">
-          <label class="block text-sm font-medium mb-1.5" style="color: var(--text-primary)">WebSocket URL</label>
+          <label class="block text-sm font-medium mb-1.5 text-slate-700 dark:text-slate-300">WebSocket URL</label>
           <UInput v-model="formData.url" placeholder="ws://localhost:8080/mcp" />
-          <p class="text-xs mt-1" style="color: var(--text-secondary)">MCP WebSocket 服务器地址</p>
+          <p class="text-xs mt-1 text-slate-500">MCP WebSocket 服务器地址</p>
         </div>
         <div>
           <label class="flex items-center gap-2 cursor-pointer">
             <UCheckbox v-model="formData.autoStart" />
-            <span class="text-sm" style="color: var(--text-primary)">启动时自动运行</span>
+            <span class="text-sm text-slate-700 dark:text-slate-300">启动时自动运行</span>
           </label>
         </div>
       </div>
@@ -201,33 +196,31 @@
       </template>
     </UDialog>
 
-    <!-- 服务详情抽屉 -->
     <UDrawer v-model="showDetailDrawer" :title="selectedService?.name || '服务详情'" side="right" size="lg">
       <div v-if="selectedService" class="space-y-6">
-        <!-- 服务状态 -->
         <div>
-          <h3 class="text-sm font-medium mb-2" style="color: var(--text-secondary)">服务状态</h3>
-          <div class="glass-card p-4">
+          <h3 class="text-sm font-medium mb-2 text-slate-500">服务状态</h3>
+          <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 p-5">
             <div class="flex items-center justify-between">
               <div class="flex items-center gap-3">
                 <div
                   class="w-12 h-12 rounded-lg flex items-center justify-center"
-                  :style="{ background: selectedService.type === 'stdio' ? 'rgba(59, 130, 246, 0.12)' : selectedService.type === 'sse' ? 'rgba(34, 197, 94, 0.12)' : selectedService.type === 'websocket' ? 'rgba(234, 179, 8, 0.12)' : 'rgba(168, 85, 247, 0.12)' }"
+                  :class="selectedService.type === 'stdio' ? 'bg-blue-100 dark:bg-blue-900/30' : selectedService.type === 'sse' ? 'bg-green-100 dark:bg-green-900/30' : selectedService.type === 'websocket' ? 'bg-yellow-100 dark:bg-yellow-900/30' : 'bg-purple-100 dark:bg-purple-900/30'"
                 >
-                  <UIcon :name="getServiceIcon(selectedService.type)" class="w-6 h-6" :style="{ color: selectedService.type === 'stdio' ? '#3b82f6' : selectedService.type === 'sse' ? '#22c55e' : selectedService.type === 'websocket' ? '#eab308' : '#a855f7' }" />
+                  <UIcon :name="getServiceIcon(selectedService.type)" class="w-6 h-6" :class="selectedService.type === 'stdio' ? 'text-blue-600 dark:text-blue-400' : selectedService.type === 'sse' ? 'text-green-600 dark:text-green-400' : selectedService.type === 'websocket' ? 'text-yellow-600 dark:text-yellow-400' : 'text-purple-600 dark:text-purple-400'" />
                 </div>
                 <div>
-                  <h4 class="font-semibold" style="color: var(--text-primary)">{{ selectedService.name }}</h4>
-                  <p class="text-sm" style="color: var(--text-secondary)">{{ selectedService.type }}</p>
+                  <h4 class="font-semibold text-slate-900 dark:text-white">{{ selectedService.name }}</h4>
+                  <p class="text-sm text-slate-500">{{ selectedService.type }}</p>
                 </div>
               </div>
               <span
                 class="inline-flex items-center gap-1.5 text-sm px-3 py-1 rounded-full"
-                :style="{ background: selectedService.status === 'running' ? 'rgba(34, 197, 94, 0.12)' : selectedService.status === 'stopped' ? 'rgba(234, 179, 8, 0.12)' : 'rgba(239, 68, 68, 0.12)', color: selectedService.status === 'running' ? '#22c55e' : selectedService.status === 'stopped' ? '#eab308' : '#ef4444' }"
+                :class="selectedService.status === 'running' ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400' : selectedService.status === 'stopped' ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400' : 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400'"
               >
                 <span
                   class="w-2 h-2 rounded-full"
-                  :style="{ background: selectedService.status === 'running' ? '#22c55e' : selectedService.status === 'stopped' ? '#eab308' : '#ef4444' }"
+                  :class="selectedService.status === 'running' ? 'bg-green-500' : selectedService.status === 'stopped' ? 'bg-yellow-500' : 'bg-red-500'"
                 ></span>
                 {{ getStatusText(selectedService.status) }}
               </span>
@@ -235,64 +228,60 @@
           </div>
         </div>
 
-        <!-- 服务描述 -->
         <div>
-          <h3 class="text-sm font-medium mb-2" style="color: var(--text-secondary)">服务描述</h3>
-          <div class="glass-card p-4">
-            <p class="text-sm" style="color: var(--text-primary)">{{ selectedService.description }}</p>
+          <h3 class="text-sm font-medium mb-2 text-slate-500">服务描述</h3>
+          <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 p-5">
+            <p class="text-sm text-slate-700 dark:text-slate-300">{{ selectedService.description }}</p>
           </div>
         </div>
 
-        <!-- 配置信息 -->
         <div>
-          <h3 class="text-sm font-medium mb-2" style="color: var(--text-secondary)">配置信息</h3>
-          <div class="glass-card p-4">
+          <h3 class="text-sm font-medium mb-2 text-slate-500">配置信息</h3>
+          <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 p-5">
             <div class="space-y-3">
               <div v-if="selectedService.command" class="flex items-start justify-between">
-                <span class="text-sm" style="color: var(--text-secondary)">启动命令</span>
-                <code class="text-xs px-2 py-1 rounded" style="background: var(--glass-bg-1); color: var(--text-primary)">{{ selectedService.command }}</code>
+                <span class="text-sm text-slate-500">启动命令</span>
+                <code class="text-xs px-2 py-1 rounded bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300">{{ selectedService.command }}</code>
               </div>
               <div v-if="selectedService.url" class="flex items-start justify-between">
-                <span class="text-sm" style="color: var(--text-secondary)">服务地址</span>
-                <code class="text-xs px-2 py-1 rounded" style="background: var(--glass-bg-1); color: var(--text-primary)">{{ selectedService.url }}</code>
+                <span class="text-sm text-slate-500">服务地址</span>
+                <code class="text-xs px-2 py-1 rounded bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300">{{ selectedService.url }}</code>
               </div>
               <div class="flex items-center justify-between">
-                <span class="text-sm" style="color: var(--text-secondary)">工具数量</span>
-                <span class="text-sm font-medium" style="color: var(--text-primary)">{{ selectedService.toolCount }}</span>
+                <span class="text-sm text-slate-500">工具数量</span>
+                <span class="text-sm font-medium text-slate-900 dark:text-white">{{ selectedService.toolCount }}</span>
               </div>
               <div class="flex items-center justify-between">
-                <span class="text-sm" style="color: var(--text-secondary)">自动启动</span>
-                <span class="text-sm font-medium" style="color: var(--text-primary)">{{ selectedService.autoStart ? '是' : '否' }}</span>
+                <span class="text-sm text-slate-500">自动启动</span>
+                <span class="text-sm font-medium text-slate-900 dark:text-white">{{ selectedService.autoStart ? '是' : '否' }}</span>
               </div>
               <div class="flex items-center justify-between">
-                <span class="text-sm" style="color: var(--text-secondary)">创建时间</span>
-                <span class="text-sm" style="color: var(--text-primary)">{{ selectedService.createdAt }}</span>
+                <span class="text-sm text-slate-500">创建时间</span>
+                <span class="text-sm text-slate-700 dark:text-slate-300">{{ selectedService.createdAt }}</span>
               </div>
             </div>
           </div>
         </div>
 
-        <!-- 工具列表 -->
         <div>
           <div class="flex items-center justify-between mb-2">
-            <h3 class="text-sm font-medium" style="color: var(--text-secondary)">工具列表</h3>
+            <h3 class="text-sm font-medium text-slate-500">工具列表</h3>
             <button class="btn-glass" @click="testTools = !testTools">
               <UIcon name="lucide:play-circle" class="w-4 h-4" />
               测试工具
             </button>
           </div>
-          <div class="glass-card" style="padding: 0">
+          <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700">
             <div>
               <div
                 v-for="(tool, toolIndex) in selectedService.tools"
                 :key="tool.name"
-                class="p-4 transition-colors"
-                :style="{ borderBottom: toolIndex < selectedService.tools.length - 1 ? '1px solid var(--glass-border)' : 'none' }"
+                class="p-4 border-b border-slate-200 dark:border-slate-700 last:border-0 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors"
               >
                 <div class="flex items-start justify-between">
                   <div class="flex-1">
-                    <h4 class="font-medium text-sm" style="color: var(--text-primary)">{{ tool.name }}</h4>
-                    <p class="text-xs mt-1" style="color: var(--text-secondary)">{{ tool.description }}</p>
+                    <h4 class="font-medium text-sm text-slate-900 dark:text-white">{{ tool.name }}</h4>
+                    <p class="text-xs mt-1 text-slate-500">{{ tool.description }}</p>
                   </div>
                   <button class="btn-glass" @click="testTool(tool)">
                     <UIcon name="lucide:play" class="w-4 h-4" />
@@ -303,7 +292,6 @@
           </div>
         </div>
 
-        <!-- 操作按钮 -->
         <div class="flex gap-3">
           <button
             v-if="selectedService.status === 'running'"
@@ -338,28 +326,15 @@ definePageMeta({
   layout: 'console',
 })
 
-/**
- * MCP 服务状态类型
- */
 type ServiceStatus = 'running' | 'stopped' | 'error'
-
-/**
- * MCP 服务类型
- */
 type ServiceType = 'stdio' | 'sse' | 'websocket' | 'builtin'
 
-/**
- * MCP 工具接口定义
- */
 interface McpTool {
   name: string
   description: string
   inputSchema?: Record<string, unknown>
 }
 
-/**
- * MCP 服务接口定义
- */
 interface McpService {
   id: string
   name: string
@@ -374,49 +349,15 @@ interface McpService {
   tools: McpTool[]
 }
 
-/**
- * 搜索关键词
- */
 const searchKeyword = ref('')
-
-/**
- * 状态筛选
- */
 const statusFilter = ref('all')
-
-/**
- * 类型筛选
- */
 const typeFilter = ref('all')
-
-/**
- * 是否显示添加对话框
- */
 const showAddDialog = ref(false)
-
-/**
- * 是否显示详情抽屉
- */
 const showDetailDrawer = ref(false)
-
-/**
- * 当前选中的服务
- */
 const selectedService = ref<McpService | null>(null)
-
-/**
- * 正在编辑的服务
- */
 const editingService = ref<McpService | null>(null)
-
-/**
- * 是否显示测试工具模式
- */
 const testTools = ref(false)
 
-/**
- * 状态筛选选项
- */
 const statusOptions = [
   { label: '全部状态', value: 'all' },
   { label: '运行中', value: 'running' },
@@ -424,9 +365,6 @@ const statusOptions = [
   { label: '错误', value: 'error' },
 ]
 
-/**
- * 类型筛选选项
- */
 const typeOptions = [
   { label: '全部类型', value: 'all' },
   { label: '标准输入输出', value: 'stdio' },
@@ -435,9 +373,6 @@ const typeOptions = [
   { label: '内置服务', value: 'builtin' },
 ]
 
-/**
- * 服务类型选项（用于表单）
- */
 const serviceTypeOptions = [
   { label: '标准输入输出 (STDIO)', value: 'stdio' },
   { label: 'Server-Sent Events (SSE)', value: 'sse' },
@@ -445,9 +380,6 @@ const serviceTypeOptions = [
   { label: '内置服务', value: 'builtin' },
 ]
 
-/**
- * 表单数据
- */
 const formData = ref({
   name: '',
   type: 'stdio' as ServiceType,
@@ -457,9 +389,6 @@ const formData = ref({
   autoStart: false,
 })
 
-/**
- * 模拟 MCP 服务数据
- */
 const services = ref<McpService[]>([
   {
     id: '1',
@@ -577,9 +506,6 @@ const services = ref<McpService[]>([
   },
 ])
 
-/**
- * 统计数据
- */
 const stats = computed(() => ({
   totalServices: services.value.length,
   running: services.value.filter(s => s.status === 'running').length,
@@ -588,9 +514,6 @@ const stats = computed(() => ({
   totalTools: services.value.reduce((sum, s) => sum + s.toolCount, 0),
 }))
 
-/**
- * 根据筛选条件过滤后的服务列表
- */
 const filteredServices = computed(() => {
   let result = [...services.value]
 
@@ -614,11 +537,6 @@ const filteredServices = computed(() => {
   return result
 })
 
-/**
- * 获取服务状态文本
- * @param status - 服务状态
- * @returns 状态显示文本
- */
 function getStatusText(status: ServiceStatus): string {
   const map: Record<ServiceStatus, string> = {
     running: '运行中',
@@ -628,39 +546,6 @@ function getStatusText(status: ServiceStatus): string {
   return map[status]
 }
 
-/**
- * 获取状态徽章样式类
- * @param status - 服务状态
- * @returns CSS 类名
- */
-function getStatusBadgeClass(status: ServiceStatus): string {
-  const map: Record<ServiceStatus, string> = {
-    running: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
-    stopped: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400',
-    error: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
-  }
-  return map[status]
-}
-
-/**
- * 获取状态点样式类
- * @param status - 服务状态
- * @returns CSS 类名
- */
-function getStatusDotClass(status: ServiceStatus): string {
-  const map: Record<ServiceStatus, string> = {
-    running: 'bg-green-500',
-    stopped: 'bg-yellow-500',
-    error: 'bg-red-500',
-  }
-  return map[status]
-}
-
-/**
- * 获取服务图标
- * @param type - 服务类型
- * @returns 图标名称
- */
 function getServiceIcon(type: ServiceType): string {
   const map: Record<ServiceType, string> = {
     stdio: 'lucide:terminal',
@@ -671,49 +556,12 @@ function getServiceIcon(type: ServiceType): string {
   return map[type]
 }
 
-/**
- * 获取服务图标背景色
- * @param type - 服务类型
- * @returns CSS 类名
- */
-function getServiceIconBg(type: ServiceType): string {
-  const map: Record<ServiceType, string> = {
-    stdio: 'bg-blue-100 dark:bg-blue-900/30',
-    sse: 'bg-green-100 dark:bg-green-900/30',
-    websocket: 'bg-yellow-100 dark:bg-yellow-900/30',
-    builtin: 'bg-purple-100 dark:bg-purple-900/30',
-  }
-  return map[type]
-}
-
-/**
- * 获取服务图标颜色
- * @param type - 服务类型
- * @returns CSS 类名
- */
-function getServiceIconColor(type: ServiceType): string {
-  const map: Record<ServiceType, string> = {
-    stdio: 'text-blue-600 dark:text-blue-400',
-    sse: 'text-green-600 dark:text-green-400',
-    websocket: 'text-yellow-600 dark:text-yellow-400',
-    builtin: 'text-purple-600 dark:text-purple-400',
-  }
-  return map[type]
-}
-
-/**
- * 重置所有筛选条件
- */
 function resetFilters() {
   searchKeyword.value = ''
   statusFilter.value = 'all'
   typeFilter.value = 'all'
 }
 
-/**
- * 切换服务运行状态
- * @param service - MCP 服务
- */
 function toggleService(service: McpService) {
   if (service.status === 'running') {
     service.status = 'stopped'
@@ -722,19 +570,11 @@ function toggleService(service: McpService) {
   }
 }
 
-/**
- * 查看服务详情
- * @param service - MCP 服务
- */
 function viewServiceDetail(service: McpService) {
   selectedService.value = service
   showDetailDrawer.value = true
 }
 
-/**
- * 编辑服务
- * @param service - MCP 服务
- */
 function editService(service: McpService) {
   editingService.value = service
   formData.value = {
@@ -749,18 +589,10 @@ function editService(service: McpService) {
   showAddDialog.value = true
 }
 
-/**
- * 查看服务日志
- * @param service - MCP 服务
- */
 function viewLogs(service: McpService) {
   console.log('查看日志:', service.name)
 }
 
-/**
- * 删除服务
- * @param service - MCP 服务
- */
 function deleteService(service: McpService) {
   const index = services.value.findIndex(s => s.id === service.id)
   if (index > -1) {
@@ -768,9 +600,6 @@ function deleteService(service: McpService) {
   }
 }
 
-/**
- * 保存服务
- */
 function saveService() {
   if (editingService.value) {
     const service = services.value.find(s => s.id === editingService.value!.id)
@@ -803,9 +632,6 @@ function saveService() {
   resetForm()
 }
 
-/**
- * 重置表单
- */
 function resetForm() {
   formData.value = {
     name: '',
@@ -818,10 +644,6 @@ function resetForm() {
   editingService.value = null
 }
 
-/**
- * 测试工具
- * @param tool - MCP 工具
- */
 function testTool(tool: McpTool) {
   console.log('测试工具:', tool.name)
 }

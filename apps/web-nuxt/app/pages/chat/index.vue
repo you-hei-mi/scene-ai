@@ -1,5 +1,5 @@
 <template>
-  <div class="flex h-full">
+  <div class="flex h-full bg-white dark:bg-slate-900">
     <ChatSidebar
       v-if="!sidebarCollapsed"
       :conversations="conversations"
@@ -11,17 +11,16 @@
     />
 
     <div class="flex-1 flex flex-col min-w-0">
-      <div class="h-12 flex items-center px-4 gap-2" style="border-bottom: 1px solid var(--glass-border); background: var(--glass-bg-nav)">
+      <div class="h-14 flex items-center px-4 gap-3 border-b border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl">
         <button
           v-if="sidebarCollapsed"
-          class="btn-glass"
-          style="padding: 0.25rem 0.5rem; font-size: 0.875rem;"
+          class="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors"
           @click="sidebarCollapsed = false"
         >
-          <UIcon name="lucide:panel-left" class="w-4 h-4" />
+          <UIcon name="lucide:panel-left" class="w-5 h-5 text-slate-600 dark:text-slate-300" />
         </button>
         <div class="flex-1 flex items-center justify-center">
-          <h1 class="font-display font-medium" style="color: var(--text-primary)">
+          <h1 class="font-semibold text-slate-900 dark:text-white">
             {{ currentConversation?.title || '新对话' }}
           </h1>
         </div>
@@ -35,27 +34,29 @@
 
       <div
         ref="messagesContainer"
-        class="flex-1 overflow-y-auto"
+        class="flex-1 overflow-y-auto bg-gradient-to-b from-slate-50/50 to-white/50 dark:from-slate-900/50 dark:to-slate-800/50"
       >
         <div class="max-w-3xl mx-auto py-6 px-4">
           <div v-if="messages.length === 0" class="text-center py-20">
-            <div class="inline-flex items-center justify-center w-16 h-16 rounded-full mb-6" style="background: var(--accent-soft-bg)">
-              <UIcon name="lucide:message-square" class="w-8 h-8" style="color: var(--accent-soft-text)" />
+            <div class="inline-flex items-center justify-center w-20 h-20 rounded-2xl mb-8 bg-gradient-to-br from-primary/10 to-accent/10">
+              <UIcon name="lucide:message-square" class="w-10 h-10 text-primary" />
             </div>
-            <h2 class="font-display text-2xl font-semibold mb-2 text-gradient">有什么我可以帮您的？</h2>
-            <p class="mb-8" style="color: var(--text-secondary)">输入您的问题，开始与 AI 对话</p>
-            <div class="grid grid-cols-2 gap-4 max-w-lg mx-auto">
+            <h2 class="text-2xl font-bold mb-3 bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">有什么我可以帮您的？</h2>
+            <p class="text-slate-500 dark:text-slate-400 mb-10">输入您的问题，开始与 AI 对话</p>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-lg mx-auto">
               <div
                 v-for="suggestion in suggestions"
                 :key="suggestion.title"
-                class="glass-card p-4 cursor-pointer text-left"
+                class="bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl border border-slate-200 dark:border-slate-700 rounded-xl p-5 cursor-pointer hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-300 text-left"
                 @click="sendMessage(suggestion.title)"
               >
-                <div class="flex items-start gap-3">
-                  <UIcon :name="suggestion.icon" class="w-5 h-5 mt-0.5" style="color: var(--accent-soft-text)" />
+                <div class="flex items-start gap-4">
+                  <div class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                    <UIcon :name="suggestion.icon" class="w-5 h-5 text-primary" />
+                  </div>
                   <div>
-                    <div class="font-medium mb-1" style="color: var(--text-primary)">{{ suggestion.title }}</div>
-                    <div class="text-sm" style="color: var(--text-secondary)">{{ suggestion.desc }}</div>
+                    <div class="font-semibold text-slate-900 dark:text-white mb-1">{{ suggestion.title }}</div>
+                    <div class="text-sm text-slate-500 dark:text-slate-400">{{ suggestion.desc }}</div>
                   </div>
                 </div>
               </div>
@@ -83,7 +84,7 @@
         </div>
       </div>
 
-      <div style="border-top: 1px solid var(--glass-border)" class="p-4">
+      <div class="border-t border-slate-200 dark:border-slate-700 bg-white/90 dark:bg-slate-800/90 backdrop-blur-xl p-4">
         <div class="max-w-3xl mx-auto">
           <ChatInput
             v-model="inputValue"
@@ -91,7 +92,7 @@
             @send="handleSend"
             @stop="handleStop"
           />
-          <p class="text-xs text-center mt-2" style="color: var(--text-secondary)">
+          <p class="text-xs text-center mt-3 text-slate-400 dark:text-slate-500">
             AI 可能会犯错，请核实重要信息
           </p>
         </div>

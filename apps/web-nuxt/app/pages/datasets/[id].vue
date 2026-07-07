@@ -1,120 +1,127 @@
 <template>
-  <div style="background: var(--bg-deep); min-height: 100vh; display: flex; flex-direction: column;">
-    <header style="height: 3.5rem; border-bottom: 1px solid var(--glass-border); display: flex; align-items: center; justify-content: space-between; padding: 0 1rem;">
-      <div style="display: flex; align-items: center; gap: 0.75rem;">
-        <button class="btn-glass" style="font-size: 0.875rem; padding: 0.25rem 0.5rem;" @click="navigateTo('/datasets')">
-          <UIcon name="lucide:arrow-left" style="width: 1rem; height: 1rem;" />
-          返回
+  <div class="h-screen flex flex-col bg-gradient-to-br from-slate-50 via-white to-indigo-50/30 dark:from-slate-900 dark:via-slate-800 dark:to-indigo-950/30">
+    <header class="h-14 flex items-center justify-between px-4 sm:px-6 border-b border-slate-200/80 dark:border-slate-700/80 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl">
+      <div class="flex items-center gap-4">
+        <button class="btn-glass p-2 hover:bg-slate-100 dark:hover:bg-slate-800" @click="navigateTo('/datasets')">
+          <UIcon name="lucide:arrow-left" class="w-4 h-4" />
         </button>
-        <div style="width: 2rem; height: 2rem; border-radius: 0.5rem; background: var(--accent-soft-bg); display: flex; align-items: center; justify-content: center;">
-          <UIcon name="lucide:database" style="width: 1.25rem; height: 1.25rem; color: var(--accent-soft-text);" />
+        <div class="w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-primary to-accent">
+          <UIcon name="lucide:database" class="w-5 h-5 text-white" />
         </div>
         <div>
-          <h1 class="font-display" style="font-weight: 600; color: var(--text-primary);">{{ currentDataset?.name || '知识库详情' }}</h1>
-          <p style="font-size: 0.75rem; color: var(--text-secondary);">
-            {{ currentDataset?.docCount || 0 }} 文档 · {{ currentDataset?.chunkCount || 0 }} 分段
-          </p>
+          <h1 class="font-display font-bold text-slate-900 dark:text-white">{{ currentDataset?.name || '知识库详情' }}</h1>
+          <p class="text-xs text-slate-500">{{ currentDataset?.docCount || 0 }} 文档 · {{ currentDataset?.chunkCount || 0 }} 分段</p>
         </div>
       </div>
-      <div style="display: flex; align-items: center; gap: 0.5rem;">
+      <div class="flex items-center gap-3">
         <button class="btn-glass" @click="handleTest">
-          <UIcon name="lucide:search" style="width: 1rem; height: 1rem;" />
+          <UIcon name="lucide:search" class="w-4 h-4" />
           检索测试
         </button>
         <button class="btn-glass btn-glass--primary" @click="handleUpload">
-          <UIcon name="lucide:upload" style="width: 1rem; height: 1rem;" />
+          <UIcon name="lucide:upload" class="w-4 h-4" />
           上传文档
         </button>
       </div>
     </header>
 
-    <div style="flex: 1; display: flex; overflow: hidden;">
-      <aside style="width: 14rem; border-right: 1px solid var(--glass-border); background: var(--glass-bg-1);">
-        <nav style="padding: 0.5rem;">
-          <ul style="list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 0.25rem;">
+    <div class="flex-1 flex overflow-hidden">
+      <aside class="w-48 border-r border-slate-200/50 dark:border-slate-700/50 bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm">
+        <nav class="p-3">
+          <ul class="space-y-1">
             <li
               v-for="tab in tabs"
               :key="tab.id"
-              style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0.75rem; border-radius: 0.375rem; font-size: 0.875rem; cursor: pointer;"
-              :style="activeTab === tab.id ? { background: 'var(--accent-soft-bg)', color: 'var(--accent-soft-text)' } : { color: 'var(--text-secondary)' }"
+              :class="[
+                'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium cursor-pointer transition-all duration-200',
+                activeTab === tab.id
+                  ? 'bg-gradient-to-r from-primary/10 to-accent/10 text-primary dark:from-primary/20 dark:to-accent/20'
+                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+              ]"
               @click="activeTab = tab.id"
             >
-              <UIcon :name="tab.icon" style="width: 1rem; height: 1rem;" />
+              <UIcon :name="tab.icon" class="w-4 h-4" />
               <span>{{ tab.label }}</span>
             </li>
           </ul>
         </nav>
       </aside>
 
-      <div style="flex: 1; overflow-y: auto;">
-        <div style="max-width: 64rem; margin: 0 auto; padding: 1.5rem;">
-          <!-- 文档列表 -->
-          <div v-if="activeTab === 'documents'">
-            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem;">
-              <h2 class="font-display" style="font-size: 1.25rem; font-weight: 600; color: var(--text-primary);">文档管理</h2>
-              <div style="display: flex; align-items: center; gap: 0.5rem;">
-                <div style="position: relative; width: 12rem;">
-                  <UIcon name="lucide:search" style="position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); width: 1rem; height: 1rem; color: var(--text-secondary);" />
-                  <input v-model="docKeyword" placeholder="搜索文档..." style="background: var(--glass-bg-1); border: 1px solid var(--glass-border); border-radius: 0.75rem; padding: 0.375rem 0.75rem 0.375rem 2rem; color: var(--text-primary); outline: none; width: 100%; font-size: 0.875rem;" />
-                </div>
+      <div class="flex-1 overflow-y-auto">
+        <div class="max-w-6xl mx-auto p-6 sm:p-8">
+          <div v-if="activeTab === 'documents'" class="space-y-6">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-4">
+                <div class="w-1 h-6 bg-gradient-to-b from-primary to-accent rounded-full"></div>
+                <h2 class="font-display text-xl font-bold text-slate-900 dark:text-white">文档管理</h2>
+              </div>
+              <div class="relative w-48">
+                <UIcon name="lucide:search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input 
+                  v-model="docKeyword" 
+                  placeholder="搜索文档..." 
+                  class="w-full pl-10 pr-4 py-2 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
+                />
               </div>
             </div>
 
-            <div class="glass-panel" style="padding: 0;">
-              <table style="width: 100%; border-collapse: collapse;">
+            <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 overflow-hidden">
+              <table class="w-full">
                 <thead>
-                  <tr style="border-bottom: 1px solid var(--glass-border);">
-                    <th style="text-align: left; padding: 0.75rem 1rem; font-size: 0.875rem; font-weight: 500; color: var(--text-secondary);">文件名</th>
-                    <th style="text-align: left; padding: 0.75rem 1rem; font-size: 0.875rem; font-weight: 500; color: var(--text-secondary); width: 6rem;">类型</th>
-                    <th style="text-align: left; padding: 0.75rem 1rem; font-size: 0.875rem; font-weight: 500; color: var(--text-secondary); width: 6rem;">大小</th>
-                    <th style="text-align: left; padding: 0.75rem 1rem; font-size: 0.875rem; font-weight: 500; color: var(--text-secondary); width: 5rem;">分段</th>
-                    <th style="text-align: left; padding: 0.75rem 1rem; font-size: 0.875rem; font-weight: 500; color: var(--text-secondary); width: 6rem;">状态</th>
-                    <th style="text-align: right; padding: 0.75rem 1rem; font-size: 0.875rem; font-weight: 500; color: var(--text-secondary); width: 6rem;">操作</th>
+                  <tr class="border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-700/50">
+                    <th class="text-left px-6 py-4 text-sm font-medium text-slate-500">文件名</th>
+                    <th class="text-left px-6 py-4 text-sm font-medium text-slate-500 w-20">类型</th>
+                    <th class="text-left px-6 py-4 text-sm font-medium text-slate-500 w-20">大小</th>
+                    <th class="text-left px-6 py-4 text-sm font-medium text-slate-500 w-16">分段</th>
+                    <th class="text-left px-6 py-4 text-sm font-medium text-slate-500 w-24">状态</th>
+                    <th class="text-right px-6 py-4 text-sm font-medium text-slate-500 w-24">操作</th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
                   <tr
                     v-for="doc in filteredDocuments"
                     :key="doc.id"
-                    style="border-bottom: 1px solid var(--glass-border);"
+                    class="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors"
                   >
-                    <td style="padding: 0.75rem 1rem;">
-                      <div style="display: flex; align-items: center; gap: 0.5rem;">
-                        <UIcon name="lucide:file-text" style="width: 1rem; height: 1rem; color: var(--text-secondary);" />
-                        <span style="font-weight: 500; color: var(--text-primary);">{{ doc.name }}</span>
+                    <td class="px-6 py-4">
+                      <div class="flex items-center gap-3">
+                        <UIcon name="lucide:file-text" class="w-4 h-4 text-slate-400" />
+                        <span class="font-medium text-slate-900 dark:text-white">{{ doc.name }}</span>
                       </div>
                     </td>
-                    <td style="padding: 0.75rem 1rem; font-size: 0.875rem;">
-                      <UBadge variant="outline" size="sm">
+                    <td class="px-6 py-4">
+                      <span class="px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">
                         {{ typeText(doc.type) }}
-                      </UBadge>
-                    </td>
-                    <td style="padding: 0.75rem 1rem; font-size: 0.875rem; color: var(--text-secondary);">
-                      {{ doc.size > 0 ? formatSize(doc.size) : '-' }}
-                    </td>
-                    <td style="padding: 0.75rem 1rem; font-size: 0.875rem; color: var(--text-secondary);">
-                      {{ doc.chunkCount > 0 ? doc.chunkCount : '-' }}
-                    </td>
-                    <td style="padding: 0.75rem 1rem;">
-                      <span
-                        style="display: inline-flex; align-items: center; gap: 0.375rem; font-size: 0.875rem;"
-                        :style="{
-                          color: doc.status === 'completed' ? '#22c55e' : doc.status === 'parsing' ? '#eab308' : doc.status === 'error' ? '#ef4444' : undefined,
-                        }"
-                      >
-                        <span
-                          style="width: 0.5rem; height: 0.5rem; border-radius: 50%;"
-                          :style="{
-                            backgroundColor: doc.status === 'completed' ? '#22c55e' : doc.status === 'parsing' ? '#eab308' : doc.status === 'error' ? '#ef4444' : undefined,
-                          }"
-                        ></span>
-                        {{ statusText(doc.status) }}
                       </span>
                     </td>
-                    <td style="padding: 0.75rem 1rem; text-align: right;">
+                    <td class="px-6 py-4 text-sm text-slate-500">
+                      {{ doc.size > 0 ? formatSize(doc.size) : '-' }}
+                    </td>
+                    <td class="px-6 py-4 text-sm text-slate-500">
+                      {{ doc.chunkCount > 0 ? doc.chunkCount : '-' }}
+                    </td>
+                    <td class="px-6 py-4">
+                      <div class="flex items-center gap-2">
+                        <span
+                          :class="[
+                            'w-2 h-2 rounded-full',
+                            doc.status === 'completed' ? 'bg-green-500' : doc.status === 'parsing' ? 'bg-amber-500 animate-pulse' : 'bg-red-500'
+                          ]"
+                        ></span>
+                        <span
+                          :class="[
+                            'text-sm font-medium',
+                            doc.status === 'completed' ? 'text-green-600 dark:text-green-400' : doc.status === 'parsing' ? 'text-amber-600 dark:text-amber-400' : 'text-red-600 dark:text-red-400'
+                          ]"
+                        >
+                          {{ statusText(doc.status) }}
+                        </span>
+                      </div>
+                    </td>
+                    <td class="px-6 py-4 text-right">
                       <UDropdownMenu>
-                        <button class="btn-glass" style="font-size: 0.875rem; padding: 0.25rem 0.5rem;" icon="lucide:more-horizontal">
-                          <UIcon name="lucide:more-horizontal" style="width: 1rem; height: 1rem;" />
+                        <button class="btn-glass p-2">
+                          <UIcon name="lucide:more-horizontal" class="w-4 h-4" />
                         </button>
                         <template #items>
                           <UDropdownMenuItem label="查看分段" icon="lucide:layers" />
@@ -127,64 +134,78 @@
                   </tr>
                 </tbody>
               </table>
-              <div v-if="filteredDocuments.length === 0" style="text-align: center; padding-top: 3rem; padding-bottom: 3rem;">
-                <UIcon name="lucide:folder-open" style="width: 3rem; height: 3rem; margin: 0 auto; color: var(--text-secondary); margin-bottom: 0.75rem;" />
-                <p style="color: var(--text-secondary); margin-bottom: 1rem;">暂无文档</p>
-                <button class="btn-glass btn-glass--primary" style="font-size: 0.875rem;" @click="handleUpload">
+              <div v-if="filteredDocuments.length === 0" class="text-center py-12">
+                <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-slate-100 dark:bg-slate-700 mb-4">
+                  <UIcon name="lucide:folder-open" class="w-8 h-8 text-slate-400" />
+                </div>
+                <p class="text-slate-500 mb-4">暂无文档</p>
+                <button class="btn-glass btn-glass--primary" @click="handleUpload">
                   上传文档
                 </button>
               </div>
             </div>
           </div>
 
-          <!-- 分段管理 -->
-          <div v-if="activeTab === 'chunks'">
-            <h2 class="font-display" style="font-size: 1.25rem; font-weight: 600; color: var(--text-primary); margin-bottom: 1.5rem;">分段管理</h2>
-            <div class="glass-panel" style="padding: 1rem;">
-              <div style="display: flex; flex-direction: column; gap: 1rem;">
+          <div v-if="activeTab === 'chunks'" class="space-y-6">
+            <div class="flex items-center gap-4">
+              <div class="w-1 h-6 bg-gradient-to-b from-primary to-accent rounded-full"></div>
+              <h2 class="font-display text-xl font-bold text-slate-900 dark:text-white">分段管理</h2>
+            </div>
+            <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 p-6">
+              <div class="space-y-4">
                 <div
                   v-for="chunk in mockChunks"
                   :key="chunk.id"
-                  style="padding: 1rem; border: 1px solid var(--glass-border); border-radius: 0.5rem;"
+                  class="p-4 bg-slate-50 dark:bg-slate-700/50 rounded-xl border border-slate-200 dark:border-slate-600/50"
                 >
-                  <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem;">
-                    <span style="font-size: 0.875rem; font-weight: 500; color: var(--text-primary);">{{ chunk.id }}</span>
-                    <span style="font-size: 0.75rem; color: var(--text-secondary);">{{ chunk.tokens }} tokens</span>
+                  <div class="flex items-center justify-between mb-2">
+                    <span class="text-sm font-medium text-slate-900 dark:text-white">{{ chunk.id }}</span>
+                    <span class="text-xs text-slate-500">{{ chunk.tokens }} tokens</span>
                   </div>
-                  <p style="font-size: 0.875rem; color: var(--text-secondary); overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2;">{{ chunk.content }}</p>
+                  <p class="text-sm text-slate-600 dark:text-slate-400 line-clamp-2">{{ chunk.content }}</p>
                 </div>
               </div>
             </div>
           </div>
 
-          <!-- 检索测试 -->
-          <div v-if="activeTab === 'test'">
-            <h2 class="font-display" style="font-size: 1.25rem; font-weight: 600; color: var(--text-primary); margin-bottom: 1.5rem;">检索测试</h2>
-            <div class="glass-panel" style="padding: 1rem;">
-              <div style="display: flex; flex-direction: column; gap: 1rem;">
+          <div v-if="activeTab === 'test'" class="space-y-6">
+            <div class="flex items-center gap-4">
+              <div class="w-1 h-6 bg-gradient-to-b from-primary to-accent rounded-full"></div>
+              <h2 class="font-display text-xl font-bold text-slate-900 dark:text-white">检索测试</h2>
+            </div>
+            <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 p-6">
+              <div class="space-y-5">
                 <div>
-                  <label style="display: block; font-size: 0.875rem; font-weight: 500; margin-bottom: 0.375rem; color: var(--text-primary);">查询内容</label>
-                  <div style="display: flex; gap: 0.5rem;">
-                    <input v-model="testQuery" placeholder="输入要测试的查询内容..." style="background: var(--glass-bg-1); border: 1px solid var(--glass-border); border-radius: 0.75rem; padding: 0.5rem 1rem; color: var(--text-primary); outline: none; width: 100%;" />
-                    <button class="btn-glass btn-glass--primary" @click="handleTestSearch" :loading="testing">
-                      检索
+                  <label class="block text-sm font-semibold text-slate-900 dark:text-white mb-2">查询内容</label>
+                  <div class="flex gap-3">
+                    <input 
+                      v-model="testQuery" 
+                      placeholder="输入要测试的查询内容..." 
+                      class="flex-1 px-4 py-3 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
+                    />
+                    <button class="btn-glass btn-glass--primary px-6" @click="handleTestSearch" :disabled="testing">
+                      <span v-if="testing" class="inline-flex items-center gap-2">
+                        <span class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                        检索中...
+                      </span>
+                      <span v-else>检索</span>
                     </button>
                   </div>
                 </div>
 
                 <div v-if="testResults.length > 0">
-                  <label style="display: block; font-size: 0.875rem; font-weight: 500; margin-bottom: 0.5rem; color: var(--text-primary);">检索结果</label>
-                  <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                  <label class="block text-sm font-semibold text-slate-900 dark:text-white mb-3">检索结果</label>
+                  <div class="space-y-4">
                     <div
                       v-for="(result, index) in testResults"
                       :key="index"
-                      style="padding: 0.75rem; border: 1px solid var(--glass-border); border-radius: 0.5rem;"
+                      class="p-4 bg-slate-50 dark:bg-slate-700/50 rounded-xl border border-slate-200 dark:border-slate-600/50"
                     >
-                      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.25rem;">
-                        <span style="font-size: 0.875rem; font-weight: 500; color: var(--text-primary);">{{ result.source }}</span>
-                        <span style="font-size: 0.75rem; color: var(--accent-soft-text);">相似度: {{ result.score }}%</span>
+                      <div class="flex items-center justify-between mb-2">
+                        <span class="text-sm font-medium text-slate-900 dark:text-white">{{ result.source }}</span>
+                        <span class="text-xs font-medium text-primary">相似度: {{ result.score }}%</span>
                       </div>
-                      <p style="font-size: 0.875rem; color: var(--text-secondary);">{{ result.content }}</p>
+                      <p class="text-sm text-slate-600 dark:text-slate-400">{{ result.content }}</p>
                     </div>
                   </div>
                 </div>
@@ -192,89 +213,107 @@
             </div>
           </div>
 
-          <!-- 设置 -->
-          <div v-if="activeTab === 'settings'">
-            <h2 class="font-display" style="font-size: 1.25rem; font-weight: 600; color: var(--text-primary); margin-bottom: 1.5rem;">知识库设置</h2>
+          <div v-if="activeTab === 'settings'" class="space-y-8">
+            <div class="flex items-center gap-4">
+              <div class="w-1 h-6 bg-gradient-to-b from-primary to-accent rounded-full"></div>
+              <h2 class="font-display text-xl font-bold text-slate-900 dark:text-white">知识库设置</h2>
+            </div>
             
-            <section style="margin-bottom: 2rem;">
-              <h3 style="font-size: 1.125rem; font-weight: 500; color: var(--text-primary); margin-bottom: 1rem;">基础设置</h3>
-              <div class="glass-panel" style="padding: 1rem;">
-                <div style="display: flex; flex-direction: column; gap: 1rem;">
+            <section>
+              <h3 class="text-lg font-semibold text-slate-900 dark:text-white mb-4">基础设置</h3>
+              <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 p-6">
+                <div class="space-y-5">
                   <div>
-                    <label style="display: block; font-size: 0.875rem; font-weight: 500; margin-bottom: 0.375rem; color: var(--text-primary);">知识库名称</label>
-                    <input v-model="editForm.name" style="background: var(--glass-bg-1); border: 1px solid var(--glass-border); border-radius: 0.75rem; padding: 0.5rem 1rem; color: var(--text-primary); outline: none; width: 100%;" />
+                    <label class="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">知识库名称</label>
+                    <input 
+                      v-model="editForm.name" 
+                      class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
+                    />
                   </div>
                   <div>
-                    <label style="display: block; font-size: 0.875rem; font-weight: 500; margin-bottom: 0.375rem; color: var(--text-primary);">描述</label>
+                    <label class="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">描述</label>
                     <textarea
                       v-model="editForm.description"
-                      style="width: 100%; padding: 0.5rem 0.75rem; border: 1px solid var(--glass-border); border-radius: 0.5rem; outline: none; min-height: 80px; resize: none; background: var(--glass-bg-1); color: var(--text-primary);"
+                      class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all min-h-[100px] resize-none"
                     ></textarea>
                   </div>
                   <div>
-                    <label style="display: block; font-size: 0.875rem; font-weight: 500; margin-bottom: 0.375rem; color: var(--text-primary);">可见性</label>
+                    <label class="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">可见性</label>
                     <USelect v-model="editForm.type" :options="typeOptions" />
                   </div>
                 </div>
               </div>
             </section>
 
-            <section style="margin-bottom: 2rem;">
-              <h3 style="font-size: 1.125rem; font-weight: 500; color: var(--text-primary); margin-bottom: 1rem;">索引设置</h3>
-              <div class="glass-panel" style="padding: 1rem;">
-                <div style="display: flex; flex-direction: column; gap: 1rem;">
-                  <div style="display: flex; align-items: center; justify-content: space-between;">
+            <section>
+              <h3 class="text-lg font-semibold text-slate-900 dark:text-white mb-4">索引设置</h3>
+              <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 p-6">
+                <div class="space-y-5">
+                  <div class="flex items-center justify-between">
                     <div>
-                      <div style="font-weight: 500; color: var(--text-primary);">自动索引</div>
-                      <div style="font-size: 0.875rem; color: var(--text-secondary);">上传文档后自动进行向量化索引</div>
+                      <div class="font-medium text-slate-900 dark:text-white">自动索引</div>
+                      <div class="text-sm text-slate-500 mt-1">上传文档后自动进行向量化索引</div>
                     </div>
                     <USwitch v-model="editForm.autoIndex" />
                   </div>
-                  <div style="display: flex; align-items: center; justify-content: space-between;">
+                  <div class="flex items-center justify-between">
                     <div>
-                      <div style="font-weight: 500; color: var(--text-primary);">分段大小</div>
-                      <div style="font-size: 0.875rem; color: var(--text-secondary);">每个文本分段的最大字符数</div>
+                      <div class="font-medium text-slate-900 dark:text-white">分段大小</div>
+                      <div class="text-sm text-slate-500 mt-1">每个文本分段的最大字符数</div>
                     </div>
-                    <input v-model.number="editForm.chunkSize" type="number" style="background: var(--glass-bg-1); border: 1px solid var(--glass-border); border-radius: 0.75rem; padding: 0.5rem 1rem; color: var(--text-primary); outline: none; width: 8rem;" />
+                    <input 
+                      v-model.number="editForm.chunkSize" 
+                      type="number" 
+                      class="w-28 px-4 py-3 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-center"
+                    />
                   </div>
                 </div>
               </div>
             </section>
 
-            <section style="margin-bottom: 2rem;">
-              <h3 style="font-size: 1.125rem; font-weight: 500; color: var(--text-primary); margin-bottom: 1rem;">成员管理</h3>
-              <div class="glass-panel" style="padding: 1rem;">
-                <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 1rem;">
+            <section>
+              <h3 class="text-lg font-semibold text-slate-900 dark:text-white mb-4">成员管理</h3>
+              <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 p-6">
+                <div class="space-y-3 mb-4">
                   <div
                     v-for="member in members"
                     :key="member.id"
-                    style="display: flex; align-items: center; justify-content: space-between; padding: 0.75rem; border: 1px solid var(--glass-border); border-radius: 0.5rem;"
+                    class="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-700/50 rounded-xl border border-slate-200 dark:border-slate-600/50"
                   >
-                    <div style="display: flex; align-items: center; gap: 0.75rem;">
-                      <UAvatar :text="member.name.charAt(0)" size="sm" />
+                    <div class="flex items-center gap-3">
+                      <UAvatar :text="member.name.charAt(0)" size="sm" class="w-10 h-10" />
                       <div>
-                        <div style="font-weight: 500; font-size: 0.875rem; color: var(--text-primary);">{{ member.name }}</div>
-                        <div style="font-size: 0.75rem; color: var(--text-secondary);">{{ member.email }}</div>
+                        <div class="font-medium text-slate-900 dark:text-white">{{ member.name }}</div>
+                        <div class="text-xs text-slate-500">{{ member.email }}</div>
                       </div>
                     </div>
-                    <UBadge :variant="member.role === 'owner' ? 'default' : 'outline'" size="sm">
+                    <span
+                      :class="[
+                        'px-3 py-1 rounded-full text-xs font-medium',
+                        member.role === 'owner' ? 'bg-primary/10 text-primary dark:bg-primary/20' : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
+                      ]"
+                    >
                       {{ roleText(member.role) }}
-                    </UBadge>
+                    </span>
                   </div>
                 </div>
-                <button class="btn-glass" style="width: 100%;">
-                  <UIcon name="lucide:user-plus" style="width: 1rem; height: 1rem;" />
+                <button class="w-full py-3 px-4 bg-slate-50 dark:bg-slate-700/50 border border-dashed border-slate-300 dark:border-slate-600 rounded-xl text-slate-600 dark:text-slate-400 hover:border-primary/50 hover:text-primary transition-all flex items-center justify-center gap-2">
+                  <UIcon name="lucide:user-plus" class="w-4 h-4" />
                   添加成员
                 </button>
               </div>
             </section>
 
-            <div style="display: flex; justify-content: flex-end; gap: 0.75rem;">
-              <button class="btn-glass" style="color: #ef4444;" color="red">
+            <div class="flex justify-end gap-3 pt-4">
+              <button class="btn-glass text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20" color="red">
                 删除知识库
               </button>
-              <button class="btn-glass btn-glass--primary" @click="handleSaveSettings" :loading="saving">
-                保存设置
+              <button class="btn-glass btn-glass--primary px-6" @click="handleSaveSettings" :disabled="saving">
+                <span v-if="saving" class="inline-flex items-center gap-2">
+                  <span class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                  保存中...
+                </span>
+                <span v-else>保存设置</span>
               </button>
             </div>
           </div>
@@ -283,27 +322,29 @@
     </div>
 
     <UDialog v-model:open="showUploadDialog" title="上传文档">
-      <div style="display: flex; flex-direction: column; gap: 1rem;">
+      <div class="space-y-4">
         <div
-          style="border: 2px dashed var(--glass-border); border-radius: 0.5rem; padding: 2rem; text-align: center; cursor: pointer;"
+          class="border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-xl p-8 text-center cursor-pointer hover:border-primary/50 transition-colors"
           @click="triggerFileInput"
         >
-          <UIcon name="lucide:upload-cloud" style="width: 3rem; height: 3rem; margin: 0 auto; color: var(--text-secondary); margin-bottom: 0.75rem;" />
-          <p style="font-weight: 500; color: var(--text-primary); margin-bottom: 0.25rem;">点击或拖拽文件到此处上传</p>
-          <p style="font-size: 0.875rem; color: var(--text-secondary);">支持 PDF、Word、Markdown、TXT 等格式</p>
-          <input ref="fileInputRef" type="file" style="display: none;" multiple @change="handleFileSelect" />
+          <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-slate-100 dark:bg-slate-800 mb-4">
+            <UIcon name="lucide:upload-cloud" class="w-8 h-8 text-slate-400" />
+          </div>
+          <p class="font-medium text-slate-900 dark:text-white mb-1">点击或拖拽文件到此处上传</p>
+          <p class="text-sm text-slate-500">支持 PDF、Word、Markdown、TXT 等格式</p>
+          <input ref="fileInputRef" type="file" class="hidden" multiple @change="handleFileSelect" />
         </div>
-        <div v-if="uploadList.length > 0" style="display: flex; flex-direction: column; gap: 0.5rem;">
+        <div v-if="uploadList.length > 0" class="space-y-3">
           <div
             v-for="(item, index) in uploadList"
             :key="index"
-            style="display: flex; align-items: center; justify-content: space-between; padding: 0.5rem; border: 1px solid var(--glass-border); border-radius: 0.375rem;"
+            class="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-700/50 rounded-xl border border-slate-200 dark:border-slate-600/50"
           >
-            <div style="display: flex; align-items: center; gap: 0.5rem;">
-              <UIcon name="lucide:file" style="width: 1rem; height: 1rem; color: var(--text-secondary);" />
-              <span style="font-size: 0.875rem; color: var(--text-primary);">{{ item.name }}</span>
+            <div class="flex items-center gap-3">
+              <UIcon name="lucide:file" class="w-4 h-4 text-slate-400" />
+              <span class="text-sm text-slate-900 dark:text-white">{{ item.name }}</span>
             </div>
-            <span style="font-size: 0.75rem; color: var(--text-secondary);">{{ item.status }}</span>
+            <span class="text-xs text-slate-500">{{ item.status }}</span>
           </div>
         </div>
       </div>

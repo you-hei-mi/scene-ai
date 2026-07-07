@@ -1,10 +1,12 @@
 <template>
-  <div style="background: var(--bg-deep); min-height: 100vh">
-    <!-- 页面标题和操作 -->
+  <div class="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50/30 dark:from-slate-900 dark:via-slate-800 dark:to-indigo-950/30">
     <div class="flex items-center justify-between mb-6">
       <div>
-        <h1 class="font-display text-gradient text-2xl font-bold">用户管理</h1>
-        <p class="text-sm mt-1" style="color: var(--text-secondary)">管理系统用户和权限</p>
+        <div class="flex items-center gap-4 mb-2">
+          <div class="w-1 h-8 bg-gradient-to-b from-primary to-accent rounded-full"></div>
+          <h1 class="font-display text-3xl font-bold text-slate-900 dark:text-white">用户管理</h1>
+        </div>
+        <p class="text-slate-600 dark:text-slate-400 ml-5">管理系统用户和权限</p>
       </div>
       <button class="btn-glass btn-glass--primary">
         <UIcon name="lucide:user-plus" class="w-4 h-4" />
@@ -12,14 +14,16 @@
       </button>
     </div>
 
-    <!-- 筛选和搜索 -->
-    <div class="glass-card p-4 mb-6">
+    <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 p-4 mb-6">
       <div class="flex flex-wrap items-center gap-4">
-        <UInput v-model="searchKeyword" placeholder="搜索用户名/邮箱..." class="w-64">
-          <template #leading>
-            <UIcon name="lucide:search" class="w-4 h-4" style="color: var(--text-secondary)" />
-          </template>
-        </UInput>
+        <div class="relative w-64">
+          <UIcon name="lucide:search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+          <input 
+            v-model="searchKeyword" 
+            placeholder="搜索用户名/邮箱..." 
+            class="w-full pl-10 pr-4 py-2.5 bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
+          />
+        </div>
         <USelect v-model="roleFilter" :options="roleOptions" class="w-40" />
         <USelect v-model="statusFilter" :options="statusOptions" class="w-40" />
         <div class="flex-1"></div>
@@ -29,64 +33,62 @@
       </div>
     </div>
 
-    <!-- 用户列表表格 -->
-    <div class="glass-card" style="padding: 0">
+    <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 overflow-hidden">
       <div class="overflow-x-auto">
         <table class="w-full">
           <thead>
-            <tr style="border-bottom: 1px solid var(--glass-border)">
-              <th class="text-left px-4 py-3 text-sm font-medium w-12" style="color: var(--text-secondary)">
+            <tr class="border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-700/50">
+              <th class="text-left px-6 py-4 text-sm font-medium text-slate-500 w-12">
                 <UCheckbox />
               </th>
-              <th class="text-left px-4 py-3 text-sm font-medium" style="color: var(--text-secondary)">用户</th>
-              <th class="text-left px-4 py-3 text-sm font-medium w-24" style="color: var(--text-secondary)">角色</th>
-              <th class="text-left px-4 py-3 text-sm font-medium w-24" style="color: var(--text-secondary)">状态</th>
-              <th class="text-left px-4 py-3 text-sm font-medium w-32" style="color: var(--text-secondary)">注册时间</th>
-              <th class="text-left px-4 py-3 text-sm font-medium w-32" style="color: var(--text-secondary)">最后登录</th>
-              <th class="text-right px-4 py-3 text-sm font-medium w-24" style="color: var(--text-secondary)">操作</th>
+              <th class="text-left px-6 py-4 text-sm font-medium text-slate-500">用户</th>
+              <th class="text-left px-6 py-4 text-sm font-medium text-slate-500 w-24">角色</th>
+              <th class="text-left px-6 py-4 text-sm font-medium text-slate-500 w-24">状态</th>
+              <th class="text-left px-6 py-4 text-sm font-medium text-slate-500 w-32">注册时间</th>
+              <th class="text-left px-6 py-4 text-sm font-medium text-slate-500 w-32">最后登录</th>
+              <th class="text-right px-6 py-4 text-sm font-medium text-slate-500 w-24">操作</th>
             </tr>
           </thead>
           <tbody>
             <tr
               v-for="user in filteredUsers"
               :key="user.id"
-              style="border-bottom: 1px solid var(--glass-border)"
-              :style="user === filteredUsers[filteredUsers.length - 1] ? { borderBottom: 'none' } : {}"
+              class="border-b border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors"
             >
-              <td class="px-4 py-3">
+              <td class="px-6 py-4">
                 <UCheckbox />
               </td>
-              <td class="px-4 py-3">
+              <td class="px-6 py-4">
                 <div class="flex items-center gap-3">
                   <UAvatar :text="user.nickname?.charAt(0) || user.username.charAt(0)" size="sm" />
                   <div>
-                    <div class="font-medium text-sm" style="color: var(--text-primary)">{{ user.nickname || user.username }}</div>
-                    <div class="text-xs" style="color: var(--text-secondary)">{{ user.email }}</div>
+                    <div class="font-medium text-sm text-slate-900 dark:text-white">{{ user.nickname || user.username }}</div>
+                    <div class="text-xs text-slate-500">{{ user.email }}</div>
                   </div>
                 </div>
               </td>
-              <td class="px-4 py-3">
+              <td class="px-6 py-4">
                 <UBadge :variant="getRoleBadgeVariant(user.role)" size="sm">
                   {{ getRoleText(user.role) }}
                 </UBadge>
               </td>
-              <td class="px-4 py-3">
+              <td class="px-6 py-4">
                 <span
                   class="inline-flex items-center gap-1.5 text-sm"
-                  :style="{ color: user.status === 'active' ? '#22c55e' : '#ef4444' }"
+                  :class="user.status === 'active' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'"
                 >
                   <span
                     class="w-2 h-2 rounded-full"
-                    :style="{ background: user.status === 'active' ? '#22c55e' : '#ef4444' }"
+                    :class="user.status === 'active' ? 'bg-green-500' : 'bg-red-500'"
                   ></span>
                   {{ user.status === 'active' ? '正常' : '禁用' }}
                 </span>
               </td>
-              <td class="px-4 py-3 text-sm" style="color: var(--text-secondary)">{{ user.createdAt }}</td>
-              <td class="px-4 py-3 text-sm" style="color: var(--text-secondary)">{{ user.lastLogin || '从未' }}</td>
-              <td class="px-4 py-3 text-right">
+              <td class="px-6 py-4 text-sm text-slate-500">{{ user.createdAt }}</td>
+              <td class="px-6 py-4 text-sm text-slate-500">{{ user.lastLogin || '从未' }}</td>
+              <td class="px-6 py-4 text-right">
                 <UDropdownMenu>
-                  <button class="btn-glass" style="font-size: 0.875rem; padding: 0.25rem">
+                  <button class="btn-glass p-2">
                     <UIcon name="lucide:more-horizontal" class="w-4 h-4" />
                   </button>
                   <template #items>
@@ -113,23 +115,23 @@
         </table>
       </div>
 
-      <!-- 空状态 -->
       <div v-if="filteredUsers.length === 0" class="text-center py-12">
-        <UIcon name="lucide:users" class="w-12 h-12 mx-auto mb-3" style="color: var(--text-secondary)" />
-        <p style="color: var(--text-secondary)">未找到匹配的用户</p>
+        <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-slate-100 dark:bg-slate-700 mb-4">
+          <UIcon name="lucide:users" class="w-8 h-8 text-slate-400" />
+        </div>
+        <p class="text-slate-500">未找到匹配的用户</p>
       </div>
 
-      <!-- 分页 -->
-      <div class="flex items-center justify-between px-4 py-3" style="border-top: 1px solid var(--glass-border)">
-        <div class="text-sm" style="color: var(--text-secondary)">
+      <div class="flex items-center justify-between px-6 py-4 border-t border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-700/30">
+        <div class="text-sm text-slate-500">
           共 {{ totalUsers }} 位用户
         </div>
         <div class="flex items-center gap-2">
-          <button class="btn-glass" style="font-size: 0.875rem; padding: 0.25rem 0.5rem">
+          <button class="btn-glass px-3 py-1.5 text-sm">
             <UIcon name="lucide:chevron-left" class="w-4 h-4" />
           </button>
-          <span class="text-sm" style="color: var(--text-primary)">第 {{ currentPage }} / {{ totalPages }} 页</span>
-          <button class="btn-glass" style="font-size: 0.875rem; padding: 0.25rem 0.5rem">
+          <span class="text-sm font-medium text-slate-900 dark:text-white">第 {{ currentPage }} / {{ totalPages }} 页</span>
+          <button class="btn-glass px-3 py-1.5 text-sm">
             <UIcon name="lucide:chevron-right" class="w-4 h-4" />
           </button>
         </div>
@@ -145,9 +147,6 @@ definePageMeta({
   layout: 'console',
 })
 
-/**
- * 用户接口定义
- */
 interface User {
   id: string
   username: string
@@ -159,29 +158,11 @@ interface User {
   lastLogin?: string
 }
 
-/**
- * 搜索关键词
- */
 const searchKeyword = ref('')
-
-/**
- * 角色筛选
- */
 const roleFilter = ref('all')
-
-/**
- * 状态筛选
- */
 const statusFilter = ref('all')
-
-/**
- * 当前页码
- */
 const currentPage = ref(1)
 
-/**
- * 角色筛选选项
- */
 const roleOptions = [
   { label: '全部角色', value: 'all' },
   { label: '超级管理员', value: 'super_admin' },
@@ -189,18 +170,12 @@ const roleOptions = [
   { label: '普通用户', value: 'user' },
 ]
 
-/**
- * 状态筛选选项
- */
 const statusOptions = [
   { label: '全部状态', value: 'all' },
   { label: '正常', value: 'active' },
   { label: '禁用', value: 'disabled' },
 ]
 
-/**
- * 模拟用户数据
- */
 const users = ref<User[]>([
   {
     id: '1',
@@ -284,23 +259,12 @@ const users = ref<User[]>([
   },
 ])
 
-/**
- * 总用户数
- */
 const totalUsers = computed(() => filteredUsers.value.length)
-
-/**
- * 总页数
- */
 const totalPages = computed(() => Math.ceil(totalUsers.value / 10) || 1)
 
-/**
- * 根据筛选条件过滤后的用户列表
- */
 const filteredUsers = computed(() => {
   let result = [...users.value]
 
-  // 关键词搜索
   if (searchKeyword.value.trim()) {
     const kw = searchKeyword.value.toLowerCase()
     result = result.filter(
@@ -311,12 +275,10 @@ const filteredUsers = computed(() => {
     )
   }
 
-  // 角色筛选
   if (roleFilter.value !== 'all') {
     result = result.filter(u => u.role === roleFilter.value)
   }
 
-  // 状态筛选
   if (statusFilter.value !== 'all') {
     result = result.filter(u => u.status === statusFilter.value)
   }
@@ -324,11 +286,6 @@ const filteredUsers = computed(() => {
   return result
 })
 
-/**
- * 获取角色显示文本
- * @param role - 角色标识符
- * @returns 角色显示名称
- */
 function getRoleText(role: string): string {
   const map: Record<string, string> = {
     super_admin: '超级管理员',
@@ -338,11 +295,6 @@ function getRoleText(role: string): string {
   return map[role] || role
 }
 
-/**
- * 获取角色徽章的样式变体
- * @param role - 角色标识符
- * @returns UBadge 的 variant 属性值
- */
 function getRoleBadgeVariant(role: string): 'default' | 'secondary' | 'outline' {
   const map: Record<string, 'default' | 'secondary' | 'outline'> = {
     super_admin: 'default',
@@ -352,9 +304,6 @@ function getRoleBadgeVariant(role: string): 'default' | 'secondary' | 'outline' 
   return map[role] || 'outline'
 }
 
-/**
- * 重置所有筛选条件
- */
 function resetFilters() {
   searchKeyword.value = ''
   roleFilter.value = 'all'

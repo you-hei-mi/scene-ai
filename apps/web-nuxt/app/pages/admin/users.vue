@@ -8,7 +8,7 @@
         </div>
         <p class="text-slate-600 dark:text-slate-400 ml-5">管理系统用户和权限</p>
       </div>
-      <button class="btn-glass btn-glass--primary">
+      <button class="btn-glass btn-glass--primary" @click="showAddDialog = true">
         <UIcon name="lucide:user-plus" class="w-4 h-4" />
         添加用户
       </button>
@@ -92,21 +92,23 @@
                     <UIcon name="lucide:more-horizontal" class="w-4 h-4" />
                   </button>
                   <template #items>
-                    <UDropdownMenuItem label="编辑用户" icon="lucide:edit" />
-                    <UDropdownMenuItem label="重置密码" icon="lucide:key" />
+                    <UDropdownMenuItem label="编辑用户" icon="lucide:edit" @click="openEditDialog(user)" />
+                    <UDropdownMenuItem label="重置密码" icon="lucide:key" @click="openResetPasswordDialog(user)" />
                     <UDropdownMenuItem
                       v-if="user.status === 'active'"
                       label="禁用用户"
                       icon="lucide:user-x"
                       color="red"
+                      @click="toggleUserStatus(user)"
                     />
                     <UDropdownMenuItem
                       v-else
                       label="启用用户"
                       icon="lucide:user-check"
                       color="green"
+                      @click="toggleUserStatus(user)"
                     />
-                    <UDropdownMenuItem label="删除用户" icon="lucide:trash-2" color="red" />
+                    <UDropdownMenuItem label="删除用户" icon="lucide:trash-2" color="red" @click="deleteUser(user)" />
                   </template>
                 </UDropdownMenu>
               </td>
@@ -137,6 +139,83 @@
         </div>
       </div>
     </div>
+  </div>
+
+    <!-- Add/Edit User Dialog -->
+    <UDialog v-model:open="showAddDialog" :title="editingUser ? '编辑用户' : '添加用户'">
+      <template #body>
+        <div class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium mb-1.5 text-slate-700 dark:text-slate-300">用户名</label>
+            <input
+              v-model="formData.username"
+              placeholder="请输入用户名"
+              class="w-full px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-900 dark:text-white placeholder-slate-400 outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
+            />
+          </div>
+          <div v-if="!editingUser">
+            <label class="block text-sm font-medium mb-1.5 text-slate-700 dark:text-slate-300">密码</label>
+            <input
+              v-model="formData.password"
+              type="password"
+              placeholder="请输入密码"
+              class="w-full px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-900 dark:text-white placeholder-slate-400 outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
+            />
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1.5 text-slate-700 dark:text-slate-300">昵称</label>
+            <input
+              v-model="formData.nickname"
+              placeholder="请输入昵称"
+              class="w-full px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-900 dark:text-white placeholder-slate-400 outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
+            />
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1.5 text-slate-700 dark:text-slate-300">邮箱</label>
+            <input
+              v-model="formData.email"
+              type="email"
+              placeholder="请输入邮箱"
+              class="w-full px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-900 dark:text-white placeholder-slate-400 outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
+            />
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1.5 text-slate-700 dark:text-slate-300">角色</label>
+            <USelect v-model="formData.role" :options="roleOptions.slice(1)" />
+          </div>
+        </div>
+      </template>
+      <template #footer>
+        <button class="btn-glass" @click="showAddDialog = false">取消</button>
+        <button class="btn-glass btn-glass--primary" @click="saveUser">
+          {{ editingUser ? '保存' : '创建' }}
+        </button>
+      </template>
+    </UDialog>
+
+    <!-- Reset Password Dialog -->
+    <UDialog v-model:open="showResetDialog" title="重置密码">
+      <template #body>
+        <p class="text-sm text-slate-600 dark:text-slate-400 mb-4">
+          正在为 <strong class="text-slate-900 dark:text-white">{{ resetTargetUser?.nickname || resetTargetUser?.username }}</strong> 重置密码
+        </p>
+        <div>
+          <label class="block text-sm font-medium mb-1.5 text-slate-700 dark:text-slate-300">新密码</label>
+          <input
+            v-model="resetPassword"
+            type="password"
+            placeholder="请输入新密码"
+            class="w-full px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-900 dark:text-white placeholder-slate-400 outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
+          />
+        </div>
+      </template>
+      <template #footer>
+        <button class="btn-glass" @click="showResetDialog = false">取消</button>
+        <button class="btn-glass btn-glass--primary" @click="confirmResetPassword">
+          确认重置
+        </button>
+      </template>
+    </UDialog>
   </div>
 </template>
 
@@ -309,5 +388,92 @@ function resetFilters() {
   roleFilter.value = 'all'
   statusFilter.value = 'all'
   currentPage.value = 1
+}
+
+// Dialog state
+const showAddDialog = ref(false)
+const showResetDialog = ref(false)
+const editingUser = ref<User | null>(null)
+const resetTargetUser = ref<User | null>(null)
+const resetPassword = ref('')
+
+interface UserFormData {
+  username: string
+  nickname: string
+  email: string
+  password: string
+  role: string
+}
+
+const formData = ref<UserFormData>({
+  username: '',
+  nickname: '',
+  email: '',
+  password: '',
+  role: 'user',
+})
+
+function openEditDialog(user: User) {
+  editingUser.value = user
+  formData.value = {
+    username: user.username,
+    nickname: user.nickname || '',
+    email: user.email,
+    password: '',
+    role: user.role,
+  }
+  showAddDialog.value = true
+}
+
+function saveUser() {
+  if (editingUser.value) {
+    const idx = users.value.findIndex(u => u.id === editingUser.value!.id)
+    if (idx !== -1) {
+      users.value[idx] = {
+        ...users.value[idx],
+        username: formData.value.username,
+        nickname: formData.value.nickname,
+        email: formData.value.email,
+        role: formData.value.role as 'super_admin' | 'admin' | 'user',
+      }
+    }
+  } else {
+    const newUser: User = {
+      id: String(Date.now()),
+      username: formData.value.username,
+      nickname: formData.value.nickname,
+      email: formData.value.email,
+      role: formData.value.role as 'super_admin' | 'admin' | 'user',
+      status: 'active',
+      createdAt: new Date().toISOString().split('T')[0],
+    }
+    users.value.unshift(newUser)
+  }
+  showAddDialog.value = false
+  editingUser.value = null
+  formData.value = { username: '', nickname: '', email: '', password: '', role: 'user' }
+}
+
+function openResetPasswordDialog(user: User) {
+  resetTargetUser.value = user
+  resetPassword.value = ''
+  showResetDialog.value = true
+}
+
+function confirmResetPassword() {
+  showResetDialog.value = false
+  resetTargetUser.value = null
+  resetPassword.value = ''
+}
+
+function toggleUserStatus(user: User) {
+  user.status = user.status === 'active' ? 'disabled' : 'active'
+}
+
+function deleteUser(user: User) {
+  const idx = users.value.findIndex(u => u.id === user.id)
+  if (idx !== -1) {
+    users.value.splice(idx, 1)
+  }
 }
 </script>

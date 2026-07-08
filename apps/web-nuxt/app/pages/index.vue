@@ -26,14 +26,14 @@
         </p>
 
         <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
-          <button class="w-full sm:w-auto px-8 py-3.5 bg-gradient-to-r from-primary to-accent text-white font-semibold rounded-xl shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 hover:-translate-y-0.5 transition-all duration-300 flex items-center justify-center gap-2">
+          <NuxtLink to="/login" class="w-full sm:w-auto px-8 py-3.5 bg-gradient-to-r from-primary to-accent text-white font-semibold rounded-xl shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 hover:-translate-y-0.5 transition-all duration-300 flex items-center justify-center gap-2">
             开始使用
             <UIcon name="lucide:arrow-right" class="w-4 h-4" />
-          </button>
-          <button class="w-full sm:w-auto px-8 py-3.5 bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 font-semibold rounded-xl hover:bg-white dark:hover:bg-slate-700 hover:shadow-lg transition-all duration-300 flex items-center justify-center gap-2">
+          </NuxtLink>
+          <NuxtLink to="/agents" class="w-full sm:w-auto px-8 py-3.5 bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 font-semibold rounded-xl hover:bg-white dark:hover:bg-slate-700 hover:shadow-lg transition-all duration-300 flex items-center justify-center gap-2">
             探索智能体
             <UIcon name="lucide:search" class="w-4 h-4" />
-          </button>
+          </NuxtLink>
         </div>
 
         <div class="mt-16 grid grid-cols-1 sm:grid-cols-3 gap-8 mx-auto">
@@ -76,14 +76,14 @@
         <h2 class="text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white mb-6">准备好开始了吗？</h2>
         <p class="text-lg text-slate-600 dark:text-slate-300 mb-10">加入数千名开发者，用 AI 智能体构建更智能的应用</p>
         <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
-          <button class="w-full sm:w-auto px-8 py-3.5 bg-gradient-to-r from-primary to-accent text-white font-semibold rounded-xl shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 hover:-translate-y-0.5 transition-all duration-300 flex items-center justify-center gap-2">
+          <NuxtLink to="/login" class="w-full sm:w-auto px-8 py-3.5 bg-gradient-to-r from-primary to-accent text-white font-semibold rounded-xl shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 hover:-translate-y-0.5 transition-all duration-300 flex items-center justify-center gap-2">
             免费开始
             <UIcon name="lucide:sparkles" class="w-4 h-4" />
-          </button>
-          <button class="w-full sm:w-auto px-8 py-3.5 border-2 border-primary text-primary font-semibold rounded-xl hover:bg-primary hover:text-white transition-all duration-300 flex items-center justify-center gap-2">
+          </NuxtLink>
+          <NuxtLink to="/contact" class="w-full sm:w-auto px-8 py-3.5 border-2 border-primary text-primary font-semibold rounded-xl hover:bg-primary hover:text-white transition-all duration-300 flex items-center justify-center gap-2">
             预约演示
             <UIcon name="lucide:calendar" class="w-4 h-4" />
-          </button>
+          </NuxtLink>
         </div>
       </div>
     </section>

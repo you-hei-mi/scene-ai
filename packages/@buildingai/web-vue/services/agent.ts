@@ -1,55 +1,43 @@
 import type { Agent } from '../types'
+import { apiGet, apiPost, apiPatch, apiDelete } from './client'
+
+interface PaginatedResult<T> {
+  items: T[]
+  total: number
+}
+
+interface ListParams {
+  page?: number
+  pageSize?: number
+  search?: string
+}
 
 class AgentService {
-  async list(params?: { page?: number; pageSize?: number; search?: string }): Promise<{ data: Agent[]; total: number }> {
-    await new Promise(resolve => setTimeout(resolve, 500))
-    return {
-      data: [
-        { id: '1', name: '文档助手', description: '帮助处理文档', model: 'gpt-4o', status: 'running', createdAt: '2024-01-15' },
-        { id: '2', name: '代码助手', description: '帮助编写代码', model: 'claude-3-5-sonnet', status: 'running', createdAt: '2024-01-20' },
-      ],
-      total: 2,
-    }
+  /** 获取我的智能体列表 */
+  async list(params?: ListParams): Promise<PaginatedResult<Agent>> {
+    return apiGet<PaginatedResult<Agent>>('/api/ai-agents/my-created', {
+      query: params,
+    })
   }
 
+  /** 获取智能体详情 */
   async get(id: string): Promise<Agent> {
-    await new Promise(resolve => setTimeout(resolve, 300))
-    return {
-      id,
-      name: '文档助手',
-      description: '帮助处理文档问题',
-      model: 'gpt-4o',
-      status: 'running',
-      createdAt: '2024-01-15',
-    }
+    return apiGet<Agent>(`/api/ai-agents/${id}`)
   }
 
-  async create(data: Partial<Agent>): Promise<Agent> {
-    await new Promise(resolve => setTimeout(resolve, 300))
-    return {
-      id: Date.now().toString(),
-      name: data.name || '新智能体',
-      description: data.description || '',
-      model: data.model || 'gpt-4o',
-      status: 'running',
-      createdAt: new Date().toISOString().split('T')[0],
-    }
+  /** 创建智能体 */
+  async create(data: Partial<Agent> & { name: string; description?: string }): Promise<Agent> {
+    return apiPost<Agent>('/api/ai-agents', data)
   }
 
+  /** 更新智能体 */
   async update(id: string, data: Partial<Agent>): Promise<Agent> {
-    await new Promise(resolve => setTimeout(resolve, 300))
-    return {
-      id,
-      name: data.name || '智能体',
-      description: data.description || '',
-      model: data.model || 'gpt-4o',
-      status: data.status || 'running',
-      createdAt: '2024-01-15',
-    }
+    return apiPatch<Agent>(`/api/ai-agents/${id}`, data)
   }
 
+  /** 删除智能体 */
   async delete(id: string): Promise<void> {
-    await new Promise(resolve => setTimeout(resolve, 200))
+    await apiDelete(`/api/ai-agents/${id}`)
   }
 }
 

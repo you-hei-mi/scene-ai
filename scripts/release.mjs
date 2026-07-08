@@ -16,7 +16,7 @@ if (Number(currentVersion) < requiredVersion) {
 }
 
 const rootDir = path.resolve(import.meta.dirname, "..");
-const distPath = path.resolve(rootDir, "packages/client/dist");
+const distPath = path.resolve(rootDir, "apps/web-nuxt/.output/public");
 const releasePath = path.resolve(rootDir, "public/web");
 
 /**
@@ -54,9 +54,9 @@ async function release() {
         console.log(chalk.blue("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"));
 
         if (!existsSync(distPath)) {
-            console.log(chalk.red("✖ Build output not found: packages/client/dist"));
+            console.log(chalk.red("✖ Build output not found: apps/web-nuxt/.output/public"));
             console.log(
-                chalk.red("✖ Please run `pnpm --filter buildingai-client build:web` first"),
+                chalk.red("✖ Please run `pnpm --filter @buildingai/web-nuxt build` first"),
             );
             process.exit(1);
         }

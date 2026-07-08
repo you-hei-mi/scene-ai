@@ -180,7 +180,6 @@
       <div class="mt-2 px-3">
         <NuxtLink
           to="/admin"
-          target="_blank"
           class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200"
           :class="[
             isActive('/admin')
@@ -191,11 +190,6 @@
         >
           <UIcon name="lucide:layout-grid" class="w-5 h-5 flex-shrink-0" />
           <span v-if="!collapsed" class="truncate flex-1">工作台</span>
-          <UIcon
-            v-if="!collapsed"
-            name="lucide:arrow-up-right"
-            class="w-4 h-4 text-slate-400"
-          />
         </NuxtLink>
       </div>
     </nav>

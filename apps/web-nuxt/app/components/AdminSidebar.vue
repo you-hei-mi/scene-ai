@@ -6,7 +6,7 @@
     <!-- 顶部标题 -->
     <div class="flex items-center justify-between h-14 px-4 border-b border-slate-200 dark:border-slate-700">
       <div v-if="!collapsed" class="flex items-center gap-2">
-        <div class="w-7 h-7 rounded-lg bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center">
+        <div class="w-7 h-7 rounded-lg bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center flex-shrink-0">
           <UIcon name="lucide:bot" class="w-4 h-4 text-white" />
         </div>
         <div class="leading-tight">
@@ -17,14 +17,23 @@
       <div v-else class="w-7 h-7 rounded-lg bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center mx-auto">
         <UIcon name="lucide:bot" class="w-4 h-4 text-white" />
       </div>
-      <UButton
-        v-if="!collapsed"
-        variant="ghost"
-        size="xs"
-        icon="lucide:panel-left-close"
-        class="text-slate-400 hover:text-slate-600"
-        @click="appStore.toggleSidebar()"
-      />
+      <div class="flex items-center gap-2">
+        <NuxtLink
+          to="/chat"
+          v-if="!collapsed"
+          class="font-medium inline-flex items-center text-xs gap-1.5 text-primary hover:bg-slate-100 dark:hover:bg-slate-700/50 rounded-lg transition-all duration-200 p-1.5"
+        >
+          <UIcon name="lucide:panel-left" class="w-4 h-4" />
+        </NuxtLink>
+        <UButton
+          v-if="!collapsed"
+          variant="ghost"
+          size="xs"
+          icon="lucide:panel-left-close"
+          class="text-slate-400 hover:text-slate-600"
+          @click="appStore.toggleSidebar()"
+        />
+      </div>
     </div>
 
     <!-- 菜单 -->

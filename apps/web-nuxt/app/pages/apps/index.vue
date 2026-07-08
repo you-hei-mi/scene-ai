@@ -256,7 +256,7 @@ import { ref, computed, onMounted } from 'vue'
 import { getExtensionList } from '~/composables/api/core'
 
 definePageMeta({
-  layout: 'console',
+  layout: 'app',
 })
 
 /**
@@ -367,6 +367,25 @@ const sortOptions = [
  * 模拟应用数据（API 失败时的回退数据）
  */
 const mockApps: AppItem[] = [
+  {
+    id: 'comic-factory',
+    name: '漫剧工厂',
+    description: 'AI 驱动的漫画创作工具，一键将文本转换为精彩漫画',
+    fullDescription: '漫剧工厂是一款强大的 AI 漫画创作工具，让每个人都能轻松创作出精彩的漫画作品。\n\n主要功能：\n• 文本转漫画：输入故事脚本，自动生成漫画分镜\n• AI 角色生成：自定义角色形象和风格\n• 场景设计：丰富的背景场景和道具选择\n• 分镜编辑：拖拽式分镜编排\n• 多风格支持：支持日式、美式、卡通等多种画风\n• 导出分享：一键导出高清漫画图片',
+    icon: 'lucide:film',
+    category: 'design',
+    developer: 'BuildingAI',
+    version: '1.0.0',
+    size: '32.5 MB',
+    price: 0,
+    rating: 4.9,
+    reviewCount: 1892,
+    installCount: 56800,
+    updatedAt: '2024-06-28',
+    tags: ['漫画', '创作', 'AI'],
+    features: ['文本转漫画', 'AI 角色生成', '场景设计', '分镜编辑'],
+    isNew: true,
+  },
   {
     id: '1',
     name: 'Notion 助手',

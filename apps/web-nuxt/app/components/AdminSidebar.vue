@@ -5,35 +5,36 @@
   >
     <!-- 顶部标题 -->
     <div class="flex items-center justify-between h-14 px-4 border-b border-slate-200 dark:border-slate-700">
-      <div v-if="!collapsed" class="flex items-center gap-2">
+      <div v-if="!collapsed" class="flex items-center gap-2 min-w-0">
+        <NuxtLink
+          to="/chat"
+          class="font-medium inline-flex items-center text-xs gap-1.5 text-primary hover:bg-slate-100 dark:hover:bg-slate-700/50 rounded-lg transition-all duration-200 p-1.5 flex-shrink-0"
+        >
+          <UIcon name="lucide:panel-left" class="w-4 h-4" />
+        </NuxtLink>
         <div class="w-7 h-7 rounded-lg bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center flex-shrink-0">
           <UIcon name="lucide:bot" class="w-4 h-4 text-white" />
         </div>
-        <div class="leading-tight">
-          <p class="text-sm font-bold text-slate-900 dark:text-white">BuildingAI</p>
-          <p class="text-xs text-slate-400">工作台 · v26.2.1</p>
+        <div class="leading-tight min-w-0">
+          <p class="text-sm font-bold text-slate-900 dark:text-white truncate">BuildingAI</p>
+          <p class="text-xs text-slate-400 truncate">工作台 · v26.2.1</p>
         </div>
       </div>
-      <div v-else class="w-7 h-7 rounded-lg bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center mx-auto">
-        <UIcon name="lucide:bot" class="w-4 h-4 text-white" />
-      </div>
-      <div class="flex items-center gap-2">
+      <div v-else class="flex items-center gap-2">
         <NuxtLink
           to="/chat"
-          v-if="!collapsed"
           class="font-medium inline-flex items-center text-xs gap-1.5 text-primary hover:bg-slate-100 dark:hover:bg-slate-700/50 rounded-lg transition-all duration-200 p-1.5"
         >
           <UIcon name="lucide:panel-left" class="w-4 h-4" />
         </NuxtLink>
-        <UButton
-          v-if="!collapsed"
-          variant="ghost"
-          size="xs"
-          icon="lucide:panel-left-close"
-          class="text-slate-400 hover:text-slate-600"
-          @click="appStore.toggleSidebar()"
-        />
       </div>
+      <UButton
+        variant="ghost"
+        size="xs"
+        :icon="collapsed ? 'lucide:panel-right' : 'lucide:panel-left-close'"
+        class="text-slate-400 hover:text-slate-600 flex-shrink-0"
+        @click="appStore.toggleSidebar()"
+      />
     </div>
 
     <!-- 菜单 -->

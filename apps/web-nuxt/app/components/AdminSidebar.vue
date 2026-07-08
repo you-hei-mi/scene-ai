@@ -83,23 +83,25 @@
           </button>
           <ul
             v-if="!collapsed && expandedMenus.has('智能体')"
-            class="mt-0.5 space-y-0.5"
+            class="mt-0.5 space-y-0.5 ml-3 border-l border-slate-200 dark:border-slate-700 pl-2"
           >
             <li>
               <NuxtLink
                 to="/admin/agents"
-                class="flex items-center px-3 py-2 rounded-lg text-sm transition-all duration-200"
-                :class="route.path === '/admin/agents' ? 'text-primary font-medium' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'"
+                class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-all duration-200"
+                :class="route.path === '/admin/agents' ? 'text-primary font-medium bg-primary/5 dark:bg-primary/10' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700/50'"
               >
+                <span class="w-1.5 h-1.5 rounded-full bg-current opacity-50 flex-shrink-0"></span>
                 <span class="truncate">智能体列表</span>
               </NuxtLink>
             </li>
             <li>
               <NuxtLink
                 to="/admin/agents/configuration"
-                class="flex items-center px-3 py-2 rounded-lg text-sm transition-all duration-200"
-                :class="route.path === '/admin/agents/configuration' ? 'text-primary font-medium' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'"
+                class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-all duration-200"
+                :class="route.path === '/admin/agents/configuration' ? 'text-primary font-medium bg-primary/5 dark:bg-primary/10' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700/50'"
               >
+                <span class="w-1.5 h-1.5 rounded-full bg-current opacity-50 flex-shrink-0"></span>
                 <span class="truncate">智能体配置</span>
               </NuxtLink>
             </li>
@@ -129,23 +131,25 @@
           </button>
           <ul
             v-if="!collapsed && expandedMenus.has('知识库')"
-            class="mt-0.5 space-y-0.5"
+            class="mt-0.5 space-y-0.5 ml-3 border-l border-slate-200 dark:border-slate-700 pl-2"
           >
             <li>
               <NuxtLink
                 to="/admin/datasets"
-                class="flex items-center px-3 py-2 rounded-lg text-sm transition-all duration-200"
-                :class="route.path === '/admin/datasets' ? 'text-primary font-medium' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'"
+                class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-all duration-200"
+                :class="route.path === '/admin/datasets' ? 'text-primary font-medium bg-primary/5 dark:bg-primary/10' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700/50'"
               >
+                <span class="w-1.5 h-1.5 rounded-full bg-current opacity-50 flex-shrink-0"></span>
                 <span class="truncate">知识库列表</span>
               </NuxtLink>
             </li>
             <li>
               <NuxtLink
                 to="/admin/datasets/configuration"
-                class="flex items-center px-3 py-2 rounded-lg text-sm transition-all duration-200"
-                :class="route.path === '/admin/datasets/configuration' ? 'text-primary font-medium' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'"
+                class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-all duration-200"
+                :class="route.path === '/admin/datasets/configuration' ? 'text-primary font-medium bg-primary/5 dark:bg-primary/10' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700/50'"
               >
+                <span class="w-1.5 h-1.5 rounded-full bg-current opacity-50 flex-shrink-0"></span>
                 <span class="truncate">知识库配置</span>
               </NuxtLink>
             </li>
@@ -250,14 +254,15 @@
             </button>
             <ul
               v-if="!collapsed && expandedMenus.has(item.label)"
-              class="mt-0.5 space-y-0.5"
+              class="mt-0.5 space-y-0.5 ml-3 border-l border-slate-200 dark:border-slate-700 pl-2"
             >
               <li v-for="child in item.children" :key="child.to">
                 <NuxtLink
                   :to="child.to"
-                  class="flex items-center px-3 py-2 rounded-lg text-sm transition-all duration-200"
-                  :class="route.path === child.to ? 'text-primary font-medium' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'"
+                  class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-all duration-200"
+                  :class="route.path === child.to ? 'text-primary font-medium bg-primary/5 dark:bg-primary/10' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700/50'"
                 >
+                  <span class="w-1.5 h-1.5 rounded-full bg-current opacity-50 flex-shrink-0"></span>
                   <span class="truncate">{{ child.label }}</span>
                 </NuxtLink>
               </li>

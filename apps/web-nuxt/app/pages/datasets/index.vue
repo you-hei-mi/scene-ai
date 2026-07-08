@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen">
+  <div class="flex flex-col h-full bg-gradient-to-br from-slate-50 via-white to-indigo-50/30 dark:from-slate-900 dark:via-slate-800 dark:to-indigo-950/30 p-6">
     <div class="flex items-center justify-between mb-8">
       <div>
         <div class="flex items-center gap-4 mb-2">
@@ -198,15 +198,14 @@
 </template>
 
 <script setup lang="ts">
+definePageMeta({
+  layout: 'app',
+})
 import { ref, computed, onMounted } from 'vue'
 import { getMyDatasets } from '~/composables/api/core'
 
 const datasetStore = useDatasetStore()
 const toast = useToast()
-
-definePageMeta({
-  layout: 'console',
-})
 
 const keyword = ref('')
 const filterType = ref<'all' | 'private' | 'public'>('all')

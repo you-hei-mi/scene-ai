@@ -1,5 +1,6 @@
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50/30 dark:from-slate-900 dark:via-slate-800 dark:to-indigo-950/30">
+  <div class="flex flex-col h-full bg-gradient-to-br from-slate-50 via-white to-indigo-50/30 dark:from-slate-900 dark:via-slate-800 dark:to-indigo-950/30">
+    <!-- Header -->
     <header class="sticky top-0 z-50 border-b border-slate-200/80 dark:border-slate-700/80 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
         <div class="flex items-center justify-between">
@@ -7,7 +8,7 @@
             <div class="w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-primary to-accent shadow-lg shadow-primary/20">
               <UIcon name="lucide:bot" class="w-5 h-5 text-white" />
             </div>
-            <span class="font-display font-bold text-lg text-slate-900 dark:text-white">BuildingAI Agents</span>
+            <span class="font-display font-bold text-lg text-slate-900 dark:text-white">智能体广场</span>
           </div>
           <div class="flex items-center gap-3">
             <div class="relative">
@@ -22,18 +23,14 @@
               <UIcon name="lucide:plus" class="w-4 h-4" />
               创建智能体
             </button>
-            <NuxtLink to="/chat">
-              <button class="btn-glass">
-                <UIcon name="lucide:message-square" class="w-4 h-4" />
-                对话
-              </button>
-            </NuxtLink>
           </div>
         </div>
       </div>
     </header>
 
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Content -->
+    <div class="flex-1 overflow-y-auto">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div v-if="error" class="mb-6 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/50 rounded-xl p-4 flex items-center gap-3">
         <UIcon name="lucide:alert-triangle" class="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0" />
         <div class="flex-1">
@@ -175,12 +172,17 @@
         </button>
       </template>
     </UDialog>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { getMyAgents } from '~/composables/api/core'
+
+definePageMeta({
+  layout: 'app',
+})
 
 const agentStore = useAgentStore()
 const toast = useToast()

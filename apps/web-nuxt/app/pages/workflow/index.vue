@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50/30 dark:from-slate-900 dark:via-slate-800 dark:to-indigo-950/30">
+  <div class="flex flex-col h-full bg-gradient-to-br from-slate-50 via-white to-indigo-50/30 dark:from-slate-900 dark:via-slate-800 dark:to-indigo-950/30 p-6">
     <div class="flex items-center gap-4 mb-6">
       <div class="w-1 h-8 bg-gradient-to-b from-primary to-accent rounded-full"></div>
       <h1 class="font-display text-3xl font-bold text-slate-900 dark:text-white">工作流</h1>
@@ -14,6 +14,6 @@
 
 <script setup lang="ts">
 definePageMeta({
-  layout: 'default',
+  layout: 'app',
 })
 </script>

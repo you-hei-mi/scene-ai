@@ -83,7 +83,7 @@
           </button>
           <ul
             v-if="!collapsed && expandedMenus.has('智能体')"
-            class="mt-0.5 space-y-0.5 ml-3 border-l border-slate-200 dark:border-slate-700 pl-2"
+            class="mt-0.5 space-y-0.5 ml-6 border-l border-slate-200 dark:border-slate-700 pl-3"
           >
             <li>
               <NuxtLink
@@ -131,7 +131,7 @@
           </button>
           <ul
             v-if="!collapsed && expandedMenus.has('知识库')"
-            class="mt-0.5 space-y-0.5 ml-3 border-l border-slate-200 dark:border-slate-700 pl-2"
+            class="mt-0.5 space-y-0.5 ml-6 border-l border-slate-200 dark:border-slate-700 pl-3"
           >
             <li>
               <NuxtLink
@@ -254,7 +254,7 @@
             </button>
             <ul
               v-if="!collapsed && expandedMenus.has(item.label)"
-              class="mt-0.5 space-y-0.5 ml-3 border-l border-slate-200 dark:border-slate-700 pl-2"
+              class="mt-0.5 space-y-0.5 ml-6 border-l border-slate-200 dark:border-slate-700 pl-3"
             >
               <li v-for="child in item.children" :key="child.to">
                 <NuxtLink

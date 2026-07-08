@@ -9,12 +9,12 @@
           class="hover:bg-slate-100 dark:hover:bg-slate-700/50 rounded-lg transition-all duration-200"
           @click="appStore.toggleSidebar()"
         />
-        <div class="flex items-center gap-2">
+        <NuxtLink to="/" class="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity">
           <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-lg shadow-primary/20">
             <UIcon name="lucide:bot" class="w-5 h-5 text-white" />
           </div>
           <span class="font-bold text-lg bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">BuildingAI</span>
-        </div>
+        </NuxtLink>
       </div>
       <div class="flex items-center gap-2 md:gap-3">
         <UButton

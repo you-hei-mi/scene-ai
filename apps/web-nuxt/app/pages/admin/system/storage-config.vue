@@ -10,7 +10,22 @@
 
     <AdminSystemTabs />
 
-    <div class="space-y-6">
+    <!-- Loading -->
+    <div v-if="loading" class="flex items-center justify-center py-20">
+      <UIcon name="lucide:loader" class="w-8 h-8 animate-spin text-primary" />
+      <span class="ml-3 text-slate-500">加载中...</span>
+    </div>
+
+    <!-- Error -->
+    <div v-else-if="error" class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4 mb-6">
+      <div class="flex items-center gap-2">
+        <UIcon name="lucide:alert-circle" class="w-5 h-5 text-red-600 dark:text-red-400" />
+        <span class="text-sm text-red-700 dark:text-red-400">{{ error }}</span>
+      </div>
+      <button class="btn-glass mt-3 text-sm" @click="fetchConfig">重试</button>
+    </div>
+
+    <div v-else class="space-y-6">
       <!-- 存储类型 -->
       <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-100 dark:border-slate-700">
         <div class="mb-6">
@@ -125,14 +140,18 @@
 
       <div class="flex items-center justify-end gap-3">
         <button class="btn-glass" @click="resetConfig">重置</button>
-        <button class="btn-glass btn-glass--primary" @click="saveConfig">保存设置</button>
+        <button class="btn-glass btn-glass--primary" @click="saveConfig" :disabled="saving">
+          <UIcon v-if="saving" name="lucide:loader" class="w-4 h-4 animate-spin" />
+          {{ saving ? '保存中...' : '保存设置' }}
+        </button>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { reactive, computed } from 'vue'
+import { reactive, ref, computed, onMounted } from 'vue'
+import { getStorageConfig, updateStorageConfig } from '~/composables/api/system'
 
 definePageMeta({
   layout: 'console',
@@ -150,6 +169,10 @@ interface StorageConfig {
   maxFileSize: number
   allowedFileTypes: string[]
 }
+
+const loading = ref(true)
+const error = ref<string | null>(null)
+const saving = ref(false)
 
 const storageTypeOptions = [
   { label: '本地存储', value: 'local' },
@@ -196,6 +219,27 @@ const storageStats = computed(() => {
   }
 })
 
+async function fetchConfig() {
+  loading.value = true
+  error.value = null
+  try {
+    const data = await getStorageConfig()
+    if (data) {
+      config.storageType = data.storageType ?? defaultConfig.storageType
+      config.region = data.region ?? ''
+      config.bucket = data.bucket ?? ''
+      config.accessKey = data.accessKey ?? ''
+      config.secretKey = data.secretKey ?? ''
+      config.maxFileSize = data.maxFileSize ?? defaultConfig.maxFileSize
+      config.allowedFileTypes = data.allowedFileTypes ?? defaultConfig.allowedFileTypes
+    }
+  } catch (e: any) {
+    error.value = e.message || '加载存储配置失败'
+  } finally {
+    loading.value = false
+  }
+}
+
 function toggleFileType(value: string) {
   const idx = config.allowedFileTypes.indexOf(value)
   if (idx > -1) {
@@ -209,7 +253,28 @@ function resetConfig() {
   Object.assign(config, JSON.parse(JSON.stringify(defaultConfig)))
 }
 
-function saveConfig() {
-  console.log('保存存储配置:', config)
+async function saveConfig() {
+  if (saving.value) return
+  saving.value = true
+  error.value = null
+  try {
+    await updateStorageConfig({
+      storageType: config.storageType,
+      region: config.region,
+      bucket: config.bucket,
+      accessKey: config.accessKey,
+      secretKey: config.secretKey,
+      maxFileSize: config.maxFileSize,
+      allowedFileTypes: config.allowedFileTypes,
+    } as any)
+  } catch (e: any) {
+    error.value = e.message || '保存存储配置失败'
+  } finally {
+    saving.value = false
+  }
 }
+
+onMounted(() => {
+  fetchConfig()
+})
 </script>

@@ -1,5 +1,18 @@
 <template>
   <div class="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50/30 dark:from-slate-900 dark:via-slate-800 dark:to-indigo-950/30">
+    <!-- Loading -->
+    <div v-if="loading" class="flex items-center justify-center py-24">
+      <UIcon name="lucide:loader-2" class="w-10 h-10 text-primary animate-spin" />
+    </div>
+
+    <!-- Error -->
+    <div v-if="error" class="mb-6 p-4 rounded-2xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
+      <div class="flex items-center gap-3">
+        <UIcon name="lucide:alert-circle" class="w-5 h-5 text-red-500" />
+        <p class="text-sm text-red-700 dark:text-red-400">{{ error }}</p>
+      </div>
+    </div>
+
     <div class="flex items-center justify-between mb-6">
       <div>
         <div class="flex items-center gap-4 mb-2">
@@ -159,7 +172,7 @@
                       color="red"
                       @click="revokeCdk(cdk)"
                     />
-                    <UDropdownMenuItem label="删除" icon="lucide:trash-2" color="red" @click="deleteCdk(cdk)" />
+                    <UDropdownMenuItem label="删除" icon="lucide:trash-2" color="red" @click="removeCdk(cdk)" />
                   </template>
                 </UDropdownMenu>
               </td>
@@ -228,7 +241,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import {
+  getCDKList,
+  generateCDK,
+  deleteCDK,
+  type CDKItem,
+} from '~/composables/api/operation'
 
 definePageMeta({
   layout: 'console',
@@ -237,7 +256,8 @@ definePageMeta({
 type CdkType = 'recharge' | 'subscription' | 'gift'
 type CdkStatus = 'unused' | 'used' | 'expired' | 'revoked'
 
-interface CdkItem {
+interface CdkItemUI {
+  id: string
   code: string
   type: CdkType
   content: string
@@ -249,6 +269,9 @@ interface CdkItem {
   createdAt: string
 }
 
+const loading = ref(true)
+const error = ref<string | null>(null)
+const saving = ref(false)
 const searchKeyword = ref('')
 const statusFilter = ref('all')
 const typeFilter = ref('all')
@@ -278,60 +301,35 @@ const batchForm = ref({
   expireAt: '',
 })
 
-// 生成模拟的 CDK 数据
-function generateMockCdk(count: number): CdkItem[] {
-  const types: CdkType[] = ['recharge', 'subscription', 'gift']
-  const statuses: CdkStatus[] = ['unused', 'used', 'unused', 'unused', 'used', 'unused']
-  const contentMap: Record<string, string> = {
-    recharge: '¥{value} 充值额度',
-    subscription: '{value} 个月专业版',
-    gift: '节日福利兑换码',
+function mapApiToUI(api: CDKItem): CdkItemUI {
+  const uiType: CdkType = api.type === 'recharge' ? 'recharge' : 'subscription'
+  const content = api.type === 'recharge'
+    ? `¥${api.value || 0} 充值`
+    : api.membershipPlanId
+      ? `套餐兑换 (${api.membershipPlanId})`
+      : '套餐兑换'
+  return {
+    id: api.id,
+    code: api.code,
+    type: uiType,
+    content,
+    value: api.value || null,
+    status: api.status === 'unused' ? 'unused' : 'used',
+    expireAt: api.expireAt || null,
+    usedBy: api.userId || null,
+    usedAt: api.usedAt || null,
+    createdAt: api.createdAt,
   }
-  const users = ['张三', '李四', '王五', '赵六', '钱七', '孙八']
-  const dates = ['2026-06-01', '2026-06-10', '2026-06-15', '2026-06-20', '2026-06-25', '2026-07-01', '2026-07-05']
-
-  return Array.from({ length: count }, (_, i) => {
-    const type = types[Math.floor(Math.random() * types.length)]
-    const status = statuses[Math.floor(Math.random() * statuses.length)] as CdkStatus
-    const value = type === 'recharge' ? [30, 50, 99, 199, 299][Math.floor(Math.random() * 5)] : null
-    const content = type === 'recharge' ? `¥${value} 充值` : type === 'subscription' ? `${Math.floor(Math.random() * 12) + 1} 个月专业版` : '活动礼品兑换'
-    const usedBy = status === 'used' ? users[Math.floor(Math.random() * users.length)] : null
-
-    const code = generateRandomCode()
-    const createdAt = dates[Math.floor(Math.random() * dates.length)] + ' ' +
-      String(Math.floor(Math.random() * 24)).padStart(2, '0') + ':' +
-      String(Math.floor(Math.random() * 60)).padStart(2, '0')
-
-    return {
-      code,
-      type,
-      content,
-      value,
-      status,
-      expireAt: null,
-      usedBy,
-      usedAt: usedBy ? createdAt : null,
-      createdAt,
-    }
-  })
 }
 
-function generateRandomCode(length = 16): string {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
-  let result = ''
-  for (let i = 0; i < length; i++) {
-    result += chars[Math.floor(Math.random() * chars.length)]
-  }
-  return result.match(/.{1,4}/g)?.join('-') || result
-}
-
-const cdkList = ref<CdkItem[]>(generateMockCdk(45))
+const cdkList = ref<CdkItemUI[]>([])
+const totalCount = ref(0)
 
 const stats = computed(() => ({
-  total: cdkList.value.length,
+  total: totalCount.value,
   used: cdkList.value.filter(c => c.status === 'used').length,
   unused: cdkList.value.filter(c => c.status === 'unused').length,
-  usedRate: cdkList.value.length ? Math.round((cdkList.value.filter(c => c.status === 'used').length / cdkList.value.length) * 100) : 0,
+  usedRate: totalCount.value ? Math.round((cdkList.value.filter(c => c.status === 'used').length / totalCount.value) * 100) : 0,
   monthNew: cdkList.value.filter(c => c.createdAt.startsWith('2026-07')).length,
 }))
 
@@ -342,7 +340,7 @@ const filteredCdkList = computed(() => {
 
   if (searchKeyword.value.trim()) {
     const kw = searchKeyword.value.toUpperCase()
-    result = result.filter(c => c.code.toUpperCase().includes(kw) || cdk.content.includes(kw))
+    result = result.filter(c => c.code.toUpperCase().includes(kw) || c.content.includes(kw))
   }
 
   if (statusFilter.value !== 'all') {
@@ -355,6 +353,20 @@ const filteredCdkList = computed(() => {
 
   return result
 })
+
+async function fetchCdks() {
+  loading.value = true
+  error.value = null
+  try {
+    const res = await getCDKList({ page: 1, pageSize: 1000 })
+    cdkList.value = (res.data?.items || []).map(mapApiToUI)
+    totalCount.value = res.data?.total || 0
+  } catch (e: any) {
+    error.value = e?.message || '加载 CDK 列表失败'
+  } finally {
+    loading.value = false
+  }
+}
 
 function getTypeText(type: CdkType): string {
   const map: Record<CdkType, string> = {
@@ -422,44 +434,49 @@ function openBatchGenerateDialog() {
   showBatchDialog.value = true
 }
 
-function batchGenerate() {
+async function batchGenerate() {
   if (!batchForm.value.quantity || batchForm.value.quantity <= 0) return
-
-  const newCdks: CdkItem[] = []
-  for (let i = 0; i < batchForm.value.quantity; i++) {
-    const code = generateRandomCode()
-    const now = new Date()
-    const createdAt = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
-
-    newCdks.push({
-      code,
-      type: batchForm.value.type,
-      content: batchForm.value.content || (batchForm.value.type === 'recharge' ? `充值¥${batchForm.value.value}` : '套餐兑换'),
-      value: batchForm.value.value,
-      status: 'unused',
-      expireAt: batchForm.value.expireAt || null,
-      usedBy: null,
-      usedAt: null,
-      createdAt,
+  saving.value = true
+  try {
+    const apiType = batchForm.value.type === 'recharge' ? 'recharge' : 'membership'
+    await generateCDK({
+      quantity: batchForm.value.quantity,
+      type: apiType as 'recharge' | 'membership',
+      value: batchForm.value.value ?? undefined,
+      expireDays: batchForm.value.expireAt ? undefined : undefined,
     })
+    showBatchDialog.value = false
+    await fetchCdks()
+  } catch (e: any) {
+    error.value = e?.message || '生成 CDK 失败'
+  } finally {
+    saving.value = false
   }
-
-  cdkList.value.unshift(...newCdks)
-  showBatchDialog.value = false
 }
 
 function copyCdk(code: string) {
   navigator.clipboard.writeText(code.replace(/-/g, ''))
 }
 
-function revokeCdk(cdk: CdkItem) {
-  cdk.status = 'revoked'
-}
-
-function deleteCdk(cdk: CdkItem) {
-  const index = cdkList.value.findIndex(c => c.code === cdk.code)
-  if (index > -1) {
-    cdkList.value.splice(index, 1)
+async function revokeCdk(cdk: CdkItemUI) {
+  try {
+    await deleteCDK(cdk.id)
+    await fetchCdks()
+  } catch (e: any) {
+    error.value = e?.message || '作废 CDK 失败'
   }
 }
+
+async function removeCdk(cdk: CdkItemUI) {
+  try {
+    await deleteCDK(cdk.id)
+    await fetchCdks()
+  } catch (e: any) {
+    error.value = e?.message || '删除 CDK 失败'
+  }
+}
+
+onMounted(() => {
+  fetchCdks()
+})
 </script>

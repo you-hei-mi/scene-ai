@@ -14,7 +14,7 @@
           :key="range.id"
           :class="activeRange === range.id ? 'btn-glass btn-glass--primary' : 'btn-glass'"
           class="text-sm px-3 py-1.5"
-          @click="activeRange = range.id"
+          @click="activeRange = range.id; fetchStats()"
         >
           {{ range.label }}
         </button>
@@ -36,7 +36,25 @@
       </button>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <!-- 加载状态 -->
+    <div v-if="loading" class="flex items-center justify-center py-20">
+      <div class="flex flex-col items-center gap-4">
+        <UIcon name="lucide:loader-2" class="w-10 h-10 text-primary animate-spin" />
+        <p class="text-slate-500 text-sm">正在加载财务数据...</p>
+      </div>
+    </div>
+
+    <!-- 错误状态 -->
+    <div v-if="error" class="mb-6 p-4 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 flex items-center gap-3">
+      <UIcon name="lucide:alert-circle" class="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0" />
+      <div class="flex-1">
+        <p class="text-sm font-medium text-red-700 dark:text-red-400">加载失败</p>
+        <p class="text-xs text-red-500 mt-0.5">{{ error }}</p>
+      </div>
+      <button class="btn-glass text-sm px-3 py-1.5" @click="fetchStats">重试</button>
+    </div>
+
+    <div v-if="!loading" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
       <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-100 dark:border-slate-700 transition-all duration-300 hover:shadow-lg">
         <div class="flex items-center justify-between">
           <div>
@@ -102,7 +120,7 @@
       </div>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+    <div v-if="!loading" class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
       <div class="lg:col-span-2 bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 p-6">
         <div class="mb-6 flex items-center justify-between">
           <h3 class="font-semibold text-lg text-slate-900 dark:text-white">收入趋势</h3>
@@ -155,23 +173,15 @@
         </div>
 
         <div class="mt-6 p-4 rounded-xl bg-slate-50 dark:bg-slate-700/50">
-          <div class="flex items-center justify-between mb-2">
-            <span class="text-sm text-slate-500">会员订阅</span>
-            <span class="text-sm font-medium text-slate-900 dark:text-white">¥{{ formatMoney(68200) }}</span>
-          </div>
-          <div class="flex items-center justify-between mb-2">
-            <span class="text-sm text-slate-500">充值金额</span>
-            <span class="text-sm font-medium text-slate-900 dark:text-white">¥{{ formatMoney(45600) }}</span>
-          </div>
-          <div class="flex items-center justify-between">
-            <span class="text-sm text-slate-500">其他收入</span>
-            <span class="text-sm font-medium text-slate-900 dark:text-white">¥{{ formatMoney(13200) }}</span>
+          <div v-for="cat in incomeCategories" :key="cat.name" class="flex items-center justify-between mb-2 last:mb-0">
+            <span class="text-sm text-slate-500">{{ cat.name }}</span>
+            <span class="text-sm font-medium text-slate-900 dark:text-white">¥{{ formatMoney(cat.value) }}</span>
           </div>
         </div>
       </div>
     </div>
 
-    <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 overflow-hidden">
+    <div v-if="!loading" class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 overflow-hidden">
       <div class="mb-4 flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-700/50">
         <h3 class="font-semibold text-lg text-slate-900 dark:text-white">月度对比表</h3>
         <UBadge variant="secondary" size="sm">{{ currentYear }}</UBadge>
@@ -240,7 +250,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import { getFinancialStats } from '~/composables/api/order-finance-access'
 
 definePageMeta({
   layout: 'console',
@@ -266,6 +277,8 @@ interface IncomeCategory {
 
 const activeTab = ref('analysis')
 const activeRange = ref<TimeRange>('30days')
+const loading = ref(true)
+const error = ref<string | null>(null)
 
 const tabs = [
   { key: 'analysis', label: '财务分析', icon: 'lucide:bar-chart-3' },
@@ -280,122 +293,129 @@ const timeRanges = [
 ]
 
 const currentYear = new Date().getFullYear()
-const currentMonth = 7
+const currentMonth = new Date().getMonth() + 1
 
 const activeRangeLabel = computed(() => {
   return timeRanges.find(r => r.id === activeRange.value)?.label || ''
 })
 
-const stats = computed(() => {
-  const dataMap: Record<TimeRange, {
-    totalRevenue: number
-    totalRevenueChange: number
-    monthRevenue: number
-    monthRevenueChange: number
-    monthExpense: number
-    monthExpenseChange: number
-    netProfit: number
-    netProfitChange: number
-  }> = {
-    '7days': {
-      totalRevenue: 1526800,
-      totalRevenueChange: 8.5,
-      monthRevenue: 28540,
-      monthRevenueChange: 12.3,
-      monthExpense: 12300,
-      monthExpenseChange: 5.2,
-      netProfit: 16240,
-      netProfitChange: 18.6,
-    },
-    '30days': {
-      totalRevenue: 1526800,
-      totalRevenueChange: 8.5,
-      monthRevenue: 127000,
-      monthRevenueChange: 12.3,
-      monthExpense: 45600,
-      monthExpenseChange: 5.2,
-      netProfit: 81400,
-      netProfitChange: 18.6,
-    },
-    '90days': {
-      totalRevenue: 1526800,
-      totalRevenueChange: 15.8,
-      monthRevenue: 385000,
-      monthRevenueChange: 18.5,
-      monthExpense: 128000,
-      monthExpenseChange: 8.6,
-      netProfit: 257000,
-      netProfitChange: 22.4,
-    },
-    'year': {
-      totalRevenue: 1526800,
-      totalRevenueChange: 28.5,
-      monthRevenue: 1526800,
-      monthRevenueChange: 28.5,
-      monthExpense: 586000,
-      monthExpenseChange: 12.8,
-      netProfit: 940800,
-      netProfitChange: 35.2,
-    },
+const apiStats = ref<{
+  totalRevenue: number
+  monthlyRevenue: number
+  monthlyExpense: number
+  netProfit: number
+  revenueTrend: { month: string; revenue: number; expense: number; profit: number }[]
+  revenueByCategory: { category: string; amount: number; percentage: number }[]
+} | null>(null)
+
+const periodMap: Record<TimeRange, string> = {
+  '7days': 'week',
+  '30days': 'month',
+  '90days': 'quarter',
+  'year': 'year',
+}
+
+async function fetchStats() {
+  loading.value = true
+  error.value = null
+  try {
+    const data = await getFinancialStats(periodMap[activeRange.value])
+    apiStats.value = data
+  } catch (e: any) {
+    error.value = e.message || '获取财务数据失败'
+  } finally {
+    loading.value = false
   }
-  return dataMap[activeRange.value]
+}
+
+onMounted(() => {
+  fetchStats()
+})
+
+const stats = computed(() => {
+  const d = apiStats.value
+  if (!d) {
+    return {
+      totalRevenue: 0,
+      totalRevenueChange: 0,
+      monthRevenue: 0,
+      monthRevenueChange: 0,
+      monthExpense: 0,
+      monthExpenseChange: 0,
+      netProfit: 0,
+      netProfitChange: 0,
+    }
+  }
+  return {
+    totalRevenue: d.totalRevenue,
+    totalRevenueChange: 0,
+    monthRevenue: d.monthlyRevenue,
+    monthRevenueChange: 0,
+    monthExpense: d.monthlyExpense,
+    monthExpenseChange: 0,
+    netProfit: d.netProfit,
+    netProfitChange: 0,
+  }
 })
 
 const revenueTrendData = computed(() => {
-  const dataMap: Record<TimeRange, Array<{ label: string; value: number }>> = {
-    '7days': [
-      { label: '7/1', value: 18600 },
-      { label: '7/2', value: 22400 },
-      { label: '7/3', value: 19800 },
-      { label: '7/4', value: 25600 },
-      { label: '7/5', value: 21300 },
-      { label: '7/6', value: 15800 },
-      { label: '7/7', value: 12700 },
-    ],
-    '30days': [
-      { label: '第1周', value: 98600 },
-      { label: '第2周', value: 122400 },
-      { label: '第3周', value: 108500 },
-      { label: '第4周', value: 127000 },
-    ],
-    '90days': [
-      { label: '5月', value: 298000 },
-      { label: '6月', value: 345000 },
-      { label: '7月', value: 385000 },
-    ],
-    'year': [
-      { label: '1月', value: 98000 },
-      { label: '2月', value: 112000 },
-      { label: '3月', value: 135000 },
-      { label: '4月', value: 128000 },
-      { label: '5月', value: 298000 },
-      { label: '6月', value: 345000 },
-      { label: '7月', value: 385000 },
-    ],
+  const d = apiStats.value
+  if (!d || !d.revenueTrend || d.revenueTrend.length === 0) {
+    return [{ label: '暂无数据', value: 0 }]
   }
-  return dataMap[activeRange.value]
+  return d.revenueTrend.map((item) => ({
+    label: item.month,
+    value: item.revenue,
+  }))
 })
 
 const maxRevenueValue = computed(() => Math.max(...revenueTrendData.value.map(d => d.value), 1))
 
+const categoryColors = [
+  { color: '#6366f1', colorLight: '#a5b4fc' },
+  { color: '#8b5cf6', colorLight: '#c4b5fd' },
+  { color: '#06b6d4', colorLight: '#67e8f9' },
+  { color: '#f59e0b', colorLight: '#fcd34d' },
+  { color: '#10b981', colorLight: '#6ee7b7' },
+]
+
 const incomeCategories = computed<IncomeCategory[]>(() => {
-  const total = 127000
-  return [
-    { name: '会员订阅', value: 68200, percentage: Math.round((68200 / total) * 100), color: '#6366f1', colorLight: '#a5b4fc' },
-    { name: '充值金额', value: 45600, percentage: Math.round((45600 / total) * 100), color: '#8b5cf6', colorLight: '#c4b5fd' },
-    { name: '其他收入', value: 13200, percentage: Math.round((13200 / total) * 100), color: '#06b6d4', colorLight: '#67e8f9' },
-  ]
+  const d = apiStats.value
+  if (!d || !d.revenueByCategory || d.revenueByCategory.length === 0) {
+    return []
+  }
+  return d.revenueByCategory.map((cat, idx) => {
+    const c = categoryColors[idx % categoryColors.length]
+    return {
+      name: cat.category,
+      value: cat.amount,
+      percentage: Math.round(cat.percentage),
+      color: c.color,
+      colorLight: c.colorLight,
+    }
+  })
 })
 
-const monthlyData = ref<MonthlyRecord[]>([
-  { month: 1, revenue: 98200, expense: 38500, profit: 59700, growthRate: 0 },
-  { month: 2, revenue: 112500, expense: 42100, profit: 70400, growthRate: 14.6 },
-  { month: 3, revenue: 135800, expense: 48600, profit: 87200, growthRate: 20.7 },
-  { month: 4, revenue: 128400, expense: 45200, profit: 83200, growthRate: -5.4 },
-  { month: 5, revenue: 298000, expense: 98500, profit: 199500, growthRate: 132.1 },
-  { month: 6, revenue: 345000, expense: 112800, profit: 232200, growthRate: 15.8 },
-  { month: 7, revenue: 127000, expense: 45600, profit: 81400, growthRate: 12.3 },
-])
+const monthlyData = computed<MonthlyRecord[]>(() => {
+  const d = apiStats.value
+  if (!d || !d.revenueTrend || d.revenueTrend.length === 0) {
+    return []
+  }
+  return d.revenueTrend.map((item, idx, arr) => {
+    const prev = idx > 0 ? arr[idx - 1] : null
+    const growthRate = prev && prev.revenue > 0
+      ? Math.round(((item.revenue - prev.revenue) / prev.revenue) * 1000) / 10
+      : 0
+    const monthNum = parseInt(item.month.replace(/[^0-9]/g, ''), 10) || (idx + 1)
+    return {
+      month: monthNum,
+      revenue: item.revenue,
+      expense: item.expense,
+      profit: item.profit,
+      growthRate,
+    }
+  })
+})
 
 const monthlyTotal = computed(() => {
   return monthlyData.value.reduce(

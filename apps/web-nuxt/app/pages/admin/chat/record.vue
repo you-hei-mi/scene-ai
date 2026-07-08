@@ -25,6 +25,23 @@
       </button>
     </div>
 
+    <!-- Loading -->
+    <div v-if="loading" class="flex items-center justify-center py-20">
+      <UIcon name="lucide:loader-2" class="w-8 h-8 animate-spin text-primary" />
+      <span class="ml-3 text-slate-500">加载中...</span>
+    </div>
+
+    <!-- Error -->
+    <div v-else-if="error" class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-2xl p-4 mb-6 flex items-start gap-3">
+      <UIcon name="lucide:alert-circle" class="w-5 h-5 text-red-500 mt-0.5 flex-shrink-0" />
+      <div class="flex-1">
+        <p class="text-sm font-medium text-red-700 dark:text-red-400">加载失败</p>
+        <p class="text-xs text-red-600 dark:text-red-300 mt-1">{{ error }}</p>
+      </div>
+      <button class="btn-glass text-sm" @click="fetchRecords">重试</button>
+    </div>
+
+    <template v-else>
     <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
       <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-100 dark:border-slate-700 transition-all duration-300 hover:shadow-lg">
         <div class="flex items-center justify-between">
@@ -154,7 +171,7 @@
 
       <div class="flex items-center justify-between px-6 py-4 border-t border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-700/30">
         <div class="text-sm text-slate-500">
-          共 {{ filteredRecords.length }} 条对话记录
+          共 {{ totalRecords }} 条对话记录
         </div>
         <div class="flex items-center gap-2">
           <button class="btn-glass px-3 py-1.5 text-sm" :disabled="currentPage <= 1" @click="currentPage = Math.max(1, currentPage - 1)">
@@ -188,7 +205,11 @@
             <span class="text-sm text-slate-900 dark:text-white">{{ viewingRecord?.lastActive }}</span>
           </div>
         </div>
-        <div class="border border-slate-200 dark:border-slate-700 rounded-xl divide-y divide-slate-200 dark:divide-slate-700 max-h-96 overflow-y-auto">
+        <div v-if="loadingDetail" class="flex items-center justify-center py-8">
+          <UIcon name="lucide:loader-2" class="w-6 h-6 animate-spin text-primary" />
+          <span class="ml-3 text-slate-500">加载对话详情...</span>
+        </div>
+        <div v-else class="border border-slate-200 dark:border-slate-700 rounded-xl divide-y divide-slate-200 dark:divide-slate-700 max-h-96 overflow-y-auto">
           <div
             v-for="(msg, index) in conversationMessages"
             :key="index"
@@ -227,11 +248,14 @@
         </button>
       </template>
     </UDialog>
+    </template>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import { getChatRecords, getChatDetail, deleteChat } from '~/composables/api/system'
+import type { ChatRecord as ApiChatRecord } from '~/composables/api/system'
 
 definePageMeta({
   layout: 'console',
@@ -256,11 +280,16 @@ interface ConversationMessage {
   time: string
 }
 
+const loading = ref(true)
+const loadingDetail = ref(false)
+const error = ref('')
 const activeTab = ref('record')
 const searchKeyword = ref('')
 const agentFilter = ref('all')
 const timeRangeFilter = ref('all')
 const currentPage = ref(1)
+const pageSize = 10
+const totalRecords = ref(0)
 const showDetailDialog = ref(false)
 const viewingRecord = ref<ChatRecord | null>(null)
 
@@ -286,170 +315,36 @@ const timeRangeOptions = [
   { label: '最近 90 天', value: '90days' },
 ]
 
-const records = ref<ChatRecord[]>([
-  {
-    id: '1',
-    userId: 'u1',
-    userName: '张三',
-    userEmail: 'zhangsan@example.com',
-    title: 'Python 函数优化建议',
-    agentId: 'a2',
-    agentName: '代码专家',
-    messageCount: 24,
-    lastActive: '2026-07-07 14:30',
-    createdAt: '2026-07-07 09:00',
-  },
-  {
-    id: '2',
-    userId: 'u2',
-    userName: '李四',
-    userEmail: 'lisi@example.com',
-    title: '产品文案润色',
-    agentId: 'a3',
-    agentName: '文案大师',
-    messageCount: 18,
-    lastActive: '2026-07-07 13:15',
-    createdAt: '2026-07-07 10:00',
-  },
-  {
-    id: '3',
-    userId: 'u3',
-    userName: '王五',
-    userEmail: 'wangwu@example.com',
-    title: '销售数据分析',
-    agentId: 'a4',
-    agentName: '数据分析师',
-    messageCount: 32,
-    lastActive: '2026-07-07 11:45',
-    createdAt: '2026-07-06 14:00',
-  },
-  {
-    id: '4',
-    userId: 'u1',
-    userName: '张三',
-    userEmail: 'zhangsan@example.com',
-    title: 'React 组件设计模式',
-    agentId: 'a2',
-    agentName: '代码专家',
-    messageCount: 15,
-    lastActive: '2026-07-07 10:20',
-    createdAt: '2026-07-07 08:30',
-  },
-  {
-    id: '5',
-    userId: 'u4',
-    userName: '赵六',
-    userEmail: 'zhaoliu@example.com',
-    title: '日常问答',
-    agentId: 'a1',
-    agentName: '通用助手',
-    messageCount: 8,
-    lastActive: '2026-07-07 09:00',
-    createdAt: '2026-07-07 07:00',
-  },
-  {
-    id: '6',
-    userId: 'u5',
-    userName: '孙七',
-    userEmail: 'sunqi@example.com',
-    title: 'Logo 设计思路',
-    agentId: 'a5',
-    agentName: '创意设计师',
-    messageCount: 12,
-    lastActive: '2026-07-06 18:30',
-    createdAt: '2026-07-06 16:00',
-  },
-  {
-    id: '7',
-    userId: 'u2',
-    userName: '李四',
-    userEmail: 'lisi@example.com',
-    title: '英文邮件翻译',
-    agentId: 'a6',
-    agentName: '翻译专家',
-    messageCount: 6,
-    lastActive: '2026-07-06 16:00',
-    createdAt: '2026-07-06 15:00',
-  },
-  {
-    id: '8',
-    userId: 'u6',
-    userName: '周八',
-    userEmail: 'zhouba@example.com',
-    title: '合同条款咨询',
-    agentId: 'a8',
-    agentName: '法律顾问',
-    messageCount: 20,
-    lastActive: '2026-07-06 14:00',
-    createdAt: '2026-07-06 10:00',
-  },
-  {
-    id: '9',
-    userId: 'u7',
-    userName: '吴九',
-    userEmail: 'wujiu@example.com',
-    title: '数据库优化方案',
-    agentId: 'a2',
-    agentName: '代码专家',
-    messageCount: 28,
-    lastActive: '2026-07-05 17:30',
-    createdAt: '2026-07-05 09:00',
-  },
-  {
-    id: '10',
-    userId: 'u8',
-    userName: '郑十',
-    userEmail: 'zhengshi@example.com',
-    title: '市场调研报告',
-    agentId: 'a4',
-    agentName: '数据分析师',
-    messageCount: 35,
-    lastActive: '2026-07-05 15:00',
-    createdAt: '2026-07-04 11:00',
-  },
-  {
-    id: '11',
-    userId: 'u1',
-    userName: '张三',
-    userEmail: 'zhangsan@example.com',
-    title: 'API 接口设计',
-    agentId: 'a2',
-    agentName: '代码专家',
-    messageCount: 42,
-    lastActive: '2026-07-04 10:00',
-    createdAt: '2026-07-03 14:00',
-  },
-  {
-    id: '12',
-    userId: 'u3',
-    userName: '王五',
-    userEmail: 'wangwu@example.com',
-    title: '年度总结报告',
-    agentId: 'a3',
-    agentName: '文案大师',
-    messageCount: 16,
-    lastActive: '2026-07-03 09:30',
-    createdAt: '2026-07-02 08:00',
-  },
-])
+const records = ref<ChatRecord[]>([])
 
-const conversationMessages = ref<ConversationMessage[]>([
-  { role: 'user', content: '你好，请帮我优化一下这段 Python 代码的性能。', time: '14:00' },
-  { role: 'assistant', content: '你好！很高兴能帮助你优化代码。请把代码发给我，我会分析并给出优化建议。', time: '14:01' },
-  { role: 'user', content: 'def process_data(items):\n    result = []\n    for item in items:\n        if item.status == "active":\n            result.append(item)\n    return result', time: '14:02' },
-  { role: 'assistant', content: '我看到了这段代码。主要优化建议：\n\n1. **使用列表推导式**：可以提升性能和可读性\n2. **考虑使用生成器**：如果数据量大，可以节省内存\n\n优化后的代码：\n```python\ndef process_data(items):\n    return [item for item in items if item.status == "active"]\n```\n\n如果需要处理大量数据，可以使用生成器：\n```python\ndef process_data(items):\n    return (item for item in items if item.status == "active")\n```\n\n还有其他需要优化的吗？', time: '14:03' },
-  { role: 'user', content: '谢谢！还有一个关于数据库查询的问题...', time: '14:05' },
-  { role: 'assistant', content: '当然，请说。我会帮你分析数据库查询的性能问题。', time: '14:05' },
-])
+const conversationMessages = ref<ConversationMessage[]>([])
+
+function mapApiRecord(api: ApiChatRecord): ChatRecord {
+  return {
+    id: api.id,
+    userId: api.user?.id || '',
+    userName: api.user?.name || '',
+    userEmail: '',
+    title: api.title,
+    agentId: '',
+    agentName: api.agentName,
+    messageCount: api.messageCount,
+    lastActive: api.lastActive,
+    createdAt: api.lastActive,
+  }
+}
 
 const stats = computed(() => ({
-  totalConversations: records.value.length,
-  todayConversations: records.value.filter(r => r.lastActive.startsWith('2026-07-07')).length,
+  totalConversations: totalRecords.value,
+  todayConversations: records.value.filter(r => {
+    const today = new Date().toISOString().split('T')[0]
+    return r.lastActive.startsWith(today)
+  }).length,
   totalMessages: records.value.reduce((sum, r) => sum + r.messageCount, 0),
   activeUsers: new Set(records.value.map(r => r.userId)).size,
 }))
 
-const totalPages = computed(() => Math.ceil(filteredRecords.value.length / 10) || 1)
+const totalPages = computed(() => Math.ceil(totalRecords.value / pageSize) || 1)
 
 const filteredRecords = computed(() => {
   let result = [...records.value]
@@ -469,31 +364,50 @@ const filteredRecords = computed(() => {
     result = result.filter(r => r.agentId === agentFilter.value || r.agentName === agentOptions.find(o => o.value === agentFilter.value)?.label)
   }
 
+  const now = new Date()
   if (timeRangeFilter.value === 'today') {
-    result = result.filter(r => r.lastActive.startsWith('2026-07-07'))
+    const today = now.toISOString().split('T')[0]
+    result = result.filter(r => r.lastActive.startsWith(today))
   } else if (timeRangeFilter.value === '7days') {
     result = result.filter(r => {
       const d = new Date(r.lastActive).getTime()
-      const now = new Date('2026-07-07').getTime()
-      return (now - d) <= 7 * 24 * 60 * 60 * 1000
+      return (now.getTime() - d) <= 7 * 24 * 60 * 60 * 1000
     })
   } else if (timeRangeFilter.value === '30days') {
     result = result.filter(r => {
       const d = new Date(r.lastActive).getTime()
-      const now = new Date('2026-07-07').getTime()
-      return (now - d) <= 30 * 24 * 60 * 60 * 1000
+      return (now.getTime() - d) <= 30 * 24 * 60 * 60 * 1000
     })
   } else if (timeRangeFilter.value === '90days') {
     result = result.filter(r => {
       const d = new Date(r.lastActive).getTime()
-      const now = new Date('2026-07-07').getTime()
-      return (now - d) <= 90 * 24 * 60 * 60 * 1000
+      return (now.getTime() - d) <= 90 * 24 * 60 * 60 * 1000
     })
   }
 
   result.sort((a, b) => new Date(b.lastActive).getTime() - new Date(a.lastActive).getTime())
 
   return result
+})
+
+async function fetchRecords() {
+  loading.value = true
+  error.value = ''
+  try {
+    const data = await getChatRecords({ page: currentPage.value, pageSize })
+    if (data) {
+      records.value = (data.items || []).map(mapApiRecord)
+      totalRecords.value = data.total || 0
+    }
+  } catch (e: any) {
+    error.value = e.message || '加载对话记录失败'
+  } finally {
+    loading.value = false
+  }
+}
+
+onMounted(() => {
+  fetchRecords()
 })
 
 function resetFilters() {
@@ -503,19 +417,42 @@ function resetFilters() {
   currentPage.value = 1
 }
 
-function viewConversation(record: ChatRecord) {
+async function viewConversation(record: ChatRecord) {
   viewingRecord.value = record
   showDetailDialog.value = true
+  loadingDetail.value = true
+  try {
+    const data = await getChatDetail(record.id)
+    if (data?.messages) {
+      conversationMessages.value = data.messages.map((m: any) => ({
+        role: m.role || 'user',
+        content: m.content || '',
+        time: m.time || '',
+      }))
+    } else {
+      conversationMessages.value = []
+    }
+  } catch (e: any) {
+    conversationMessages.value = []
+  } finally {
+    loadingDetail.value = false
+  }
 }
 
 function exportConversation(record: ChatRecord) {
   console.log('导出对话:', record.id)
 }
 
-function deleteConversation(record: ChatRecord) {
-  const index = records.value.findIndex(r => r.id === record.id)
-  if (index > -1) {
-    records.value.splice(index, 1)
+async function deleteConversation(record: ChatRecord) {
+  try {
+    await deleteChat(record.id)
+    const index = records.value.findIndex(r => r.id === record.id)
+    if (index > -1) {
+      records.value.splice(index, 1)
+      totalRecords.value = Math.max(0, totalRecords.value - 1)
+    }
+  } catch (e: any) {
+    error.value = e.message || '删除对话失败'
   }
 }
 </script>

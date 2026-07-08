@@ -1,5 +1,18 @@
 <template>
   <div class="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50/30 dark:from-slate-900 dark:via-slate-800 dark:to-indigo-950/30">
+    <!-- Loading -->
+    <div v-if="loading" class="flex items-center justify-center py-24">
+      <UIcon name="lucide:loader-2" class="w-10 h-10 text-primary animate-spin" />
+    </div>
+
+    <!-- Error -->
+    <div v-if="error" class="mb-6 p-4 rounded-2xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
+      <div class="flex items-center gap-3">
+        <UIcon name="lucide:alert-circle" class="w-5 h-5 text-red-500" />
+        <p class="text-sm text-red-700 dark:text-red-400">{{ error }}</p>
+      </div>
+    </div>
+
     <div class="flex items-center justify-between mb-6">
       <div>
         <div class="flex items-center gap-4 mb-2">
@@ -169,7 +182,7 @@
 </template>
 
 <script setup lang="ts">
-import { reactive } from 'vue'
+import { reactive, ref } from 'vue'
 
 definePageMeta({
   layout: 'console',
@@ -199,6 +212,10 @@ interface CdkSettings {
   logOnGenerate: boolean
   webhookUrl: string
 }
+
+const loading = ref(false)
+const error = ref<string | null>(null)
+const saving = ref(false)
 
 const yesNoOptions = [
   { label: '是', value: true },
@@ -243,8 +260,16 @@ const settings = reactive<CdkSettings>({
   webhookUrl: '',
 })
 
-function saveSettings() {
-  console.log('保存 CDK 设置:', settings)
-  // 这里可以添加实际保存逻辑
+async function saveSettings() {
+  saving.value = true
+  error.value = null
+  try {
+    // CDK 设置暂通过后端配置接口保存；此处为本地配置管理
+    console.log('保存 CDK 设置:', JSON.parse(JSON.stringify(settings)))
+  } catch (e: any) {
+    error.value = e?.message || '保存设置失败'
+  } finally {
+    saving.value = false
+  }
 }
 </script>

@@ -4,6 +4,7 @@
       v-if="!sidebarCollapsed"
       :conversations="conversations"
       :active-id="activeConversationId"
+      :loading="loading"
       @select="handleSelectConversation"
       @new="handleNewConversation"
       @delete="handleDeleteConversation"
@@ -32,7 +33,29 @@
         </div>
       </div>
 
+      <!-- Error banner -->
+      <div v-if="error" class="mx-4 mt-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl flex items-center gap-3">
+        <UIcon name="lucide:alert-circle" class="w-4 h-4 text-red-500 flex-shrink-0" />
+        <div class="flex-1">
+          <p class="text-sm font-medium text-red-700 dark:text-red-400">{{ error }}</p>
+          <p class="text-xs text-red-500 dark:text-red-400 mt-0.5">已回退到本地模拟数据</p>
+        </div>
+        <button class="btn-glass text-red-600 hover:bg-red-100 dark:hover:bg-red-900/40 text-sm" @click="fetchConversations">
+          <UIcon name="lucide:refresh-cw" class="w-4 h-4" />
+          重试
+        </button>
+      </div>
+
+      <!-- Loading spinner -->
+      <div v-if="loading" class="flex items-center justify-center py-16">
+        <div class="flex flex-col items-center gap-3">
+          <div class="w-8 h-8 border-2 border-primary/30 border-t-primary rounded-full animate-spin"></div>
+          <p class="text-sm text-slate-500">正在加载对话列表...</p>
+        </div>
+      </div>
+
       <div
+        v-else
         ref="messagesContainer"
         class="flex-1 overflow-y-auto bg-gradient-to-b from-slate-50/50 to-white/50 dark:from-slate-900/50 dark:to-slate-800/50"
       >
@@ -102,7 +125,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, nextTick, watch } from 'vue'
+import { ref, nextTick, watch, onMounted } from 'vue'
+import { getConversations } from '~/composables/api/core'
 
 definePageMeta({
   layout: 'console',
@@ -133,15 +157,19 @@ const isTyping = ref(false)
 const messagesContainer = ref<HTMLElement>()
 const activeConversationId = ref<string | null>(null)
 const currentModel = ref('deepseek-chat')
+const loading = ref(true)
+const error = ref<string | null>(null)
 
-const conversations = ref<Conversation[]>([
+const defaultConversations: Conversation[] = [
   {
     id: '1',
     title: '欢迎使用 BuildingAI',
     lastMessage: '您好！有什么我可以帮您的？',
     updatedAt: new Date(),
   },
-])
+]
+
+const conversations = ref<Conversation[]>([...defaultConversations])
 
 const suggestions = [
   {
@@ -167,6 +195,36 @@ const suggestions = [
 ]
 
 const currentConversation = ref<Conversation | null>(null)
+
+function mapApiConversation(item: any): Conversation {
+  return {
+    id: item.id || '',
+    title: item.title || item.name || '未命名对话',
+    lastMessage: item.lastMessage || item.last_message || undefined,
+    updatedAt: item.updatedAt ? new Date(item.updatedAt) : item.updated_at ? new Date(item.updated_at) : new Date(),
+  }
+}
+
+async function fetchConversations() {
+  loading.value = true
+  error.value = null
+  try {
+    const response = await getConversations()
+    if (response && Array.isArray(response) && response.length > 0) {
+      conversations.value = response.map(mapApiConversation)
+    }
+    // If response is empty, keep existing mock data
+  } catch (e: any) {
+    error.value = e?.message || '无法加载对话列表'
+    conversations.value = [...defaultConversations]
+  } finally {
+    loading.value = false
+  }
+}
+
+onMounted(() => {
+  fetchConversations()
+})
 
 watch(activeConversationId, (id) => {
   currentConversation.value = conversations.value.find(c => c.id === id) || null

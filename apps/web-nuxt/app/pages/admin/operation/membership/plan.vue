@@ -1,5 +1,18 @@
 <template>
   <div class="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50/30 dark:from-slate-900 dark:via-slate-800 dark:to-indigo-950/30">
+    <!-- Loading -->
+    <div v-if="loading" class="flex items-center justify-center py-24">
+      <UIcon name="lucide:loader-2" class="w-10 h-10 text-primary animate-spin" />
+    </div>
+
+    <!-- Error -->
+    <div v-if="error" class="mb-6 p-4 rounded-2xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
+      <div class="flex items-center gap-3">
+        <UIcon name="lucide:alert-circle" class="w-5 h-5 text-red-500" />
+        <p class="text-sm text-red-700 dark:text-red-400">{{ error }}</p>
+      </div>
+    </div>
+
     <div class="flex items-center justify-between mb-6">
       <div>
         <div class="flex items-center gap-4 mb-2">
@@ -176,7 +189,7 @@
                       icon="lucide:star"
                       @click="toggleRecommended(plan)"
                     />
-                    <UDropdownMenuItem label="删除套餐" icon="lucide:trash-2" color="red" @click="deletePlan(plan)" />
+                    <UDropdownMenuItem label="删除套餐" icon="lucide:trash-2" color="red" @click="removePlan(plan)" />
                   </template>
                 </UDropdownMenu>
               </td>
@@ -265,7 +278,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
+import {
+  getMembershipPlans,
+  createMembershipPlan,
+  updateMembershipPlan,
+  deleteMembershipPlan,
+  type MembershipPlan,
+} from '~/composables/api/operation'
 
 definePageMeta({
   layout: 'console',
@@ -293,8 +313,11 @@ interface Plan {
   recommended: boolean
 }
 
+const loading = ref(true)
+const error = ref<string | null>(null)
 const showDialog = ref(false)
 const editingItem = ref<Plan | null>(null)
+const saving = ref(false)
 
 const formData = ref({
   name: '',
@@ -333,6 +356,16 @@ const periodLabelMap: Record<string, string> = {
   lifetime: '永久',
 }
 
+const cycleMap: Record<string, string> = {
+  monthly: 'month',
+  quarterly: 'quarter',
+  yearly: 'year',
+  lifetime: 'lifetime',
+  month: 'monthly',
+  quarter: 'quarterly',
+  year: 'yearly',
+}
+
 const iconBgMap: Record<string, string> = {
   'lucide:zap': 'bg-amber-100 dark:bg-amber-900/30',
   'lucide:rocket': 'bg-purple-100 dark:bg-purple-900/30',
@@ -355,80 +388,51 @@ const iconColorMap: Record<string, string> = {
   'lucide:sun': 'text-red-600 dark:text-red-400',
 }
 
-const plans = ref<Plan[]>([
-  {
-    id: '1',
-    name: '免费版',
+const plans = ref<Plan[]>([])
+
+function mapApiToUI(api: MembershipPlan): Plan {
+  return {
+    id: api.id,
+    name: api.name,
     icon: 'lucide:zap',
-    iconBg: 'bg-amber-100 dark:bg-amber-900/30',
-    iconColor: 'text-amber-600 dark:text-amber-400',
-    description: '适合个人用户快速体验 AI 对话能力',
-    price: 0,
-    originalPrice: null,
-    period: 'monthly',
-    periodLabel: '月',
-    features: [
-      { label: '每日 20 次对话额度', included: true },
-      { label: '基础模型访问', included: true },
-      { label: '社区支持', included: true },
-      { label: '知识库 100MB', included: true },
-      { label: 'Agent 创建', included: false },
-      { label: 'API 访问', included: false },
-      { label: '优先客服', included: false },
-    ],
-    memberCount: 5832,
-    status: 'active',
+    iconBg: iconBgMap['lucide:zap'],
+    iconColor: iconColorMap['lucide:zap'],
+    description: api.description || '',
+    price: api.price ?? 0,
+    originalPrice: api.discountPrice || null,
+    period: cycleMap[api.cycle] || 'monthly',
+    periodLabel: periodLabelMap[cycleMap[api.cycle] || 'monthly'] || '月',
+    features: (api.features || []).map(f => ({ label: f, included: true })),
+    memberCount: 0,
+    status: api.isEnabled ? 'active' : 'disabled',
     recommended: false,
-  },
-  {
-    id: '2',
-    name: '专业版',
-    icon: 'lucide:rocket',
-    iconBg: 'bg-purple-100 dark:bg-purple-900/30',
-    iconColor: 'text-purple-600 dark:text-purple-400',
-    description: '适合专业用户和开发者，解锁更多高级功能',
-    price: 99,
-    originalPrice: 199,
-    period: 'monthly',
-    periodLabel: '月',
-    features: [
-      { label: '每日 500 次对话额度', included: true },
-      { label: '所有模型访问', included: true },
-      { label: '邮件优先支持', included: true },
-      { label: '知识库 10GB', included: true },
-      { label: 'Agent 创建权限', included: true },
-      { label: 'API 访问', included: false },
-      { label: '优先客服', included: false },
-    ],
-    memberCount: 3842,
-    status: 'active',
-    recommended: true,
-  },
-  {
-    id: '3',
-    name: '团队版',
-    icon: 'lucide:crown',
-    iconBg: 'bg-orange-100 dark:bg-orange-900/30',
-    iconColor: 'text-orange-600 dark:text-orange-400',
-    description: '适合团队和企业，提供最高级别的功能和服务',
-    price: 299,
-    originalPrice: 499,
-    period: 'monthly',
-    periodLabel: '月',
-    features: [
-      { label: '无限对话额度', included: true },
-      { label: '所有模型访问', included: true },
-      { label: '专属客户经理', included: true },
-      { label: '知识库 100GB', included: true },
-      { label: 'Agent 创建与发布', included: true },
-      { label: 'API 访问', included: true },
-      { label: '优先客服', included: true },
-    ],
-    memberCount: 1280,
-    status: 'active',
-    recommended: false,
-  },
-])
+  }
+}
+
+function mapFormToApiPayload() {
+  return {
+    name: formData.value.name,
+    description: formData.value.description,
+    price: formData.value.price,
+    discountPrice: formData.value.originalPrice || undefined,
+    cycle: cycleMap[formData.value.period] || 'month',
+    features: formData.value.features.filter(f => f.label.trim()).map(f => f.label),
+    isEnabled: formData.value.status === 'active',
+  }
+}
+
+async function fetchPlans() {
+  loading.value = true
+  error.value = null
+  try {
+    const res = await getMembershipPlans()
+    plans.value = (res.data || []).map(mapApiToUI)
+  } catch (e: any) {
+    error.value = e?.message || '加载套餐失败'
+  } finally {
+    loading.value = false
+  }
+}
 
 function openCreateDialog() {
   editingItem.value = null
@@ -474,53 +478,48 @@ function removeFeature(index: number) {
   formData.value.features.splice(index, 1)
 }
 
-function savePlan() {
+async function savePlan() {
   if (!formData.value.name.trim()) return
-
-  const planData = {
-    name: formData.value.name,
-    icon: formData.value.icon,
-    iconBg: iconBgMap[formData.value.icon] || 'bg-blue-100 dark:bg-blue-900/30',
-    iconColor: iconColorMap[formData.value.icon] || 'text-blue-600 dark:text-blue-400',
-    description: formData.value.description,
-    price: formData.value.price,
-    originalPrice: formData.value.originalPrice || null,
-    period: formData.value.period,
-    periodLabel: periodLabelMap[formData.value.period] || '月',
-    features: formData.value.features.filter(f => f.label.trim()),
-    status: formData.value.status,
-    recommended: formData.value.recommended,
-  }
-
-  if (editingItem.value) {
-    const index = plans.value.findIndex(p => p.id === editingItem.value!.id)
-    if (index > -1) {
-      plans.value[index] = { ...plans.value[index], ...planData }
+  saving.value = true
+  try {
+    if (editingItem.value) {
+      await updateMembershipPlan(editingItem.value.id, mapFormToApiPayload())
+    } else {
+      await createMembershipPlan(mapFormToApiPayload())
     }
-  } else {
-    const newPlan: Plan = {
-      id: Date.now().toString(),
-      ...planData,
-      memberCount: 0,
-    }
-    plans.value.push(newPlan)
+    showDialog.value = false
+    await fetchPlans()
+  } catch (e: any) {
+    error.value = e?.message || '保存套餐失败'
+  } finally {
+    saving.value = false
   }
-
-  showDialog.value = false
 }
 
-function toggleStatus(plan: Plan) {
-  plan.status = plan.status === 'active' ? 'disabled' : 'active'
+async function toggleStatus(plan: Plan) {
+  try {
+    const newStatus = plan.status === 'active' ? 'disabled' : 'active'
+    await updateMembershipPlan(plan.id, { isEnabled: newStatus === 'active' })
+    plan.status = newStatus
+  } catch (e: any) {
+    error.value = e?.message || '切换状态失败'
+  }
 }
 
 function toggleRecommended(plan: Plan) {
   plan.recommended = !plan.recommended
 }
 
-function deletePlan(plan: Plan) {
-  const index = plans.value.findIndex(p => p.id === plan.id)
-  if (index > -1) {
-    plans.value.splice(index, 1)
+async function removePlan(plan: Plan) {
+  try {
+    await deleteMembershipPlan(plan.id)
+    await fetchPlans()
+  } catch (e: any) {
+    error.value = e?.message || '删除套餐失败'
   }
 }
+
+onMounted(() => {
+  fetchPlans()
+})
 </script>

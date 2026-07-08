@@ -27,7 +27,25 @@
       </div>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <!-- 加载状态 -->
+    <div v-if="loading && orders.length === 0" class="flex items-center justify-center py-20">
+      <div class="flex flex-col items-center gap-4">
+        <UIcon name="lucide:loader-2" class="w-10 h-10 text-primary animate-spin" />
+        <p class="text-slate-500 text-sm">正在加载充值订单数据...</p>
+      </div>
+    </div>
+
+    <!-- 错误状态 -->
+    <div v-if="error" class="mb-6 p-4 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 flex items-center gap-3">
+      <UIcon name="lucide:alert-circle" class="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0" />
+      <div class="flex-1">
+        <p class="text-sm font-medium text-red-700 dark:text-red-400">加载失败</p>
+        <p class="text-xs text-red-500 mt-0.5">{{ error }}</p>
+      </div>
+      <button class="btn-glass text-sm px-3 py-1.5" @click="fetchOrders">重试</button>
+    </div>
+
+    <div v-if="!loading || orders.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
       <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-100 dark:border-slate-700 transition-all duration-300 hover:shadow-lg">
         <div class="flex items-center justify-between">
           <div>
@@ -77,7 +95,7 @@
       </div>
     </div>
 
-    <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 p-4 mb-6">
+    <div v-if="!loading || orders.length > 0" class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 p-4 mb-6">
       <div class="flex flex-wrap items-center gap-4">
         <div class="relative w-56">
           <UIcon name="lucide:search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -103,7 +121,7 @@
       </div>
     </div>
 
-    <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 overflow-hidden">
+    <div v-if="!loading || orders.length > 0" class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 overflow-hidden">
       <div class="overflow-x-auto">
         <table class="w-full">
           <thead>
@@ -192,7 +210,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import { getRechargeOrders } from '~/composables/api/order-finance-access'
 
 definePageMeta({
   layout: 'console',
@@ -217,6 +236,8 @@ const searchOrderNo = ref('')
 const searchUser = ref('')
 const statusFilter = ref('all')
 const currentPage = ref(1)
+const loading = ref(true)
+const error = ref<string | null>(null)
 
 const statusOptions = [
   { label: '全部状态', value: 'all' },
@@ -226,110 +247,56 @@ const statusOptions = [
   { label: '已取消', value: 'cancelled' },
 ]
 
-const orders = ref<RechargeOrder[]>([
-  {
-    id: '1',
-    orderNo: 'RCG20260707001',
-    userName: '张明',
-    userEmail: 'zhangming@example.com',
-    rechargeAmount: 500.00,
-    bonusAmount: 50.00,
-    paidAmount: 500.00,
-    paymentMethod: '微信支付',
-    status: 'completed',
-    createdAt: '2026-07-07 15:20:30',
-  },
-  {
-    id: '2',
-    orderNo: 'RCG20260707002',
-    userName: '李婷',
-    userEmail: 'liting@example.com',
-    rechargeAmount: 200.00,
-    bonusAmount: 10.00,
-    paidAmount: 200.00,
-    paymentMethod: '支付宝',
-    status: 'completed',
-    createdAt: '2026-07-07 13:45:10',
-  },
-  {
-    id: '3',
-    orderNo: 'RCG20260707003',
-    userName: '王强',
-    userEmail: 'wangqiang@example.com',
-    rechargeAmount: 1000.00,
-    bonusAmount: 200.00,
-    paidAmount: 1000.00,
-    paymentMethod: '微信支付',
-    status: 'pending',
-    createdAt: '2026-07-07 11:10:00',
-  },
-  {
-    id: '4',
-    orderNo: 'RCG20260706001',
-    userName: '赵雪',
-    userEmail: 'zhaoxue@example.com',
-    rechargeAmount: 300.00,
-    bonusAmount: 20.00,
-    paidAmount: 300.00,
-    paymentMethod: '支付宝',
-    status: 'completed',
-    createdAt: '2026-07-06 16:30:00',
-  },
-  {
-    id: '5',
-    orderNo: 'RCG20260706002',
-    userName: '孙磊',
-    userEmail: 'sunlei@example.com',
-    rechargeAmount: 100.00,
-    bonusAmount: 0,
-    paidAmount: 100.00,
-    paymentMethod: '微信支付',
-    status: 'failed',
-    createdAt: '2026-07-06 10:20:00',
-  },
-  {
-    id: '6',
-    orderNo: 'RCG20260705001',
-    userName: '周杰',
-    userEmail: 'zhoujie@example.com',
-    rechargeAmount: 50.00,
-    bonusAmount: 5.00,
-    paidAmount: 50.00,
-    paymentMethod: '支付宝',
-    status: 'cancelled',
-    createdAt: '2026-07-05 09:15:00',
-  },
-  {
-    id: '7',
-    orderNo: 'RCG20260705002',
-    userName: '吴芳',
-    userEmail: 'wufang@example.com',
-    rechargeAmount: 2000.00,
-    bonusAmount: 500.00,
-    paidAmount: 2000.00,
-    paymentMethod: '微信支付',
-    status: 'completed',
-    createdAt: '2026-07-05 14:00:00',
-  },
-  {
-    id: '8',
-    orderNo: 'RCG20260704001',
-    userName: '郑涛',
-    userEmail: 'zhengtao@example.com',
-    rechargeAmount: 150.00,
-    bonusAmount: 15.00,
-    paidAmount: 150.00,
-    paymentMethod: '支付宝',
-    status: 'completed',
-    createdAt: '2026-07-04 18:30:00',
-  },
-])
+const orders = ref<RechargeOrder[]>([])
+
+async function fetchOrders() {
+  loading.value = true
+  error.value = null
+  try {
+    const result = await getRechargeOrders({ page: 1, pageSize: 100 })
+    orders.value = (result.items || []).map((item) => {
+      const apiStatusMap: Record<string, RechargeStatus> = {
+        paid: 'completed',
+        pending: 'pending',
+        refunded: 'failed',
+        cancelled: 'cancelled',
+      }
+      return {
+        id: item.id,
+        orderNo: item.orderNo,
+        userName: item.username,
+        userEmail: '',
+        rechargeAmount: item.amount,
+        bonusAmount: item.giftAmount,
+        paidAmount: item.actualAmount,
+        paymentMethod: item.paymentMethod,
+        status: apiStatusMap[item.status] || 'pending',
+        createdAt: item.createdAt,
+      }
+    })
+  } catch (e: any) {
+    error.value = e.message || '获取充值订单数据失败'
+  } finally {
+    loading.value = false
+  }
+}
+
+onMounted(() => {
+  fetchOrders()
+})
 
 const stats = computed(() => ({
   totalOrders: orders.value.length,
-  todayOrders: orders.value.filter(o => o.createdAt.startsWith('2026-07-07')).length,
+  todayOrders: orders.value.filter(o => {
+    const today = new Date().toISOString().slice(0, 10)
+    return o.createdAt.startsWith(today)
+  }).length,
   monthlyTotal: orders.value
-    .filter(o => o.status === 'completed' && o.createdAt.startsWith('2026-07'))
+    .filter(o => {
+      const now = new Date()
+      const month = now.toISOString().slice(0, 7)
+      return o.status === 'completed' && o.createdAt.startsWith(month)
+    })
     .reduce((sum, o) => sum + o.rechargeAmount, 0),
   totalBonus: orders.value
     .filter(o => o.status === 'completed')

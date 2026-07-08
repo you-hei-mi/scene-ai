@@ -29,7 +29,25 @@
       </button>
     </div>
 
-    <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 p-4 mb-6">
+    <!-- 加载状态 -->
+    <div v-if="loading" class="flex items-center justify-center py-20">
+      <div class="flex flex-col items-center gap-4">
+        <UIcon name="lucide:loader-2" class="w-10 h-10 text-primary animate-spin" />
+        <p class="text-slate-500 text-sm">正在加载菜单数据...</p>
+      </div>
+    </div>
+
+    <!-- 错误状态 -->
+    <div v-if="error" class="mb-6 p-4 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 flex items-center gap-3">
+      <UIcon name="lucide:alert-circle" class="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0" />
+      <div class="flex-1">
+        <p class="text-sm font-medium text-red-700 dark:text-red-400">加载失败</p>
+        <p class="text-xs text-red-500 mt-0.5">{{ error }}</p>
+      </div>
+      <button class="btn-glass text-sm px-3 py-1.5" @click="fetchMenus">重试</button>
+    </div>
+
+    <div v-if="!loading" class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 p-4 mb-6">
       <div class="flex items-center gap-4">
         <button class="btn-glass text-sm" @click="expandAll">
           <UIcon name="lucide:unfold-vertical" class="w-4 h-4" />
@@ -47,7 +65,7 @@
       </div>
     </div>
 
-    <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 overflow-hidden">
+    <div v-if="!loading" class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 overflow-hidden">
       <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-700/50">
         <div class="grid grid-cols-12 gap-4 text-sm font-medium text-slate-500">
           <div class="col-span-5">菜单名称</div>
@@ -220,7 +238,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
+import { getMenus, createMenu, updateMenu, deleteMenu as deleteMenuApi } from '~/composables/api/order-finance-access'
 
 definePageMeta({
   layout: 'console',
@@ -243,6 +262,8 @@ const activeTab = ref('menu')
 const showMenuDialog = ref(false)
 const editingMenu = ref<MenuItem | null>(null)
 const addingChildMenu = ref<MenuItem | null>(null)
+const loading = ref(true)
+const error = ref<string | null>(null)
 
 const tabs = [
   { key: 'menu', label: '菜单管理', icon: 'lucide:menu' },
@@ -282,90 +303,55 @@ const parentOptions = computed(() => {
   return options
 })
 
-const menuTree = ref<MenuItem[]>([
-  {
-    id: '1',
-    name: '仪表盘',
-    path: '/admin',
-    icon: 'lucide:layout-dashboard',
-    iconColor: 'text-primary',
-    sort: 1,
-    visible: true,
-    parentId: null,
-    expanded: true,
-  },
-  {
-    id: '2',
-    name: '用户管理',
-    path: '/admin/users',
-    icon: 'lucide:users',
-    iconColor: 'text-blue-600 dark:text-blue-400',
-    sort: 2,
-    visible: true,
-    parentId: null,
-    expanded: true,
-    children: [
-      { id: '2-1', name: '用户列表', path: '/admin/users', icon: 'lucide:list', sort: 1, visible: true, parentId: '2' },
-      { id: '2-2', name: '用户角色', path: '/admin/users/roles', icon: 'lucide:shield', sort: 2, visible: true, parentId: '2' },
-    ],
-  },
-  {
-    id: '3',
-    name: '财务管理',
-    path: '/admin/financial',
-    icon: 'lucide:wallet',
-    iconColor: 'text-green-600 dark:text-green-400',
-    sort: 3,
-    visible: true,
-    parentId: null,
-    expanded: true,
-    children: [
-      { id: '3-1', name: '财务分析', path: '/admin/financial/analysis', icon: 'lucide:bar-chart-3', sort: 1, visible: true, parentId: '3' },
-      { id: '3-2', name: '余额明细', path: '/admin/financial/balance-details', icon: 'lucide:list', sort: 2, visible: true, parentId: '3' },
-    ],
-  },
-  {
-    id: '4',
-    name: '渠道管理',
-    path: '/admin/channel',
-    icon: 'lucide:share-2',
-    iconColor: 'text-purple-600 dark:text-purple-400',
-    sort: 4,
-    visible: true,
-    parentId: null,
-    expanded: true,
-    children: [
-      { id: '4-1', name: '微信公众号', path: '/admin/channel/wechat-oa', icon: 'lucide:link', sort: 1, visible: true, parentId: '4' },
-    ],
-  },
-  {
-    id: '5',
-    name: '权限管理',
-    path: '/admin/access',
-    icon: 'lucide:shield',
-    iconColor: 'text-red-600 dark:text-red-400',
-    sort: 5,
-    visible: true,
-    parentId: null,
-    expanded: true,
-    children: [
-      { id: '5-1', name: '菜单管理', path: '/admin/access/menu', icon: 'lucide:menu', sort: 1, visible: true, parentId: '5' },
-      { id: '5-2', name: '权限管理', path: '/admin/access/permission', icon: 'lucide:key', sort: 2, visible: true, parentId: '5' },
-      { id: '5-3', name: '角色管理', path: '/admin/access/role', icon: 'lucide:users', sort: 3, visible: true, parentId: '5' },
-    ],
-  },
-  {
-    id: '6',
-    name: '系统设置',
-    path: '/admin/settings',
-    icon: 'lucide:settings',
-    iconColor: 'text-slate-600 dark:text-slate-400',
-    sort: 6,
-    visible: true,
-    parentId: null,
-    expanded: false,
-  },
-])
+const menuTree = ref<MenuItem[]>([])
+
+function buildTree(apiMenus: any[]): MenuItem[] {
+  const map = new Map<string, MenuItem>()
+  const roots: MenuItem[] = []
+
+  apiMenus.forEach((m: any) => {
+    map.set(m.id, {
+      id: m.id,
+      name: m.name,
+      path: m.path,
+      icon: m.icon || 'lucide:link',
+      sort: m.sort,
+      visible: m.isVisible,
+      parentId: m.parentId,
+      expanded: true,
+    })
+  })
+
+  apiMenus.forEach((m: any) => {
+    const item = map.get(m.id)!
+    if (m.parentId && map.has(m.parentId)) {
+      const parent = map.get(m.parentId)!
+      if (!parent.children) parent.children = []
+      parent.children.push(item)
+    } else {
+      roots.push(item)
+    }
+  })
+
+  return roots.sort((a, b) => a.sort - b.sort)
+}
+
+async function fetchMenus() {
+  loading.value = true
+  error.value = null
+  try {
+    const data = await getMenus()
+    menuTree.value = buildTree(data || [])
+  } catch (e: any) {
+    error.value = e.message || '获取菜单数据失败'
+  } finally {
+    loading.value = false
+  }
+}
+
+onMounted(() => {
+  fetchMenus()
+})
 
 function toggleExpand(menu: MenuItem) {
   menu.expanded = !menu.expanded
@@ -403,69 +389,37 @@ function openEditMenuDialog(menu: MenuItem) {
   showMenuDialog.value = true
 }
 
-function saveMenu() {
+async function saveMenu() {
   if (!menuForm.name.trim()) return
 
-  const newItem: MenuItem = {
-    id: editingMenu.value?.id || Date.now().toString(),
+  const payload = {
     name: menuForm.name,
     path: menuForm.path,
     icon: menuForm.icon,
-    sort: menuForm.sort,
-    visible: menuForm.visible,
     parentId: menuForm.parentId || null,
-    expanded: true,
+    sort: menuForm.sort,
+    isVisible: menuForm.visible,
   }
 
-  if (editingMenu.value) {
-    const isChild = editingMenu.value.parentId !== null
-    if (isChild) {
-      for (const parent of menuTree.value) {
-        if (parent.children) {
-          const idx = parent.children.findIndex(c => c.id === editingMenu.value!.id)
-          if (idx > -1) {
-            parent.children[idx] = { ...parent.children[idx], ...newItem }
-            break
-          }
-        }
-      }
+  try {
+    if (editingMenu.value) {
+      await updateMenu(editingMenu.value.id, payload)
     } else {
-      const idx = menuTree.value.findIndex(m => m.id === editingMenu.value!.id)
-      if (idx > -1) {
-        menuTree.value[idx] = { ...menuTree.value[idx], ...newItem, children: menuTree.value[idx].children }
-      }
+      await createMenu(payload)
     }
-  } else {
-    if (menuForm.parentId) {
-      const parent = menuTree.value.find(m => m.id === menuForm.parentId)
-      if (parent) {
-        if (!parent.children) parent.children = []
-        parent.children.push(newItem)
-      }
-    } else {
-      menuTree.value.push(newItem)
-    }
+    showMenuDialog.value = false
+    await fetchMenus()
+  } catch (e: any) {
+    error.value = e.message || '保存菜单失败'
   }
-
-  showMenuDialog.value = false
 }
 
-function deleteMenu(menu: MenuItem) {
-  if (menu.parentId !== null) {
-    for (const parent of menuTree.value) {
-      if (parent.children) {
-        const idx = parent.children.findIndex(c => c.id === menu.id)
-        if (idx > -1) {
-          parent.children.splice(idx, 1)
-          break
-        }
-      }
-    }
-  } else {
-    const idx = menuTree.value.findIndex(m => m.id === menu.id)
-    if (idx > -1) {
-      menuTree.value.splice(idx, 1)
-    }
+async function deleteMenu(menu: MenuItem) {
+  try {
+    await deleteMenuApi(menu.id)
+    await fetchMenus()
+  } catch (e: any) {
+    error.value = e.message || '删除菜单失败'
   }
 }
 

@@ -34,6 +34,17 @@
     </header>
 
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div v-if="error" class="mb-6 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/50 rounded-xl p-4 flex items-center gap-3">
+        <UIcon name="lucide:alert-triangle" class="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0" />
+        <div class="flex-1">
+          <p class="text-sm font-medium text-amber-800 dark:text-amber-300">{{ error }}</p>
+          <p class="text-xs text-amber-600 dark:text-amber-400 mt-1">当前显示的是本地缓存数据，部分功能可能受限</p>
+        </div>
+        <button class="text-xs text-amber-700 dark:text-amber-300 underline hover:no-underline flex-shrink-0" @click="fetchAgentList">
+          重试
+        </button>
+      </div>
+
       <div class="mb-8">
         <div class="flex items-center gap-4 mb-2">
           <div class="w-1 h-8 bg-gradient-to-b from-primary to-accent rounded-full"></div>
@@ -169,6 +180,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
+import { getMyAgents } from '~/composables/api/core'
 
 const agentStore = useAgentStore()
 const toast = useToast()
@@ -177,6 +189,7 @@ const route = useRoute()
 const keyword = ref('')
 const selectedTagId = ref<string | null>(null)
 const showCreateDialog = ref(false)
+const error = ref<string | null>(null)
 
 const newAgent = ref({
   name: '',
@@ -271,7 +284,40 @@ function handleSelectAgent(agent: any) {
   navigateTo(`/agents/${agent.id}`)
 }
 
+async function fetchAgentList() {
+  error.value = null
+  agentStore.loading = true
+  try {
+    const result = await getMyAgents()
+    const apiItems = result?.items ?? []
+    const mappedAgents = apiItems.map((item: any) => ({
+      id: item.id,
+      name: item.name,
+      description: item.description || '',
+      avatar: item.avatar,
+      tags: item.tags ?? [],
+      model: item.modelName || 'unknown',
+      prompt: item.rolePrompt,
+      temperature: 0.7,
+      visibility: item.publishedToSquare ? 'public' : 'private',
+      status: 'published',
+      createdAt: new Date(item.createdAt || Date.now()),
+      updatedAt: new Date(item.updatedAt || Date.now()),
+      usageCount: item.userCount ?? 0,
+      likes: 0,
+      author: item.creatorName ? { id: '', name: item.creatorName } : undefined,
+    }))
+    agentStore.agents = mappedAgents
+    agentStore.total = mappedAgents.length
+  } catch (e: any) {
+    error.value = `加载智能体列表失败: ${e.message || '网络异常'}`  + '，已切换到本地缓存数据'
+    agentStore.initMockData()
+  } finally {
+    agentStore.loading = false
+  }
+}
+
 onMounted(() => {
-  agentStore.fetchAgents()
+  fetchAgentList()
 })
 </script>

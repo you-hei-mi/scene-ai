@@ -10,7 +10,22 @@
 
     <AdminSystemTabs />
 
-    <div class="space-y-6">
+    <!-- Loading -->
+    <div v-if="loading" class="flex items-center justify-center py-20">
+      <UIcon name="lucide:loader" class="w-8 h-8 animate-spin text-primary" />
+      <span class="ml-3 text-slate-500">加载中...</span>
+    </div>
+
+    <!-- Error -->
+    <div v-else-if="error" class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4 mb-6">
+      <div class="flex items-center gap-2">
+        <UIcon name="lucide:alert-circle" class="w-5 h-5 text-red-600 dark:text-red-400" />
+        <span class="text-sm text-red-700 dark:text-red-400">{{ error }}</span>
+      </div>
+      <button class="btn-glass mt-3 text-sm" @click="fetchConfig">重试</button>
+    </div>
+
+    <div v-else class="space-y-6">
       <!-- 基本信息 -->
       <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-100 dark:border-slate-700">
         <div class="mb-6">
@@ -117,14 +132,18 @@
 
       <div class="flex items-center justify-end gap-3">
         <button class="btn-glass" @click="resetConfig">重置</button>
-        <button class="btn-glass btn-glass--primary" @click="saveConfig">保存设置</button>
+        <button class="btn-glass btn-glass--primary" @click="saveConfig" :disabled="saving">
+          <UIcon v-if="saving" name="lucide:loader" class="w-4 h-4 animate-spin" />
+          {{ saving ? '保存中...' : '保存设置' }}
+        </button>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { reactive } from 'vue'
+import { reactive, ref, onMounted } from 'vue'
+import { getWebsiteConfig, updateWebsiteConfig } from '~/composables/api/system'
 
 definePageMeta({
   layout: 'console',
@@ -162,37 +181,98 @@ interface WebsiteConfig {
   social: SocialLinks
 }
 
+const loading = ref(true)
+const error = ref<string | null>(null)
+const saving = ref(false)
+
 const defaultConfig: WebsiteConfig = {
   basic: {
-    siteName: 'BuildingAI',
-    logoUrl: 'https://buildingai.cc/logo.png',
-    faviconUrl: 'https://buildingai.cc/favicon.ico',
-    description: '专业的 AI 助手平台，支持多模型对话、Agent 编排、知识库管理、MCP 工具集成',
+    siteName: '',
+    logoUrl: '',
+    faviconUrl: '',
+    description: '',
   },
   seo: {
-    keywords: 'AI平台, AI助手, 智能体, AI对话, 知识库, MCP, 大模型',
-    description: 'BuildingAI 是一个专业的 AI 助手平台，提供多模型对话、智能体编排、知识库管理和 MCP 工具集成等能力。',
-    icpNumber: '京ICP备2024000001号',
+    keywords: '',
+    description: '',
+    icpNumber: '',
   },
   contact: {
-    email: 'support@buildingai.cc',
-    phone: '400-888-8888',
-    address: '北京市海淀区中关村科技园',
+    email: '',
+    phone: '',
+    address: '',
   },
   social: {
-    wechat: 'BuildingAI官方',
-    weibo: 'https://weibo.com/buildingai',
-    github: 'https://github.com/buildingai',
+    wechat: '',
+    weibo: '',
+    github: '',
   },
 }
 
 const config = reactive<WebsiteConfig>(JSON.parse(JSON.stringify(defaultConfig)))
 
+async function fetchConfig() {
+  loading.value = true
+  error.value = null
+  try {
+    const data = await getWebsiteConfig()
+    if (data) {
+      config.basic = {
+        siteName: data.basic?.siteName ?? '',
+        logoUrl: data.basic?.logoUrl ?? '',
+        faviconUrl: data.basic?.faviconUrl ?? '',
+        description: data.basic?.description ?? '',
+      }
+      config.seo = {
+        keywords: data.seo?.keywords ?? '',
+        description: data.seo?.description ?? '',
+        icpNumber: data.seo?.icpNo ?? '',
+      }
+      config.contact = {
+        email: data.contact?.email ?? '',
+        phone: data.contact?.phone ?? '',
+        address: data.contact?.address ?? '',
+      }
+      config.social = {
+        wechat: data.social?.wechat ?? '',
+        weibo: data.social?.weibo ?? '',
+        github: data.social?.github ?? '',
+      }
+    }
+  } catch (e: any) {
+    error.value = e.message || '加载网站配置失败'
+  } finally {
+    loading.value = false
+  }
+}
+
 function resetConfig() {
   Object.assign(config, JSON.parse(JSON.stringify(defaultConfig)))
 }
 
-function saveConfig() {
-  console.log('保存网站配置:', config)
+async function saveConfig() {
+  if (saving.value) return
+  saving.value = true
+  error.value = null
+  try {
+    await updateWebsiteConfig({
+      basic: config.basic,
+      seo: {
+        keywords: config.seo.keywords,
+        description: config.seo.description,
+        icpNo: config.seo.icpNumber,
+      },
+      contact: config.contact,
+      social: config.social,
+    } as any)
+  } catch (e: any) {
+    error.value = e.message || '保存网站配置失败'
+  } finally {
+    saving.value = false
+  }
 }
+
+onMounted(() => {
+  fetchConfig()
+})
 </script>

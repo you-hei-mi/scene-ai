@@ -20,6 +20,22 @@
       </div>
     </div>
 
+    <!-- Loading state -->
+    <div v-if="loading" class="flex items-center justify-center py-20">
+      <UIcon name="lucide:loader-2" class="w-8 h-8 animate-spin text-primary" />
+      <span class="ml-3 text-slate-500">加载中...</span>
+    </div>
+
+    <!-- Error state -->
+    <div v-else-if="error" class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4 mb-6 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <UIcon name="lucide:alert-circle" class="w-5 h-5 text-red-500 flex-shrink-0" />
+        <span class="text-sm text-red-700 dark:text-red-400">{{ error }}</span>
+      </div>
+      <button class="text-sm text-red-500 hover:text-red-700 dark:hover:text-red-300 underline flex-shrink-0 ml-4" @click="error = null">关闭</button>
+    </div>
+
+    <template v-else>
     <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
       <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-100 dark:border-slate-700 transition-all duration-300 hover:shadow-lg">
         <div class="flex items-center justify-between">
@@ -175,7 +191,7 @@
                       color="green"
                       @click="toggleModel(model)"
                     />
-                    <UDropdownMenuItem label="删除模型" icon="lucide:trash-2" color="red" @click="deleteModel(model)" />
+                    <UDropdownMenuItem label="删除模型" icon="lucide:trash-2" color="red" @click="handleDeleteModel(model)" />
                   </template>
                 </UDropdownMenu>
               </td>
@@ -204,6 +220,7 @@
         </div>
       </div>
     </div>
+    </template>
 
     <UDialog v-model="showAddDialog" :title="editingModel ? '编辑模型' : '添加模型'" size="xl">
       <div class="space-y-4">
@@ -319,7 +336,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import { getModelList, createModel, updateModel, deleteModel } from '~/composables/api/core'
+import type { ModelItem as ApiModelItem } from '~/composables/api/core'
 
 definePageMeta({
   layout: 'console',
@@ -353,6 +372,7 @@ interface TestResult {
   duration: number
 }
 
+// ====== State ======
 const searchKeyword = ref('')
 const providerFilter = ref('all')
 const typeFilter = ref('all')
@@ -366,7 +386,12 @@ const testInput = ref('')
 const testResponse = ref('')
 const isTesting = ref(false)
 const testResult = ref<TestResult | null>(null)
+const loading = ref(false)
+const error = ref<string | null>(null)
 
+const models = ref<ModelItem[]>([])
+
+// ====== Filter options ======
 const providerOptions = [
   { label: '全部提供商', value: 'all' },
   { label: 'OpenAI', value: 'openai' },
@@ -429,224 +454,54 @@ const formData = ref({
   supportStreaming: true,
 })
 
-const models = ref<ModelItem[]>([
-  {
-    id: '1',
-    name: 'GPT-4o',
-    modelId: 'gpt-4o',
-    provider: 'openai',
-    providerName: 'OpenAI',
-    type: 'chat',
-    contextLength: 128000,
-    maxOutput: 4096,
-    inputPrice: 0.15,
-    outputPrice: 0.6,
-    description: 'OpenAI 最新的多模态模型，支持文本和图像输入',
-    enabled: true,
-    isDefault: true,
-    supportVision: true,
-    supportStreaming: true,
-    createdAt: '2024-01-01',
-  },
-  {
-    id: '2',
-    name: 'GPT-4 Turbo',
-    modelId: 'gpt-4-turbo',
-    provider: 'openai',
-    providerName: 'OpenAI',
-    type: 'chat',
-    contextLength: 128000,
-    maxOutput: 4096,
-    inputPrice: 0.1,
-    outputPrice: 0.3,
-    description: 'GPT-4 高速版本，性价比更高',
-    enabled: true,
-    isDefault: false,
-    supportVision: false,
-    supportStreaming: true,
-    createdAt: '2024-01-01',
-  },
-  {
-    id: '3',
-    name: 'Claude 3.5 Sonnet',
-    modelId: 'claude-3-5-sonnet-20240620',
-    provider: 'anthropic',
-    providerName: 'Anthropic',
-    type: 'chat',
-    contextLength: 200000,
-    maxOutput: 8192,
-    inputPrice: 0.2,
-    outputPrice: 0.8,
-    description: 'Anthropic 最新模型，擅长长文本处理和代码生成',
-    enabled: true,
-    isDefault: false,
-    supportVision: true,
-    supportStreaming: true,
-    createdAt: '2024-02-15',
-  },
-  {
-    id: '4',
-    name: 'Claude 3 Opus',
-    modelId: 'claude-3-opus-20240229',
-    provider: 'anthropic',
-    providerName: 'Anthropic',
-    type: 'chat',
-    contextLength: 200000,
-    maxOutput: 4096,
-    inputPrice: 0.75,
-    outputPrice: 3.0,
-    description: 'Anthropic 旗舰模型，最强推理能力',
-    enabled: false,
-    isDefault: false,
-    supportVision: true,
-    supportStreaming: true,
-    createdAt: '2024-02-15',
-  },
-  {
-    id: '5',
-    name: 'Gemini 1.5 Pro',
-    modelId: 'gemini-1.5-pro',
-    provider: 'google',
-    providerName: 'Google',
-    type: 'chat',
-    contextLength: 1000000,
-    maxOutput: 8192,
-    inputPrice: 0.25,
-    outputPrice: 0.75,
-    description: 'Google 旗舰模型，支持超长上下文',
-    enabled: true,
-    isDefault: false,
-    supportVision: true,
-    supportStreaming: true,
-    createdAt: '2024-03-01',
-  },
-  {
-    id: '6',
-    name: 'DeepSeek V3',
-    modelId: 'deepseek-chat',
-    provider: 'deepseek',
-    providerName: 'DeepSeek',
-    type: 'chat',
-    contextLength: 128000,
-    maxOutput: 4096,
-    inputPrice: 0.03,
-    outputPrice: 0.08,
-    description: '深度求索最新对话模型，性价比极高',
-    enabled: true,
-    isDefault: false,
-    supportVision: false,
-    supportStreaming: true,
-    createdAt: '2024-03-10',
-  },
-  {
-    id: '7',
-    name: 'GLM-4',
-    modelId: 'glm-4',
-    provider: 'zhipu',
-    providerName: '智谱 AI',
-    type: 'chat',
-    contextLength: 128000,
-    maxOutput: 4096,
-    inputPrice: 0.05,
-    outputPrice: 0.1,
-    description: '智谱 AI 第四代大语言模型',
-    enabled: true,
-    isDefault: false,
-    supportVision: false,
-    supportStreaming: true,
-    createdAt: '2024-02-01',
-  },
-  {
-    id: '8',
-    name: '通义千问 Plus',
-    modelId: 'qwen-plus',
-    provider: 'qwen',
-    providerName: '通义千问',
-    type: 'chat',
-    contextLength: 128000,
-    maxOutput: 4096,
-    inputPrice: 0.04,
-    outputPrice: 0.08,
-    description: '阿里云通义千问增强版模型',
-    enabled: true,
-    isDefault: false,
-    supportVision: false,
-    supportStreaming: true,
-    createdAt: '2024-02-20',
-  },
-  {
-    id: '9',
-    name: 'Moonshot V1.5',
-    modelId: 'moonshot-v1-128k',
-    provider: 'moonshot',
-    providerName: 'Moonshot',
-    type: 'chat',
-    contextLength: 128000,
-    maxOutput: 4096,
-    inputPrice: 0.06,
-    outputPrice: 0.12,
-    description: '月之暗面超长上下文模型',
-    enabled: false,
-    isDefault: false,
-    supportVision: false,
-    supportStreaming: true,
-    createdAt: '2024-03-05',
-  },
-  {
-    id: '10',
-    name: 'text-embedding-3-large',
-    modelId: 'text-embedding-3-large',
-    provider: 'openai',
-    providerName: 'OpenAI',
-    type: 'embedding',
-    contextLength: 8191,
-    maxOutput: 3072,
-    inputPrice: 0.013,
-    outputPrice: 0,
-    description: 'OpenAI 最新的 Embedding 模型，3072 维度',
-    enabled: true,
-    isDefault: false,
-    supportVision: false,
-    supportStreaming: false,
-    createdAt: '2024-01-01',
-  },
-  {
-    id: '11',
-    name: 'DALL-E 3',
-    modelId: 'dall-e-3',
-    provider: 'openai',
-    providerName: 'OpenAI',
-    type: 'image',
-    contextLength: 4000,
-    maxOutput: 1,
-    inputPrice: 0.04,
-    outputPrice: 0,
-    description: 'OpenAI 图像生成模型',
-    enabled: true,
-    isDefault: false,
-    supportVision: false,
-    supportStreaming: false,
-    createdAt: '2024-01-01',
-  },
-  {
-    id: '12',
-    name: 'Whisper',
-    modelId: 'whisper-1',
-    provider: 'openai',
-    providerName: 'OpenAI',
-    type: 'audio',
+// ====== Helpers ======
+
+/**
+ * 将后端 API 返回的 ModelItem 映射为模板所需的前端 ModelItem 格式。
+ * 后端字段: id, name, modelType, providerId, provider{id,name,provider,iconUrl}, isActive, isDefault, createdAt
+ */
+function mapBackendModel(api: ApiModelItem): ModelItem {
+  const providerCode = (api.provider?.provider || api.providerId || 'openai') as ModelProvider
+  return {
+    id: api.id,
+    name: api.name,
+    modelId: api.name,
+    provider: providerCode,
+    providerName: api.provider?.name || '',
+    type: (api.modelType || 'chat') as ModelType,
     contextLength: 0,
     maxOutput: 0,
-    inputPrice: 0.006,
+    inputPrice: 0,
     outputPrice: 0,
-    description: 'OpenAI 语音识别模型',
-    enabled: true,
-    isDefault: false,
+    description: '',
+    enabled: api.isActive ?? true,
+    isDefault: api.isDefault ?? false,
     supportVision: false,
-    supportStreaming: false,
-    createdAt: '2024-01-01',
-  },
-])
+    supportStreaming: true,
+    createdAt: api.createdAt || '',
+  }
+}
+
+// ====== Data fetching ======
+
+async function fetchModels() {
+  loading.value = true
+  error.value = null
+  try {
+    const data = await getModelList()
+    models.value = data.map(mapBackendModel)
+  } catch (e: any) {
+    error.value = e.message || '加载模型列表失败'
+  } finally {
+    loading.value = false
+  }
+}
+
+onMounted(() => {
+  fetchModels()
+})
+
+// ====== Computed ======
 
 const stats = computed(() => ({
   totalModels: models.value.length,
@@ -687,6 +542,8 @@ const filteredModels = computed(() => {
 
   return result
 })
+
+// ====== Formatting ======
 
 function formatContextLength(length: number): string {
   if (length >= 1000000) {
@@ -762,6 +619,8 @@ function getProviderIconColor(provider: ModelProvider): string {
   return map[provider]
 }
 
+// ====== Actions ======
+
 function resetFilters() {
   searchKeyword.value = ''
   providerFilter.value = 'all'
@@ -770,8 +629,14 @@ function resetFilters() {
   currentPage.value = 1
 }
 
-function toggleModel(model: ModelItem) {
-  model.enabled = !model.enabled
+async function toggleModel(model: ModelItem) {
+  try {
+    const newStatus = !model.enabled
+    await updateModel(model.id, { isActive: newStatus })
+    model.enabled = newStatus
+  } catch (e: any) {
+    error.value = e.message || '更新模型状态失败'
+  }
 }
 
 function editModel(model: ModelItem) {
@@ -830,56 +695,41 @@ async function runTest() {
   isTesting.value = false
 }
 
-function deleteModel(model: ModelItem) {
-  const index = models.value.findIndex(m => m.id === model.id)
-  if (index > -1) {
-    models.value.splice(index, 1)
+async function handleDeleteModel(model: ModelItem) {
+  try {
+    await deleteModel(model.id)
+    models.value = models.value.filter(m => m.id !== model.id)
+  } catch (e: any) {
+    error.value = e.message || '删除模型失败'
   }
 }
 
-function saveModel() {
-  if (editingModel.value) {
-    const model = models.value.find(m => m.id === editingModel.value!.id)
-    if (model) {
-      model.name = formData.value.name
-      model.modelId = formData.value.modelId
-      model.provider = formData.value.provider
-      model.type = formData.value.type
-      model.contextLength = formData.value.contextLength
-      model.maxOutput = formData.value.maxOutput
-      model.inputPrice = formData.value.inputPrice
-      model.outputPrice = formData.value.outputPrice
-      model.description = formData.value.description
-      model.enabled = formData.value.enabled
-      model.isDefault = formData.value.isDefault
-      model.supportVision = formData.value.supportVision
-      model.supportStreaming = formData.value.supportStreaming
-    }
-  } else {
-    const providerOption = providerSelectOptions.find(p => p.value === formData.value.provider)
-    const newModel: ModelItem = {
-      id: Date.now().toString(),
+async function saveModel() {
+  try {
+    const payload = {
       name: formData.value.name,
-      modelId: formData.value.modelId,
-      provider: formData.value.provider,
-      providerName: providerOption?.label || formData.value.provider,
-      type: formData.value.type,
-      contextLength: formData.value.contextLength,
-      maxOutput: formData.value.maxOutput,
-      inputPrice: formData.value.inputPrice,
-      outputPrice: formData.value.outputPrice,
-      description: formData.value.description,
-      enabled: formData.value.enabled,
+      modelType: formData.value.type,
+      providerId: formData.value.provider,
+      isActive: formData.value.enabled,
       isDefault: formData.value.isDefault,
-      supportVision: formData.value.supportVision,
-      supportStreaming: formData.value.supportStreaming,
-      createdAt: new Date().toISOString().split('T')[0],
     }
-    models.value.unshift(newModel)
-  }
 
-  showAddDialog.value = false
-  resetForm()
+    if (editingModel.value) {
+      const updated = await updateModel(editingModel.value.id, payload)
+      const idx = models.value.findIndex(m => m.id === editingModel.value!.id)
+      if (idx > -1) {
+        models.value[idx] = mapBackendModel(updated)
+      }
+    } else {
+      const created = await createModel(payload)
+      models.value.unshift(mapBackendModel(created))
+    }
+
+    showAddDialog.value = false
+    resetForm()
+  } catch (e: any) {
+    error.value = e.message || '保存模型失败'
+  }
 }
 
 function resetForm() {
@@ -901,7 +751,7 @@ function resetForm() {
   editingModel.value = null
 }
 
-function syncModels() {
-  console.log('同步模型列表')
+async function syncModels() {
+  await fetchModels()
 }
 </script>

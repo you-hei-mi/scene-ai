@@ -27,7 +27,25 @@
       </div>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <!-- 加载状态 -->
+    <div v-if="loading && orders.length === 0" class="flex items-center justify-center py-20">
+      <div class="flex flex-col items-center gap-4">
+        <UIcon name="lucide:loader-2" class="w-10 h-10 text-primary animate-spin" />
+        <p class="text-slate-500 text-sm">正在加载订单数据...</p>
+      </div>
+    </div>
+
+    <!-- 错误状态 -->
+    <div v-if="error" class="mb-6 p-4 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 flex items-center gap-3">
+      <UIcon name="lucide:alert-circle" class="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0" />
+      <div class="flex-1">
+        <p class="text-sm font-medium text-red-700 dark:text-red-400">加载失败</p>
+        <p class="text-xs text-red-500 mt-0.5">{{ error }}</p>
+      </div>
+      <button class="btn-glass text-sm px-3 py-1.5" @click="fetchOrders">重试</button>
+    </div>
+
+    <div v-if="!loading || orders.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
       <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-100 dark:border-slate-700 transition-all duration-300 hover:shadow-lg">
         <div class="flex items-center justify-between">
           <div>
@@ -77,7 +95,7 @@
       </div>
     </div>
 
-    <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 p-4 mb-6">
+    <div v-if="!loading || orders.length > 0" class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 p-4 mb-6">
       <div class="flex flex-wrap items-center gap-4">
         <div class="relative w-56">
           <UIcon name="lucide:search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -112,7 +130,7 @@
       </div>
     </div>
 
-    <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 overflow-hidden">
+    <div v-if="!loading || orders.length > 0" class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 overflow-hidden">
       <div class="overflow-x-auto">
         <table class="w-full">
           <thead>
@@ -302,7 +320,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import { getMembershipOrders } from '~/composables/api/order-finance-access'
 
 definePageMeta({
   layout: 'console',
@@ -336,6 +355,8 @@ const dateRange = ref('')
 const currentPage = ref(1)
 const showDetailDialog = ref(false)
 const selectedOrder = ref<Order | null>(null)
+const loading = ref(true)
+const error = ref<string | null>(null)
 
 const statusOptions = [
   { label: '全部状态', value: 'all' },
@@ -346,230 +367,54 @@ const statusOptions = [
   { label: '已取消', value: 'cancelled' },
 ]
 
-const orders = ref<Order[]>([
-  {
-    id: '1',
-    orderNo: 'ORD20260707001',
-    userName: '张明',
-    userEmail: 'zhangming@example.com',
-    userPhone: '138****6789',
-    planName: '专业版·年付',
-    planDuration: '12个月',
-    planDescription: '含全部Agent权限、优先响应、专属客服',
-    amount: 999.00,
-    paymentMethod: '微信支付',
-    status: 'paid',
-    transactionId: 'WX20260707001001',
-    couponCode: 'SUMMER20',
-    couponDiscount: 199.80,
-    createdAt: '2026-07-07 14:30:25',
-    paidAt: '2026-07-07 14:31:02',
-  },
-  {
-    id: '2',
-    orderNo: 'ORD20260707002',
-    userName: '李婷',
-    userEmail: 'liting@example.com',
-    userPhone: '139****1234',
-    planName: '黄金版·季付',
-    planDuration: '3个月',
-    planDescription: '含全部Agent权限、标准响应速度',
-    amount: 299.00,
-    paymentMethod: '支付宝',
-    status: 'paid',
-    transactionId: 'ALI20260707002001',
-    couponCode: null,
-    couponDiscount: 0,
-    createdAt: '2026-07-07 12:15:40',
-    paidAt: '2026-07-07 12:16:18',
-  },
-  {
-    id: '3',
-    orderNo: 'ORD20260707003',
-    userName: '王强',
-    userEmail: 'wangqiang@example.com',
-    userPhone: '136****5678',
-    planName: '钻石版·年付',
-    planDuration: '12个月',
-    planDescription: '含全部Agent权限、优先响应、专属客服、API调用',
-    amount: 1999.00,
-    paymentMethod: '微信支付',
-    status: 'pending',
-    transactionId: '—',
-    couponCode: null,
-    couponDiscount: 0,
-    createdAt: '2026-07-07 11:20:00',
-    paidAt: null,
-  },
-  {
-    id: '4',
-    orderNo: 'ORD20260706001',
-    userName: '赵雪',
-    userEmail: 'zhaoxue@example.com',
-    userPhone: null,
-    planName: '专业版·月付',
-    planDuration: '1个月',
-    planDescription: '含全部Agent权限、优先响应',
-    amount: 99.00,
-    paymentMethod: '支付宝',
-    status: 'refunded',
-    transactionId: 'ALI20260706001001',
-    couponCode: null,
-    couponDiscount: 0,
-    createdAt: '2026-07-06 16:40:30',
-    paidAt: '2026-07-06 16:41:10',
-  },
-  {
-    id: '5',
-    orderNo: 'ORD20260706002',
-    userName: '孙磊',
-    userEmail: 'sunlei@example.com',
-    userPhone: '137****4321',
-    planName: '黄金版·半年付',
-    planDuration: '6个月',
-    planDescription: '含全部Agent权限、标准响应速度',
-    amount: 549.00,
-    paymentMethod: '微信支付',
-    status: 'paid',
-    transactionId: 'WX20260706002001',
-    couponCode: 'NEWUSER',
-    couponDiscount: 50.00,
-    createdAt: '2026-07-06 10:05:15',
-    paidAt: '2026-07-06 10:05:50',
-  },
-  {
-    id: '6',
-    orderNo: 'ORD20260705001',
-    userName: '周杰',
-    userEmail: 'zhoujie@example.com',
-    userPhone: '135****8765',
-    planName: '专业版·季付',
-    planDuration: '3个月',
-    planDescription: '含全部Agent权限、优先响应',
-    amount: 279.00,
-    paymentMethod: '支付宝',
-    status: 'cancelled',
-    transactionId: '—',
-    couponCode: null,
-    couponDiscount: 0,
-    createdAt: '2026-07-05 09:30:00',
-    paidAt: null,
-  },
-  {
-    id: '7',
-    orderNo: 'ORD20260705002',
-    userName: '吴芳',
-    userEmail: 'wufang@example.com',
-    userPhone: '133****6543',
-    planName: '钻石版·季付',
-    planDuration: '3个月',
-    planDescription: '含全部Agent权限、优先响应、专属客服、API调用',
-    amount: 599.00,
-    paymentMethod: '微信支付',
-    status: 'paid',
-    transactionId: 'WX20260705002001',
-    couponCode: null,
-    couponDiscount: 0,
-    createdAt: '2026-07-05 15:22:10',
-    paidAt: '2026-07-05 15:22:45',
-  },
-  {
-    id: '8',
-    orderNo: 'ORD20260704001',
-    userName: '郑涛',
-    userEmail: 'zhengtao@example.com',
-    userPhone: null,
-    planName: '黄金版·月付',
-    planDuration: '1个月',
-    planDescription: '含全部Agent权限、标准响应速度',
-    amount: 109.00,
-    paymentMethod: '支付宝',
-    status: 'refunding',
-    transactionId: 'ALI20260704001001',
-    couponCode: null,
-    couponDiscount: 0,
-    createdAt: '2026-07-04 11:10:00',
-    paidAt: '2026-07-04 11:10:35',
-  },
-  {
-    id: '9',
-    orderNo: 'ORD20260703001',
-    userName: '冯丽',
-    userEmail: 'fengli@example.com',
-    userPhone: '132****7890',
-    planName: '专业版·年付',
-    planDuration: '12个月',
-    planDescription: '含全部Agent权限、优先响应、专属客服',
-    amount: 999.00,
-    paymentMethod: '微信支付',
-    status: 'paid',
-    transactionId: 'WX20260703001001',
-    couponCode: 'VIP10',
-    couponDiscount: 100.00,
-    createdAt: '2026-07-03 08:45:00',
-    paidAt: '2026-07-03 08:45:30',
-  },
-  {
-    id: '10',
-    orderNo: 'ORD20260702001',
-    userName: '陈伟',
-    userEmail: 'chenwei@example.com',
-    userPhone: '131****3456',
-    planName: '钻石版·半年付',
-    planDuration: '6个月',
-    planDescription: '含全部Agent权限、优先响应、专属客服、API调用',
-    amount: 1099.00,
-    paymentMethod: '支付宝',
-    status: 'paid',
-    transactionId: 'ALI20260702001001',
-    couponCode: null,
-    couponDiscount: 0,
-    createdAt: '2026-07-02 13:55:20',
-    paidAt: '2026-07-02 13:56:00',
-  },
-  {
-    id: '11',
-    orderNo: 'ORD20260701001',
-    userName: '刘洋',
-    userEmail: 'liuyang@example.com',
-    userPhone: '130****2345',
-    planName: '黄金版·年付',
-    planDuration: '12个月',
-    planDescription: '含全部Agent权限、标准响应速度',
-    amount: 999.00,
-    paymentMethod: '微信支付',
-    status: 'refunded',
-    transactionId: 'WX20260701001001',
-    couponCode: null,
-    couponDiscount: 0,
-    createdAt: '2026-07-01 17:20:00',
-    paidAt: '2026-07-01 17:20:40',
-  },
-  {
-    id: '12',
-    orderNo: 'ORD20260701002',
-    userName: '黄梅',
-    userEmail: 'huangmei@example.com',
-    userPhone: null,
-    planName: '专业版·月付',
-    planDuration: '1个月',
-    planDescription: '含全部Agent权限、优先响应',
-    amount: 99.00,
-    paymentMethod: '支付宝',
-    status: 'pending',
-    transactionId: '—',
-    couponCode: null,
-    couponDiscount: 0,
-    createdAt: '2026-07-01 10:00:00',
-    paidAt: null,
-  },
-])
+const orders = ref<Order[]>([])
+
+async function fetchOrders() {
+  loading.value = true
+  error.value = null
+  try {
+    const result = await getMembershipOrders({ page: 1, pageSize: 100 })
+    orders.value = (result.items || []).map((item) => ({
+      id: item.id,
+      orderNo: item.orderNo,
+      userName: item.username,
+      userEmail: '',
+      userPhone: null,
+      planName: item.planName,
+      planDuration: '',
+      planDescription: '',
+      amount: item.amount,
+      paymentMethod: item.paymentMethod,
+      status: item.status as OrderStatus,
+      transactionId: '—',
+      couponCode: null,
+      couponDiscount: 0,
+      createdAt: item.createdAt,
+      paidAt: item.paidAt || null,
+    }))
+  } catch (e: any) {
+    error.value = e.message || '获取订单数据失败'
+  } finally {
+    loading.value = false
+  }
+}
+
+onMounted(() => {
+  fetchOrders()
+})
 
 const stats = computed(() => ({
   totalOrders: orders.value.length,
-  todayOrders: orders.value.filter(o => o.createdAt.startsWith('2026-07-07')).length,
+  todayOrders: orders.value.filter(o => {
+    const today = new Date().toISOString().slice(0, 10)
+    return o.createdAt.startsWith(today)
+  }).length,
   monthlyRevenue: orders.value
-    .filter(o => o.status === 'paid' && o.createdAt.startsWith('2026-07'))
+    .filter(o => {
+      const now = new Date()
+      const month = now.toISOString().slice(0, 7)
+      return o.status === 'paid' && o.createdAt.startsWith(month)
+    })
     .reduce((sum, o) => sum + o.amount, 0),
   refunding: orders.value.filter(o => o.status === 'refunding').length,
 }))

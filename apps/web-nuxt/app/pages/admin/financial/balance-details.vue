@@ -25,7 +25,25 @@
       </button>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+    <!-- 加载状态 -->
+    <div v-if="loading" class="flex items-center justify-center py-20">
+      <div class="flex flex-col items-center gap-4">
+        <UIcon name="lucide:loader-2" class="w-10 h-10 text-primary animate-spin" />
+        <p class="text-slate-500 text-sm">正在加载余额数据...</p>
+      </div>
+    </div>
+
+    <!-- 错误状态 -->
+    <div v-if="error" class="mb-6 p-4 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 flex items-center gap-3">
+      <UIcon name="lucide:alert-circle" class="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0" />
+      <div class="flex-1">
+        <p class="text-sm font-medium text-red-700 dark:text-red-400">加载失败</p>
+        <p class="text-xs text-red-500 mt-0.5">{{ error }}</p>
+      </div>
+      <button class="btn-glass text-sm px-3 py-1.5" @click="fetchBalances">重试</button>
+    </div>
+
+    <div v-if="!loading" class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
       <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-100 dark:border-slate-700">
         <div class="flex items-center justify-between">
           <div>
@@ -61,7 +79,7 @@
       </div>
     </div>
 
-    <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 p-4 mb-6">
+    <div v-if="!loading" class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 p-4 mb-6">
       <div class="flex flex-wrap items-center gap-4">
         <div class="relative w-64">
           <UIcon name="lucide:search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -79,7 +97,7 @@
       </div>
     </div>
 
-    <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 overflow-hidden">
+    <div v-if="!loading" class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 overflow-hidden">
       <div class="overflow-x-auto">
         <table class="w-full">
           <thead>
@@ -155,66 +173,74 @@
     </div>
 
     <UDialog v-model="showHistoryDialog" :title="`余额变动明细 - ${selectedUser?.nickname || selectedUser?.username}`" size="lg">
-      <div class="mb-4 flex items-center gap-4">
-        <div class="flex-1 p-4 rounded-xl bg-slate-50 dark:bg-slate-700/50">
-          <p class="text-xs text-slate-500">当前余额</p>
-          <p class="text-xl font-bold text-primary">{{ selectedUser ? '¥' + selectedUser.balance.toFixed(2) : '—' }}</p>
-        </div>
-        <div class="flex-1 p-4 rounded-xl bg-slate-50 dark:bg-slate-700/50">
-          <p class="text-xs text-slate-500">累计充值</p>
-          <p class="text-xl font-bold text-green-600 dark:text-green-400">{{ selectedUser ? '¥' + selectedUser.totalRecharge.toFixed(2) : '—' }}</p>
-        </div>
-        <div class="flex-1 p-4 rounded-xl bg-slate-50 dark:bg-slate-700/50">
-          <p class="text-xs text-slate-500">累计消费</p>
-          <p class="text-xl font-bold text-orange-600 dark:text-orange-400">{{ selectedUser ? '¥' + selectedUser.totalConsume.toFixed(2) : '—' }}</p>
-        </div>
+      <div v-if="historyLoading" class="flex items-center justify-center py-10">
+        <UIcon name="lucide:loader-2" class="w-8 h-8 text-primary animate-spin" />
       </div>
-      <div class="overflow-x-auto">
-        <table class="w-full">
-          <thead>
-            <tr class="border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-700/50">
-              <th class="text-left px-4 py-3 text-sm font-medium text-slate-500">时间</th>
-              <th class="text-left px-4 py-3 text-sm font-medium text-slate-500">类型</th>
-              <th class="text-right px-4 py-3 text-sm font-medium text-slate-500">金额</th>
-              <th class="text-right px-4 py-3 text-sm font-medium text-slate-500">变动后余额</th>
-              <th class="text-left px-4 py-3 text-sm font-medium text-slate-500">备注</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr
-              v-for="record in balanceHistory"
-              :key="record.id"
-              class="border-b border-slate-200 dark:border-slate-700"
-            >
-              <td class="px-4 py-3 text-sm text-slate-500">{{ record.time }}</td>
-              <td class="px-4 py-3">
-                <span
-                  class="inline-flex items-center gap-1 text-sm"
-                  :class="record.type === 'recharge' ? 'text-green-600 dark:text-green-400' : 'text-orange-600 dark:text-orange-400'"
-                >
-                  <UIcon :name="record.type === 'recharge' ? 'lucide:arrow-down-circle' : 'lucide:arrow-up-circle'" class="w-3.5 h-3.5" />
-                  {{ record.type === 'recharge' ? '充值' : record.type === 'consume' ? '消费' : '退款' }}
-                </span>
-              </td>
-              <td class="px-4 py-3 text-right">
-                <span
-                  class="text-sm font-medium"
-                  :class="record.amount >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'"
-                >
-                  {{ record.amount >= 0 ? '+' : '' }}¥{{ record.amount.toFixed(2) }}
-                </span>
-              </td>
-              <td class="px-4 py-3 text-right">
-                <span class="text-sm text-slate-700 dark:text-slate-300">¥{{ record.afterBalance.toFixed(2) }}</span>
-              </td>
-              <td class="px-4 py-3 text-sm text-slate-500">{{ record.remark }}</td>
-            </tr>
-          </tbody>
-        </table>
+      <div v-else-if="historyError" class="p-4 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
+        <p class="text-sm text-red-600">{{ historyError }}</p>
       </div>
-      <div v-if="balanceHistory.length === 0" class="text-center py-8">
-        <p class="text-sm text-slate-400">暂无变动记录</p>
-      </div>
+      <template v-else>
+        <div class="mb-4 flex items-center gap-4">
+          <div class="flex-1 p-4 rounded-xl bg-slate-50 dark:bg-slate-700/50">
+            <p class="text-xs text-slate-500">当前余额</p>
+            <p class="text-xl font-bold text-primary">{{ selectedUser ? '¥' + selectedUser.balance.toFixed(2) : '—' }}</p>
+          </div>
+          <div class="flex-1 p-4 rounded-xl bg-slate-50 dark:bg-slate-700/50">
+            <p class="text-xs text-slate-500">累计充值</p>
+            <p class="text-xl font-bold text-green-600 dark:text-green-400">{{ selectedUser ? '¥' + selectedUser.totalRecharge.toFixed(2) : '—' }}</p>
+          </div>
+          <div class="flex-1 p-4 rounded-xl bg-slate-50 dark:bg-slate-700/50">
+            <p class="text-xs text-slate-500">累计消费</p>
+            <p class="text-xl font-bold text-orange-600 dark:text-orange-400">{{ selectedUser ? '¥' + selectedUser.totalConsume.toFixed(2) : '—' }}</p>
+          </div>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full">
+            <thead>
+              <tr class="border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-700/50">
+                <th class="text-left px-4 py-3 text-sm font-medium text-slate-500">时间</th>
+                <th class="text-left px-4 py-3 text-sm font-medium text-slate-500">类型</th>
+                <th class="text-right px-4 py-3 text-sm font-medium text-slate-500">金额</th>
+                <th class="text-right px-4 py-3 text-sm font-medium text-slate-500">变动后余额</th>
+                <th class="text-left px-4 py-3 text-sm font-medium text-slate-500">备注</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr
+                v-for="record in balanceHistory"
+                :key="record.id"
+                class="border-b border-slate-200 dark:border-slate-700"
+              >
+                <td class="px-4 py-3 text-sm text-slate-500">{{ record.time }}</td>
+                <td class="px-4 py-3">
+                  <span
+                    class="inline-flex items-center gap-1 text-sm"
+                    :class="record.type === 'recharge' ? 'text-green-600 dark:text-green-400' : 'text-orange-600 dark:text-orange-400'"
+                  >
+                    <UIcon :name="record.type === 'recharge' ? 'lucide:arrow-down-circle' : 'lucide:arrow-up-circle'" class="w-3.5 h-3.5" />
+                    {{ record.type === 'recharge' ? '充值' : record.type === 'consume' ? '消费' : '退款' }}
+                  </span>
+                </td>
+                <td class="px-4 py-3 text-right">
+                  <span
+                    class="text-sm font-medium"
+                    :class="record.amount >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'"
+                  >
+                    {{ record.amount >= 0 ? '+' : '' }}¥{{ record.amount.toFixed(2) }}
+                  </span>
+                </td>
+                <td class="px-4 py-3 text-right">
+                  <span class="text-sm text-slate-700 dark:text-slate-300">¥{{ record.afterBalance.toFixed(2) }}</span>
+                </td>
+                <td class="px-4 py-3 text-sm text-slate-500">{{ record.remark }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div v-if="balanceHistory.length === 0" class="text-center py-8">
+          <p class="text-sm text-slate-400">暂无变动记录</p>
+        </div>
+      </template>
       <template #footer>
         <button class="btn-glass" @click="showHistoryDialog = false">关闭</button>
       </template>
@@ -223,7 +249,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import { getBalanceDetails, getBalanceChanges } from '~/composables/api/order-finance-access'
 
 definePageMeta({
   layout: 'console',
@@ -254,6 +281,10 @@ const balanceRange = ref('all')
 const currentPage = ref(1)
 const showHistoryDialog = ref(false)
 const selectedUser = ref<UserBalance | null>(null)
+const loading = ref(true)
+const error = ref<string | null>(null)
+const historyLoading = ref(false)
+const historyError = ref<string | null>(null)
 
 const tabs = [
   { key: 'analysis', label: '财务分析', icon: 'lucide:bar-chart-3' },
@@ -267,80 +298,32 @@ const balanceRangeOptions = [
   { label: '余额 > 100', value: 'high' },
 ]
 
-const users = ref<UserBalance[]>([
-  {
-    id: '1001',
-    username: 'admin',
-    nickname: '系统管理员',
-    balance: 520.50,
-    totalRecharge: 2000.00,
-    totalConsume: 1479.50,
-    lastChangeTime: '2026-07-07 10:30:25',
-  },
-  {
-    id: '1002',
-    username: 'zhangsan',
-    nickname: '张三',
-    balance: 1280.00,
-    totalRecharge: 3500.00,
-    totalConsume: 2220.00,
-    lastChangeTime: '2026-07-07 09:15:42',
-  },
-  {
-    id: '1003',
-    username: 'lisi',
-    nickname: '李四',
-    balance: 0.00,
-    totalRecharge: 500.00,
-    totalConsume: 500.00,
-    lastChangeTime: '2026-07-06 16:45:18',
-  },
-  {
-    id: '1004',
-    username: 'wangwu',
-    nickname: '王五',
-    balance: 345.80,
-    totalRecharge: 1200.00,
-    totalConsume: 854.20,
-    lastChangeTime: '2026-07-07 08:22:10',
-  },
-  {
-    id: '1005',
-    username: 'zhaoliu',
-    nickname: '赵六',
-    balance: 89.00,
-    totalRecharge: 300.00,
-    totalConsume: 211.00,
-    lastChangeTime: '2026-07-06 20:10:33',
-  },
-  {
-    id: '1006',
-    username: 'qianqi',
-    nickname: '钱七',
-    balance: 2560.00,
-    totalRecharge: 5000.00,
-    totalConsume: 2440.00,
-    lastChangeTime: '2026-07-07 11:05:00',
-  },
-  {
-    id: '1007',
-    username: 'sunba',
-    nickname: '孙八',
-    balance: 0.00,
-    totalRecharge: 100.00,
-    totalConsume: 100.00,
-    lastChangeTime: '2026-07-05 14:30:00',
-  },
-  {
-    id: '1008',
-    username: 'zhoujiu',
-    nickname: '周九',
-    balance: 156.30,
-    totalRecharge: 800.00,
-    totalConsume: 643.70,
-    lastChangeTime: '2026-07-07 07:55:48',
-  },
-])
+const users = ref<UserBalance[]>([])
+
+async function fetchBalances() {
+  loading.value = true
+  error.value = null
+  try {
+    const result = await getBalanceDetails({ page: 1, pageSize: 100 })
+    users.value = (result.items || []).map((item) => ({
+      id: item.userId,
+      username: item.username,
+      nickname: item.username,
+      balance: item.currentBalance,
+      totalRecharge: item.totalRecharge,
+      totalConsume: item.totalConsume,
+      lastChangeTime: item.lastChangeTime,
+    }))
+  } catch (e: any) {
+    error.value = e.message || '获取余额数据失败'
+  } finally {
+    loading.value = false
+  }
+}
+
+onMounted(() => {
+  fetchBalances()
+})
 
 const summary = computed(() => {
   const totalBalance = users.value.reduce((s, u) => s + u.balance, 0)
@@ -375,19 +358,29 @@ const filteredUsers = computed(() => {
 
 const totalPages = computed(() => Math.ceil(filteredUsers.value.length / 10) || 1)
 
-const balanceHistory = ref<BalanceRecord[]>([
-  { id: '1', time: '2026-07-07 10:30:25', type: 'consume', amount: -29.90, afterBalance: 520.50, remark: '购买专业版月卡' },
-  { id: '2', time: '2026-07-06 15:20:10', type: 'recharge', amount: 200.00, afterBalance: 550.40, remark: '微信充值 ¥200' },
-  { id: '3', time: '2026-07-05 12:00:00', type: 'consume', amount: -99.00, afterBalance: 350.40, remark: '购买对话额度包' },
-  { id: '4', time: '2026-07-04 09:15:30', type: 'recharge', amount: 500.00, afterBalance: 449.40, remark: '支付宝充值 ¥500' },
-  { id: '5', time: '2026-07-03 18:45:00', type: 'refund', amount: 29.90, afterBalance: -50.60, remark: '退款 - 专业版月卡' },
-  { id: '6', time: '2026-07-02 14:00:00', type: 'consume', amount: -19.90, afterBalance: -80.50, remark: '购买单次对话包' },
-  { id: '7', time: '2026-07-01 08:30:00', type: 'recharge', amount: 100.00, afterBalance: -60.60, remark: '微信充值 ¥100' },
-])
+const balanceHistory = ref<BalanceRecord[]>([])
 
-function openHistoryDialog(user: UserBalance) {
+async function openHistoryDialog(user: UserBalance) {
   selectedUser.value = user
   showHistoryDialog.value = true
+  historyLoading.value = true
+  historyError.value = null
+  balanceHistory.value = []
+  try {
+    const changes = await getBalanceChanges(user.id)
+    balanceHistory.value = (changes || []).map((item) => ({
+      id: item.id,
+      time: item.createdAt,
+      type: item.type === 'gift' ? 'recharge' : item.type as BalanceRecord['type'],
+      amount: item.amount,
+      afterBalance: item.balance,
+      remark: item.description,
+    }))
+  } catch (e: any) {
+    historyError.value = e.message || '获取变动记录失败'
+  } finally {
+    historyLoading.value = false
+  }
 }
 
 function resetFilters() {

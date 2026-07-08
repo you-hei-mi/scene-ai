@@ -10,7 +10,22 @@
 
     <AdminSystemTabs />
 
-    <div class="space-y-6">
+    <!-- Loading -->
+    <div v-if="loading" class="flex items-center justify-center py-20">
+      <UIcon name="lucide:loader" class="w-8 h-8 animate-spin text-primary" />
+      <span class="ml-3 text-slate-500">加载中...</span>
+    </div>
+
+    <!-- Error -->
+    <div v-else-if="error" class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4 mb-6">
+      <div class="flex items-center gap-2">
+        <UIcon name="lucide:alert-circle" class="w-5 h-5 text-red-600 dark:text-red-400" />
+        <span class="text-sm text-red-700 dark:text-red-400">{{ error }}</span>
+      </div>
+      <button class="btn-glass mt-3 text-sm" @click="fetchConfig">重试</button>
+    </div>
+
+    <div v-else class="space-y-6">
       <!-- 登录方式 -->
       <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-100 dark:border-slate-700">
         <div class="mb-6">
@@ -121,14 +136,18 @@
 
       <div class="flex items-center justify-end gap-3">
         <button class="btn-glass" @click="resetConfig">重置</button>
-        <button class="btn-glass btn-glass--primary" @click="saveConfig">保存设置</button>
+        <button class="btn-glass btn-glass--primary" @click="saveConfig" :disabled="saving">
+          <UIcon v-if="saving" name="lucide:loader" class="w-4 h-4 animate-spin" />
+          {{ saving ? '保存中...' : '保存设置' }}
+        </button>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { reactive } from 'vue'
+import { reactive, ref, onMounted } from 'vue'
+import { getLoginConfig, updateLoginConfig } from '~/composables/api/system'
 
 definePageMeta({
   layout: 'console',
@@ -161,6 +180,10 @@ interface LoginConfig {
   security: SecurityConfig
 }
 
+const loading = ref(true)
+const error = ref<string | null>(null)
+const saving = ref(false)
+
 const roleOptions = [
   { label: '普通用户', value: 'user' },
   { label: '管理员', value: 'admin' },
@@ -190,11 +213,76 @@ const defaultConfig: LoginConfig = {
 
 const config = reactive<LoginConfig>(JSON.parse(JSON.stringify(defaultConfig)))
 
+async function fetchConfig() {
+  loading.value = true
+  error.value = null
+  try {
+    const data = await getLoginConfig()
+    if (data) {
+      const methods = data.loginMethods as any
+      config.loginMethods = {
+        password: methods.password ?? defaultConfig.loginMethods.password,
+        sms: methods.phone ?? methods.sms ?? defaultConfig.loginMethods.sms,
+        email: methods.email ?? defaultConfig.loginMethods.email,
+        wechat: methods.wechat ?? defaultConfig.loginMethods.wechat,
+        oauth: methods.oauth ?? defaultConfig.loginMethods.oauth,
+      }
+      config.registration = {
+        openRegistration: data.registration?.openRegistration ?? defaultConfig.registration.openRegistration,
+        reviewRequired: data.registration?.reviewRequired ?? defaultConfig.registration.reviewRequired,
+        defaultRole: data.registration?.defaultRole ?? defaultConfig.registration.defaultRole,
+      }
+      config.security = {
+        maxLoginAttempts: data.security?.maxLoginAttempts ?? defaultConfig.security.maxLoginAttempts,
+        lockoutDuration: data.security?.lockoutMinutes ?? data.security?.lockoutDuration ?? defaultConfig.security.lockoutDuration,
+        enableCaptcha: data.security?.captchaEnabled ?? data.security?.enableCaptcha ?? defaultConfig.security.enableCaptcha,
+        sessionTimeout: data.security?.sessionTimeout ?? defaultConfig.security.sessionTimeout,
+      }
+    }
+  } catch (e: any) {
+    error.value = e.message || '加载登录配置失败'
+  } finally {
+    loading.value = false
+  }
+}
+
 function resetConfig() {
   Object.assign(config, JSON.parse(JSON.stringify(defaultConfig)))
 }
 
-function saveConfig() {
-  console.log('保存登录配置:', config)
+async function saveConfig() {
+  if (saving.value) return
+  saving.value = true
+  error.value = null
+  try {
+    await updateLoginConfig({
+      loginMethods: {
+        password: config.loginMethods.password,
+        phone: config.loginMethods.sms,
+        email: config.loginMethods.email,
+        wechat: config.loginMethods.wechat,
+        oauth: config.loginMethods.oauth,
+      },
+      registration: {
+        openRegistration: config.registration.openRegistration,
+        reviewRequired: config.registration.reviewRequired,
+        defaultRole: config.registration.defaultRole,
+      },
+      security: {
+        maxLoginAttempts: config.security.maxLoginAttempts,
+        lockoutMinutes: config.security.lockoutDuration,
+        captchaEnabled: config.security.enableCaptcha,
+        sessionTimeout: config.security.sessionTimeout,
+      },
+    } as any)
+  } catch (e: any) {
+    error.value = e.message || '保存登录配置失败'
+  } finally {
+    saving.value = false
+  }
 }
+
+onMounted(() => {
+  fetchConfig()
+})
 </script>

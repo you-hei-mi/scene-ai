@@ -25,6 +25,23 @@
       </button>
     </div>
 
+    <!-- Loading -->
+    <div v-if="loading" class="flex items-center justify-center py-20">
+      <UIcon name="lucide:loader-2" class="w-8 h-8 animate-spin text-primary" />
+      <span class="ml-3 text-slate-500">加载中...</span>
+    </div>
+
+    <!-- Error -->
+    <div v-else-if="error" class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-2xl p-4 mb-6 flex items-start gap-3">
+      <UIcon name="lucide:alert-circle" class="w-5 h-5 text-red-500 mt-0.5 flex-shrink-0" />
+      <div class="flex-1">
+        <p class="text-sm font-medium text-red-700 dark:text-red-400">加载失败</p>
+        <p class="text-xs text-red-600 dark:text-red-300 mt-1">{{ error }}</p>
+      </div>
+      <button class="btn-glass text-sm" @click="fetchAgents">重试</button>
+    </div>
+
+    <template v-else>
     <div class="mb-8">
       <div class="flex items-center justify-between mb-4">
         <h2 class="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
@@ -225,14 +242,17 @@
       </div>
       <template #footer>
         <button class="btn-glass" @click="showEditDialog = false">取消</button>
-        <button class="btn-glass btn-glass--primary" @click="saveEditAgent">保存</button>
+        <button class="btn-glass btn-glass--primary" :disabled="saving" @click="saveEditAgent">{{ saving ? '保存中...' : '保存' }}</button>
       </template>
     </UDialog>
+    </template>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
+import { getDecorateAgents, updateDecorateAgent, reorderDecorateAgents } from '~/composables/api/system'
+import type { DecorateAgent as ApiDecorateAgent } from '~/composables/api/system'
 
 definePageMeta({
   layout: 'console',
@@ -260,6 +280,9 @@ interface SortConfig {
   perPage: number
 }
 
+const loading = ref(true)
+const error = ref('')
+const saving = ref(false)
 const activeTab = ref('agents')
 const searchKeyword = ref('')
 const categoryFilter = ref('all')
@@ -330,104 +353,22 @@ const sortConfig = reactive<SortConfig>({
   perPage: 12,
 })
 
-const agents = ref<AgentItem[]>([
-  {
-    id: '1',
-    name: '通用助手',
-    description: '全能型 AI 助手，可处理各类任务',
-    icon: 'lucide:sparkles',
+const agents = ref<AgentItem[]>([])
+
+function mapApiToLocal(api: ApiDecorateAgent): AgentItem {
+  return {
+    id: api.id,
+    name: api.name,
+    description: api.description,
+    icon: api.icon,
     iconColor: 'text-purple-500 dark:text-purple-400',
-    category: 'general',
-    displayed: true,
-    featured: true,
-    usageCount: 15820,
-    sortOrder: 1,
-  },
-  {
-    id: '2',
-    name: '代码专家',
-    description: '精通多种编程语言，提供代码审查和优化建议',
-    icon: 'lucide:code-2',
-    iconColor: 'text-green-500 dark:text-green-400',
-    category: 'coding',
-    displayed: true,
-    featured: true,
-    usageCount: 12450,
-    sortOrder: 2,
-  },
-  {
-    id: '3',
-    name: '文案大师',
-    description: '擅长各类文案写作，从营销文案到技术文档',
-    icon: 'lucide:pen',
-    iconColor: 'text-blue-500 dark:text-blue-400',
-    category: 'writing',
-    displayed: true,
-    featured: true,
-    usageCount: 8930,
-    sortOrder: 3,
-  },
-  {
-    id: '4',
-    name: '数据分析师',
-    description: '专业的数据分析和可视化解读',
-    icon: 'lucide:bar-chart-3',
-    iconColor: 'text-orange-500 dark:text-orange-400',
-    category: 'analysis',
-    displayed: true,
-    featured: true,
-    usageCount: 6720,
-    sortOrder: 4,
-  },
-  {
-    id: '5',
-    name: '创意设计师',
-    description: '提供创意灵感和设计建议',
-    icon: 'lucide:palette',
-    iconColor: 'text-pink-500 dark:text-pink-400',
-    category: 'creative',
-    displayed: true,
-    featured: false,
-    usageCount: 4510,
-    sortOrder: 5,
-  },
-  {
-    id: '6',
-    name: '翻译专家',
-    description: '支持 50+ 语言的专业翻译',
-    icon: 'lucide:languages',
-    iconColor: 'text-cyan-500 dark:text-cyan-400',
-    category: 'general',
-    displayed: true,
-    featured: false,
-    usageCount: 7890,
-    sortOrder: 6,
-  },
-  {
-    id: '7',
-    name: '知识问答',
-    description: '基于知识库的精准问答',
-    icon: 'lucide:brain',
-    iconColor: 'text-indigo-500 dark:text-indigo-400',
-    category: 'general',
-    displayed: true,
-    featured: false,
-    usageCount: 10200,
-    sortOrder: 7,
-  },
-  {
-    id: '8',
-    name: '法律顾问',
-    description: '法律条文查询和案例分析',
-    icon: 'lucide:scale',
-    iconColor: 'text-amber-500 dark:text-amber-400',
-    category: 'analysis',
-    displayed: false,
-    featured: false,
-    usageCount: 2340,
-    sortOrder: 8,
-  },
-])
+    category: (api.category as AgentCategory) || 'other',
+    displayed: api.isVisible,
+    featured: api.isFeatured,
+    usageCount: 0,
+    sortOrder: api.sortOrder,
+  }
+}
 
 const featuredAgents = computed(() => {
   return agents.value.filter(a => a.featured).sort((a, b) => a.sortOrder - b.sortOrder)
@@ -454,6 +395,25 @@ const filteredAgents = computed(() => {
   return result
 })
 
+async function fetchAgents() {
+  loading.value = true
+  error.value = ''
+  try {
+    const data = await getDecorateAgents()
+    if (data) {
+      agents.value = data.map(mapApiToLocal)
+    }
+  } catch (e: any) {
+    error.value = e.message || '加载 Agent 数据失败'
+  } finally {
+    loading.value = false
+  }
+}
+
+onMounted(() => {
+  fetchAgents()
+})
+
 function getCategoryText(category: AgentCategory): string {
   const map: Record<AgentCategory, string> = {
     general: '通用',
@@ -478,12 +438,24 @@ function getCategoryBadgeClass(category: AgentCategory): string {
   return map[category]
 }
 
-function toggleDisplay(agent: AgentItem) {
+async function toggleDisplay(agent: AgentItem) {
   agent.displayed = !agent.displayed
+  try {
+    await updateDecorateAgent(agent.id, { isVisible: agent.displayed })
+  } catch (e: any) {
+    agent.displayed = !agent.displayed
+    error.value = e.message || '更新失败'
+  }
 }
 
-function toggleFeaturedDisplay(agent: AgentItem) {
+async function toggleFeaturedDisplay(agent: AgentItem) {
   agent.displayed = !agent.displayed
+  try {
+    await updateDecorateAgent(agent.id, { isVisible: agent.displayed })
+  } catch (e: any) {
+    agent.displayed = !agent.displayed
+    error.value = e.message || '更新失败'
+  }
 }
 
 function editAgent(agent: AgentItem) {
@@ -498,16 +470,29 @@ function editAgent(agent: AgentItem) {
   showEditDialog.value = true
 }
 
-function saveEditAgent() {
-  if (editingAgent.value) {
+async function saveEditAgent() {
+  if (!editingAgent.value) return
+  saving.value = true
+  try {
+    await updateDecorateAgent(editingAgent.value.id, {
+      name: editForm.value.name,
+      description: editForm.value.description,
+      category: editForm.value.category,
+      isVisible: editForm.value.displayed,
+      isFeatured: editForm.value.featured,
+    })
     editingAgent.value.name = editForm.value.name
     editingAgent.value.description = editForm.value.description
     editingAgent.value.category = editForm.value.category
     editingAgent.value.displayed = editForm.value.displayed
     editingAgent.value.featured = editForm.value.featured
+  } catch (e: any) {
+    error.value = e.message || '保存失败'
+  } finally {
+    saving.value = false
+    showEditDialog.value = false
+    editingAgent.value = null
   }
-  showEditDialog.value = false
-  editingAgent.value = null
 }
 
 function resetFilters() {
@@ -539,9 +524,14 @@ function onDragOver(event: DragEvent, agent: AgentItem) {
   }
 }
 
-function onDrop(event: DragEvent, _agent: AgentItem) {
+async function onDrop(event: DragEvent, _agent: AgentItem) {
   if (event.dataTransfer) {
     event.dataTransfer.dropEffect = 'move'
+  }
+  try {
+    await reorderDecorateAgents(agents.value.map(a => a.id))
+  } catch (e: any) {
+    error.value = e.message || '排序保存失败'
   }
 }
 
@@ -563,7 +553,6 @@ function onFeaturedDragOver(event: DragEvent, agent: AgentItem) {
   const fromIndex = featured.findIndex(a => a.id === featuredDragItem.value!.id)
   const toIndex = featured.findIndex(a => a.id === agent.id)
   if (fromIndex !== -1 && toIndex !== -1) {
-    // Reorder sort orders within featured agents
     const fromGlobal = agents.value.findIndex(a => a.id === featuredDragItem.value!.id)
     const toGlobal = agents.value.findIndex(a => a.id === agent.id)
     if (fromGlobal !== -1 && toGlobal !== -1) {
@@ -574,9 +563,14 @@ function onFeaturedDragOver(event: DragEvent, agent: AgentItem) {
   }
 }
 
-function onFeaturedDrop(event: DragEvent, _agent: AgentItem) {
+async function onFeaturedDrop(event: DragEvent, _agent: AgentItem) {
   if (event.dataTransfer) {
     event.dataTransfer.dropEffect = 'move'
+  }
+  try {
+    await reorderDecorateAgents(agents.value.map(a => a.id))
+  } catch (e: any) {
+    error.value = e.message || '排序保存失败'
   }
 }
 

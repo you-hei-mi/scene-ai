@@ -1,5 +1,18 @@
 <template>
   <div class="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50/30 dark:from-slate-900 dark:via-slate-800 dark:to-indigo-950/30">
+    <!-- Loading -->
+    <div v-if="loading" class="flex items-center justify-center py-24">
+      <UIcon name="lucide:loader-2" class="w-10 h-10 text-primary animate-spin" />
+    </div>
+
+    <!-- Error -->
+    <div v-if="error" class="mb-8 p-4 rounded-2xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
+      <div class="flex items-center gap-3">
+        <UIcon name="lucide:alert-circle" class="w-5 h-5 text-red-500" />
+        <p class="text-sm text-red-700 dark:text-red-400">{{ error }}</p>
+      </div>
+    </div>
+
     <div class="mb-8">
       <div class="flex items-center gap-4 mb-2">
         <div class="w-1 h-8 bg-gradient-to-b from-primary to-accent rounded-full"></div>
@@ -180,7 +193,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
+import { getMembershipLevels } from '~/composables/api/operation'
+import { getMembershipPlans } from '~/composables/api/operation'
+import { getCDKList } from '~/composables/api/operation'
 
 definePageMeta({
   layout: 'console',
@@ -209,13 +225,16 @@ interface MembershipLevel {
   count: number
 }
 
+const loading = ref(true)
+const error = ref<string | null>(null)
+
 const stats = ref({
-  totalMembers: 12850,
-  activePlans: 3,
-  totalPlans: 4,
-  cdkIssued: 15680,
-  cdkUsed: 9842,
-  monthlyRecharge: 256800,
+  totalMembers: 0,
+  activePlans: 0,
+  totalPlans: 0,
+  cdkIssued: 0,
+  cdkUsed: 0,
+  monthlyRecharge: 0,
 })
 
 const quickLinks: QuickLink[] = [
@@ -288,17 +307,55 @@ const recentActivities = ref<Activity[]>([
   },
 ])
 
-const membershipDistribution = ref<MembershipLevel[]>([
-  { name: '钻石会员', color: '#8b5cf6', percentage: 8, count: 1028 },
-  { name: '黄金会员', color: '#f59e0b', percentage: 22, count: 2827 },
-  { name: '白银会员', color: '#94a3b8', percentage: 35, count: 4498 },
-  { name: '普通会员', color: '#6b7280', percentage: 35, count: 4497 },
-])
+const membershipDistribution = ref<MembershipLevel[]>([])
 
 const overview = ref({
   todayNewMembers: 128,
   todayCdkRedeems: 256,
   todayRechargeOrders: 89,
   pendingTickets: 3,
+})
+
+const levelColors = ['#8b5cf6', '#f59e0b', '#94a3b8', '#6b7280', '#ef4444', '#06b6d4']
+
+async function fetchData() {
+  loading.value = true
+  error.value = null
+  try {
+    const [levelsRes, plansRes, cdkRes] = await Promise.all([
+      getMembershipLevels(),
+      getMembershipPlans(),
+      getCDKList({ page: 1, pageSize: 1 }),
+    ])
+
+    if (levelsRes.data) {
+      const totalMembers = levelsRes.data.reduce((sum, l) => sum + (l.memberCount || 0), 0)
+      stats.value.totalMembers = totalMembers
+
+      membershipDistribution.value = levelsRes.data.map((l, i) => ({
+        name: l.name,
+        color: levelColors[i % levelColors.length],
+        percentage: totalMembers > 0 ? Math.round((l.memberCount || 0) / totalMembers * 100) : 0,
+        count: l.memberCount || 0,
+      }))
+    }
+
+    if (plansRes.data) {
+      stats.value.activePlans = plansRes.data.filter(p => p.isEnabled).length
+      stats.value.totalPlans = plansRes.data.length
+    }
+
+    if (cdkRes.data) {
+      stats.value.cdkIssued = cdkRes.data.total || 0
+    }
+  } catch (e: any) {
+    error.value = e?.message || '加载运营数据失败'
+  } finally {
+    loading.value = false
+  }
+}
+
+onMounted(() => {
+  fetchData()
 })
 </script>

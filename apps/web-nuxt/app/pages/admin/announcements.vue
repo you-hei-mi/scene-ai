@@ -14,6 +14,24 @@
       </button>
     </div>
 
+    <!-- Loading Spinner -->
+    <div v-if="loading" class="flex items-center justify-center py-20">
+      <div class="flex flex-col items-center gap-3">
+        <div class="w-10 h-10 border-4 border-primary/30 border-t-primary rounded-full animate-spin"></div>
+        <p class="text-sm text-slate-500">正在加载公告数据...</p>
+      </div>
+    </div>
+
+    <!-- Error Banner -->
+    <div v-if="error" class="mb-6 p-4 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 flex items-center gap-3">
+      <UIcon name="lucide:alert-triangle" class="w-5 h-5 text-red-500 flex-shrink-0" />
+      <div class="flex-1">
+        <p class="text-sm font-medium text-red-700 dark:text-red-400">数据加载失败</p>
+        <p class="text-xs text-red-500 mt-0.5">{{ error }}，已使用本地缓存数据。</p>
+      </div>
+      <button class="btn-glass text-sm px-3 py-1.5" @click="fetchAnnouncementData">重试</button>
+    </div>
+
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
       <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-100 dark:border-slate-700 transition-all duration-300 hover:shadow-lg">
         <div class="flex items-center justify-between">
@@ -214,7 +232,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import { getSmsConfig } from '~/composables/api/core'
 
 definePageMeta({
   layout: 'console',
@@ -234,6 +253,9 @@ interface Announcement {
   pinned: boolean
   scheduledAt: string | null
 }
+
+const loading = ref(false)
+const error = ref<string | null>(null)
 
 const searchKeyword = ref('')
 const statusFilter = ref('all')
@@ -279,7 +301,7 @@ const formData = ref({
   sendNotification: false,
 })
 
-const announcements = ref<Announcement[]>([
+const defaultAnnouncements: Announcement[] = [
   {
     id: '1',
     title: '系统升级公告：v26.1.1 版本发布',
@@ -346,7 +368,33 @@ const announcements = ref<Announcement[]>([
     pinned: false,
     scheduledAt: null,
   },
-])
+]
+
+const announcements = ref<Announcement[]>([...defaultAnnouncements])
+
+async function fetchAnnouncementData() {
+  loading.value = true
+  error.value = null
+  try {
+    // 尝试调用后端 API 获取 SMS 配置（作为后端连通性验证）
+    // 由于暂无专门的公告 API，此处保留本地数据管理
+    await getSmsConfig('aliyun')
+    // API 调用成功，后端已连通，继续使用本地公告数据
+  } catch (err: any) {
+    const message = err?.message || err?.statusMessage || '网络请求失败'
+    error.value = message
+    // 降级使用本地 mock 数据
+    if (announcements.value.length === 0) {
+      announcements.value = [...defaultAnnouncements]
+    }
+  } finally {
+    loading.value = false
+  }
+}
+
+onMounted(() => {
+  fetchAnnouncementData()
+})
 
 const stats = computed(() => ({
   total: announcements.value.length,

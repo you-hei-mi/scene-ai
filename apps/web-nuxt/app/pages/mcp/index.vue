@@ -75,7 +75,28 @@
       </div>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    <!-- Error banner -->
+    <div v-if="error" class="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-2xl flex items-center gap-3">
+      <UIcon name="lucide:alert-circle" class="w-5 h-5 text-red-500 flex-shrink-0" />
+      <div class="flex-1">
+        <p class="text-sm font-medium text-red-700 dark:text-red-400">{{ error }}</p>
+        <p class="text-xs text-red-500 dark:text-red-400 mt-0.5">已回退到本地模拟数据</p>
+      </div>
+      <button class="btn-glass text-red-600 hover:bg-red-100 dark:hover:bg-red-900/40" @click="fetchServices">
+        <UIcon name="lucide:refresh-cw" class="w-4 h-4" />
+        重试
+      </button>
+    </div>
+
+    <!-- Loading spinner -->
+    <div v-if="loading" class="flex items-center justify-center py-16">
+      <div class="flex flex-col items-center gap-3">
+        <div class="w-8 h-8 border-2 border-primary/30 border-t-primary rounded-full animate-spin"></div>
+        <p class="text-sm text-slate-500">正在加载服务列表...</p>
+      </div>
+    </div>
+
+    <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       <div
         v-for="service in filteredServices"
         :key="service.id"
@@ -145,7 +166,7 @@
       </div>
     </div>
 
-    <div v-if="filteredServices.length === 0" class="text-center py-12">
+    <div v-if="!loading && filteredServices.length === 0" class="text-center py-12">
       <UIcon name="lucide:server-off" class="w-12 h-12 mx-auto mb-3 text-slate-400" />
       <p class="mb-4 text-slate-500">未找到匹配的 MCP 服务</p>
       <button class="btn-glass btn-glass--primary" @click="showAddDialog = true">
@@ -320,7 +341,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import { getMcpServerList } from '~/composables/api/core'
 
 definePageMeta({
   layout: 'console',
@@ -357,6 +379,8 @@ const showDetailDrawer = ref(false)
 const selectedService = ref<McpService | null>(null)
 const editingService = ref<McpService | null>(null)
 const testTools = ref(false)
+const loading = ref(true)
+const error = ref<string | null>(null)
 
 const statusOptions = [
   { label: '全部状态', value: 'all' },
@@ -389,7 +413,7 @@ const formData = ref({
   autoStart: false,
 })
 
-const services = ref<McpService[]>([
+const defaultServices: McpService[] = [
   {
     id: '1',
     name: '文件系统',
@@ -504,7 +528,58 @@ const services = ref<McpService[]>([
       { name: 'get_history', description: '获取频道历史消息' },
     ],
   },
-])
+]
+
+const services = ref<McpService[]>([...defaultServices])
+
+function mapApiItemToService(item: any): McpService {
+  return {
+    id: item.id || '',
+    name: item.name || '',
+    type: (item.type as ServiceType) || 'stdio',
+    description: item.description || '',
+    status: mapApiStatus(item.status),
+    toolCount: item.toolCount ?? item.tools?.length ?? 0,
+    command: item.command || item.commandLine || undefined,
+    url: item.url || item.serverUrl || undefined,
+    autoStart: item.autoStart ?? item.autoRun ?? false,
+    createdAt: item.createdAt || item.created_at || '',
+    tools: (item.tools || []).map((t: any) => ({
+      name: t.name || '',
+      description: t.description || '',
+      inputSchema: t.inputSchema || t.input_schema,
+    })),
+  }
+}
+
+function mapApiStatus(status: string | undefined): ServiceStatus {
+  if (!status) return 'stopped'
+  const s = status.toLowerCase()
+  if (s === 'active' || s === 'running' || s === 'connected') return 'running'
+  if (s === 'error' || s === 'failed') return 'error'
+  return 'stopped'
+}
+
+async function fetchServices() {
+  loading.value = true
+  error.value = null
+  try {
+    const response = await getMcpServerList()
+    if (response && response.items && response.items.length > 0) {
+      services.value = response.items.map(mapApiItemToService)
+    }
+    // If response has no items, keep existing mock data
+  } catch (e: any) {
+    error.value = e?.message || '无法加载 MCP 服务列表'
+    services.value = [...defaultServices]
+  } finally {
+    loading.value = false
+  }
+}
+
+onMounted(() => {
+  fetchServices()
+})
 
 const stats = computed(() => ({
   totalServices: services.value.length,

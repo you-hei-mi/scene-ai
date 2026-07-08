@@ -10,6 +10,24 @@
       </div>
     </div>
 
+    <!-- Loading Spinner -->
+    <div v-if="loading" class="flex items-center justify-center py-20">
+      <div class="flex flex-col items-center gap-3">
+        <div class="w-10 h-10 border-4 border-primary/30 border-t-primary rounded-full animate-spin"></div>
+        <p class="text-sm text-slate-500">正在加载系统设置...</p>
+      </div>
+    </div>
+
+    <!-- Error Banner -->
+    <div v-if="error" class="mb-6 p-4 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 flex items-center gap-3">
+      <UIcon name="lucide:alert-triangle" class="w-5 h-5 text-red-500 flex-shrink-0" />
+      <div class="flex-1">
+        <p class="text-sm font-medium text-red-700 dark:text-red-400">系统信息加载失败</p>
+        <p class="text-xs text-red-500 mt-0.5">{{ error }}，已使用本地缓存数据。</p>
+      </div>
+      <button class="btn-glass text-sm px-3 py-1.5" @click="fetchSystemData">重试</button>
+    </div>
+
     <div class="flex gap-6">
       <div class="w-56 flex-shrink-0">
         <div class="bg-white dark:bg-slate-800 rounded-2xl p-3 sticky top-6 shadow-sm border border-slate-100 dark:border-slate-700">
@@ -310,34 +328,44 @@
             <div class="grid grid-cols-2 gap-4">
               <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-700/50">
                 <p class="text-xs text-slate-500">系统版本</p>
-                <p class="text-lg font-bold mt-1 text-slate-900 dark:text-white">v2.0.0</p>
+                <p class="text-lg font-bold mt-1 text-slate-900 dark:text-white">{{ systemInfo.version }}</p>
               </div>
               <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-700/50">
                 <p class="text-xs text-slate-500">构建时间</p>
-                <p class="text-lg font-bold mt-1 text-slate-900 dark:text-white">2024-06-26</p>
+                <p class="text-lg font-bold mt-1 text-slate-900 dark:text-white">{{ systemInfo.buildTime }}</p>
               </div>
             </div>
             <div class="space-y-3">
               <div class="flex items-center justify-between py-2 border-b border-slate-200 dark:border-slate-700">
                 <span class="text-sm text-slate-500">前端框架</span>
-                <span class="text-sm font-medium text-slate-900 dark:text-white">Nuxt 4 + Vue 3</span>
+                <span class="text-sm font-medium text-slate-900 dark:text-white">{{ systemInfo.frontendFramework }}</span>
               </div>
               <div class="flex items-center justify-between py-2 border-b border-slate-200 dark:border-slate-700">
                 <span class="text-sm text-slate-500">后端框架</span>
-                <span class="text-sm font-medium text-slate-900 dark:text-white">NestJS</span>
+                <span class="text-sm font-medium text-slate-900 dark:text-white">{{ systemInfo.backendFramework }}</span>
               </div>
               <div class="flex items-center justify-between py-2 border-b border-slate-200 dark:border-slate-700">
                 <span class="text-sm text-slate-500">数据库</span>
-                <span class="text-sm font-medium text-slate-900 dark:text-white">PostgreSQL + Redis</span>
+                <span class="text-sm font-medium text-slate-900 dark:text-white">{{ systemInfo.database }}</span>
               </div>
               <div class="flex items-center justify-between py-2 border-b border-slate-200 dark:border-slate-700">
                 <span class="text-sm text-slate-500">Node.js 版本</span>
-                <span class="text-sm font-medium text-slate-900 dark:text-white">v20.10.0</span>
+                <span class="text-sm font-medium text-slate-900 dark:text-white">{{ systemInfo.nodeVersion }}</span>
               </div>
               <div class="flex items-center justify-between py-2">
                 <span class="text-sm text-slate-500">运行环境</span>
-                <span class="text-sm font-medium text-slate-900 dark:text-white">生产环境</span>
+                <span class="text-sm font-medium text-slate-900 dark:text-white">{{ systemInfo.environment }}</span>
               </div>
+            </div>
+            <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-700">
+              <button
+                class="btn-glass text-sm"
+                :disabled="restarting"
+                @click="handleRestart"
+              >
+                <UIcon name="lucide:refresh-cw" class="w-4 h-4" :class="{ 'animate-spin': restarting }" />
+                {{ restarting ? '重启中...' : '重启应用' }}
+              </button>
             </div>
           </div>
         </div>
@@ -347,7 +375,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
+import { getSystemInfo, getRuntimeInfo, restartApplication } from '~/composables/api/core'
 
 definePageMeta({
   layout: 'console',
@@ -399,6 +428,20 @@ interface SystemSettings {
   maintenanceMessage: string
 }
 
+interface SystemInfoDisplay {
+  version: string
+  buildTime: string
+  frontendFramework: string
+  backendFramework: string
+  database: string
+  nodeVersion: string
+  environment: string
+}
+
+const loading = ref(false)
+const error = ref<string | null>(null)
+const restarting = ref(false)
+
 const activeSection = ref('basic')
 
 const settingSections: SettingSection[] = [
@@ -436,6 +479,18 @@ const announcementTypeOptions = [
   { label: '警告提示', value: 'warning' },
   { label: '错误提示', value: 'error' },
 ]
+
+const defaultSystemInfo: SystemInfoDisplay = {
+  version: 'v2.0.0',
+  buildTime: '2024-06-26',
+  frontendFramework: 'Nuxt 4 + Vue 3',
+  backendFramework: 'NestJS',
+  database: 'PostgreSQL + Redis',
+  nodeVersion: 'v20.10.0',
+  environment: '生产环境',
+}
+
+const systemInfo = reactive<SystemInfoDisplay>({ ...defaultSystemInfo })
 
 const settings = reactive<SystemSettings>({
   siteName: 'BuildingAI',
@@ -476,6 +531,53 @@ const settings = reactive<SystemSettings>({
   maintenanceMode: false,
   maintenanceMessage: '系统正在维护升级中，请稍后再试。预计维护时间：2小时。',
 })
+
+async function fetchSystemData() {
+  loading.value = true
+  error.value = null
+  try {
+    const [systemRes, runtimeRes] = await Promise.all([
+      getSystemInfo(),
+      getRuntimeInfo(),
+    ])
+
+    // 从 API 响应中尝试提取系统信息
+    if (systemRes) {
+      if (systemRes.version) systemInfo.version = systemRes.version
+      if (systemRes.buildTime) systemInfo.buildTime = systemRes.buildTime
+      if (systemRes.environment) systemInfo.environment = systemRes.environment
+      if (systemRes.siteName) settings.siteName = systemRes.siteName
+    }
+
+    if (runtimeRes) {
+      if (runtimeRes.nodeVersion) systemInfo.nodeVersion = runtimeRes.nodeVersion
+      if (runtimeRes.platform) systemInfo.environment = runtimeRes.platform
+    }
+  } catch (err: any) {
+    const message = err?.message || err?.statusMessage || '网络请求失败'
+    error.value = message
+    // 降级使用默认 mock 数据
+    Object.assign(systemInfo, defaultSystemInfo)
+  } finally {
+    loading.value = false
+  }
+}
+
+onMounted(() => {
+  fetchSystemData()
+})
+
+async function handleRestart() {
+  restarting.value = true
+  try {
+    await restartApplication()
+  } catch (err: any) {
+    const message = err?.message || err?.statusMessage || '重启请求失败'
+    error.value = message
+  } finally {
+    restarting.value = false
+  }
+}
 
 function saveSettings() {
   console.log('保存系统设置:', settings)

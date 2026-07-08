@@ -8,9 +8,12 @@
         </div>
         <p class="text-slate-600 dark:text-slate-400 ml-5">通知设置</p>
       </div>
-      <button class="btn-glass btn-glass--primary" @click="saveSettings">
-        <UIcon name="lucide:save" class="w-4 h-4" />
-        保存设置
+      <button class="btn-glass btn-glass--primary" @click="saveSettings" :disabled="saving">
+        <UIcon v-if="saving" name="lucide:loader" class="w-4 h-4 animate-spin" />
+        <template v-else>
+          <UIcon name="lucide:save" class="w-4 h-4" />
+        </template>
+        {{ saving ? '保存中...' : '保存设置' }}
       </button>
     </div>
 
@@ -31,145 +34,165 @@
       </div>
     </div>
 
-    <div class="mb-8">
-      <h2 class="text-lg font-semibold text-slate-900 dark:text-white mb-4">通知渠道配置</h2>
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div
-          v-for="channel in notificationChannels"
-          :key="channel.id"
-          class="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-100 dark:border-slate-700 transition-all duration-300 hover:shadow-lg"
-        >
-          <div class="flex items-center justify-between mb-3">
-            <div class="flex items-center gap-3">
-              <div
-                class="w-12 h-12 rounded-xl flex items-center justify-center"
-                :class="channel.iconBg"
-              >
-                <UIcon :name="channel.icon" class="w-6 h-6" :class="channel.iconColor" />
-              </div>
-              <div>
-                <p class="font-medium text-slate-900 dark:text-white">{{ channel.name }}</p>
-                <p class="text-xs text-slate-500">{{ channel.description }}</p>
-              </div>
-            </div>
-          </div>
-          <div class="flex items-center justify-between">
-            <span class="text-sm text-slate-500">启用状态</span>
-            <label class="relative inline-flex items-center cursor-pointer">
-              <input
-                type="checkbox"
-                :checked="channel.enabled"
-                class="sr-only peer"
-                @change="toggleChannel(channel.id)"
-              />
-              <div class="w-10 h-5 bg-slate-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary/50 rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:after:border-slate-600 peer-checked:bg-primary"></div>
-            </label>
-          </div>
-          <div v-if="channel.id === 'email'" class="mt-3 pt-3 border-t border-slate-100 dark:border-slate-700">
-            <div class="flex justify-between text-xs">
-              <span class="text-slate-500">SMTP 配置</span>
-              <span class="text-green-600 dark:text-green-400 font-medium">已配置</span>
-            </div>
-          </div>
-          <div v-if="channel.id === 'sms'" class="mt-3 pt-3 border-t border-slate-100 dark:border-slate-700">
-            <div class="flex justify-between text-xs">
-              <span class="text-slate-500">服务商</span>
-              <span class="text-slate-700 dark:text-slate-300">阿里云短信</span>
-            </div>
-          </div>
-          <div v-if="channel.id === 'wechat'" class="mt-3 pt-3 border-t border-slate-100 dark:border-slate-700">
-            <div class="flex justify-between text-xs">
-              <span class="text-slate-500">公众号</span>
-              <span class="text-slate-700 dark:text-slate-300">已绑定</span>
-            </div>
-          </div>
-        </div>
-      </div>
+    <!-- Loading -->
+    <div v-if="loading" class="flex items-center justify-center py-20">
+      <UIcon name="lucide:loader" class="w-8 h-8 animate-spin text-primary" />
+      <span class="ml-3 text-slate-500">加载中...</span>
     </div>
 
-    <div>
-      <h2 class="text-lg font-semibold text-slate-900 dark:text-white mb-4">事件通知设置</h2>
-      <div class="space-y-4">
-        <div
-          v-for="event in notificationEvents"
-          :key="event.id"
-          class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 overflow-hidden"
-        >
-          <div class="p-6">
-            <div class="flex items-start justify-between">
-              <div class="flex items-start gap-4">
+    <!-- Error -->
+    <div v-else-if="error" class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4 mb-6">
+      <div class="flex items-center gap-2">
+        <UIcon name="lucide:alert-circle" class="w-5 h-5 text-red-600 dark:text-red-400" />
+        <span class="text-sm text-red-700 dark:text-red-400">{{ error }}</span>
+      </div>
+      <button class="btn-glass mt-3 text-sm" @click="fetchSettings">重试</button>
+    </div>
+
+    <template v-else>
+      <div class="mb-8">
+        <h2 class="text-lg font-semibold text-slate-900 dark:text-white mb-4">通知渠道配置</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div
+            v-for="channel in notificationChannels"
+            :key="channel.id"
+            class="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-100 dark:border-slate-700 transition-all duration-300 hover:shadow-lg"
+          >
+            <div class="flex items-center justify-between mb-3">
+              <div class="flex items-center gap-3">
                 <div
-                  class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-                  :class="event.iconBg"
+                  class="w-12 h-12 rounded-xl flex items-center justify-center"
+                  :class="channel.iconBg"
                 >
-                  <UIcon :name="event.icon" class="w-5 h-5" :class="event.iconColor" />
+                  <UIcon :name="channel.icon" class="w-6 h-6" :class="channel.iconColor" />
                 </div>
                 <div>
-                  <h3 class="font-medium text-slate-900 dark:text-white">{{ event.name }}</h3>
-                  <p class="text-sm text-slate-500 mt-1">{{ event.description }}</p>
+                  <p class="font-medium text-slate-900 dark:text-white">{{ channel.name }}</p>
+                  <p class="text-xs text-slate-500">{{ channel.description }}</p>
                 </div>
               </div>
-              <label class="relative inline-flex items-center cursor-pointer flex-shrink-0">
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-sm text-slate-500">启用状态</span>
+              <label class="relative inline-flex items-center cursor-pointer">
                 <input
                   type="checkbox"
-                  :checked="event.enabled"
+                  :checked="channel.enabled"
                   class="sr-only peer"
-                  @change="toggleEvent(event.id)"
+                  @change="toggleChannel(channel.id)"
                 />
                 <div class="w-10 h-5 bg-slate-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary/50 rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:after:border-slate-600 peer-checked:bg-primary"></div>
               </label>
             </div>
-
-            <div v-if="event.enabled" class="mt-5 pt-5 border-t border-slate-100 dark:border-slate-700">
-              <p class="text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">通知渠道</p>
-              <div class="flex flex-wrap gap-4">
-                <label
-                  v-for="channel in event.channels"
-                  :key="channel.id"
-                  class="flex items-center gap-2 cursor-pointer"
-                >
-                  <UCheckbox :modelValue="channel.selected" @change="toggleEventChannel(event.id, channel.id)" />
-                  <span class="text-sm text-slate-700 dark:text-slate-300">{{ channel.name }}</span>
-                </label>
+            <div v-if="channel.id === 'email'" class="mt-3 pt-3 border-t border-slate-100 dark:border-slate-700">
+              <div class="flex justify-between text-xs">
+                <span class="text-slate-500">SMTP 配置</span>
+                <span class="text-green-600 dark:text-green-400 font-medium">已配置</span>
               </div>
             </div>
+            <div v-if="channel.id === 'sms'" class="mt-3 pt-3 border-t border-slate-100 dark:border-slate-700">
+              <div class="flex justify-between text-xs">
+                <span class="text-slate-500">服务商</span>
+                <span class="text-slate-700 dark:text-slate-300">阿里云短信</span>
+              </div>
+            </div>
+            <div v-if="channel.id === 'wechat'" class="mt-3 pt-3 border-t border-slate-100 dark:border-slate-700">
+              <div class="flex justify-between text-xs">
+                <span class="text-slate-500">公众号</span>
+                <span class="text-slate-700 dark:text-slate-300">已绑定</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
 
-            <div v-if="event.enabled && event.subEvents.length > 0" class="mt-4 pt-4 border-t border-slate-100 dark:border-slate-700">
-              <p class="text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">具体事件</p>
-              <div class="space-y-2">
-                <div
-                  v-for="sub in event.subEvents"
-                  :key="sub.id"
-                  class="flex items-center justify-between py-1.5"
-                >
-                  <span class="text-sm text-slate-600 dark:text-slate-400">{{ sub.name }}</span>
-                  <label class="relative inline-flex items-center cursor-pointer">
-                    <input
-                      type="checkbox"
-                      :checked="sub.enabled"
-                      class="sr-only peer"
-                      @change="toggleSubEvent(event.id, sub.id)"
-                    />
-                    <div class="w-9 h-4.5 bg-slate-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary/50 rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-3.5 after:w-3.5 after:transition-all dark:after:border-slate-600 peer-checked:bg-primary"></div>
+      <div>
+        <h2 class="text-lg font-semibold text-slate-900 dark:text-white mb-4">事件通知设置</h2>
+        <div class="space-y-4">
+          <div
+            v-for="event in notificationEvents"
+            :key="event.id"
+            class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 overflow-hidden"
+          >
+            <div class="p-6">
+              <div class="flex items-start justify-between">
+                <div class="flex items-start gap-4">
+                  <div
+                    class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                    :class="event.iconBg"
+                  >
+                    <UIcon :name="event.icon" class="w-5 h-5" :class="event.iconColor" />
+                  </div>
+                  <div>
+                    <h3 class="font-medium text-slate-900 dark:text-white">{{ event.name }}</h3>
+                    <p class="text-sm text-slate-500 mt-1">{{ event.description }}</p>
+                  </div>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer flex-shrink-0">
+                  <input
+                    type="checkbox"
+                    :checked="event.enabled"
+                    class="sr-only peer"
+                    @change="toggleEvent(event.id)"
+                  />
+                  <div class="w-10 h-5 bg-slate-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary/50 rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:after:border-slate-600 peer-checked:bg-primary"></div>
+                </label>
+              </div>
+
+              <div v-if="event.enabled" class="mt-5 pt-5 border-t border-slate-100 dark:border-slate-700">
+                <p class="text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">通知渠道</p>
+                <div class="flex flex-wrap gap-4">
+                  <label
+                    v-for="channel in event.channels"
+                    :key="channel.id"
+                    class="flex items-center gap-2 cursor-pointer"
+                  >
+                    <UCheckbox :modelValue="channel.selected" @change="toggleEventChannel(event.id, channel.id)" />
+                    <span class="text-sm text-slate-700 dark:text-slate-300">{{ channel.name }}</span>
                   </label>
+                </div>
+              </div>
+
+              <div v-if="event.enabled && event.subEvents.length > 0" class="mt-4 pt-4 border-t border-slate-100 dark:border-slate-700">
+                <p class="text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">具体事件</p>
+                <div class="space-y-2">
+                  <div
+                    v-for="sub in event.subEvents"
+                    :key="sub.id"
+                    class="flex items-center justify-between py-1.5"
+                  >
+                    <span class="text-sm text-slate-600 dark:text-slate-400">{{ sub.name }}</span>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        :checked="sub.enabled"
+                        class="sr-only peer"
+                        @change="toggleSubEvent(event.id, sub.id)"
+                      />
+                      <div class="w-9 h-4.5 bg-slate-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary/50 rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-3.5 after:w-3.5 after:transition-all dark:after:border-slate-600 peer-checked:bg-primary"></div>
+                    </label>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
 
-    <div class="mt-8 flex items-center justify-end gap-3">
-      <button class="btn-glass" @click="resetSettings">
-        <UIcon name="lucide:rotate-ccw" class="w-4 h-4" />
-        恢复默认
-      </button>
-      <button class="btn-glass btn-glass--primary" @click="saveSettings">
-        <UIcon name="lucide:save" class="w-4 h-4" />
-        保存设置
-      </button>
-    </div>
+      <div class="mt-8 flex items-center justify-end gap-3">
+        <button class="btn-glass" @click="resetSettings">
+          <UIcon name="lucide:rotate-ccw" class="w-4 h-4" />
+          恢复默认
+        </button>
+        <button class="btn-glass btn-glass--primary" @click="saveSettings" :disabled="saving">
+          <UIcon v-if="saving" name="lucide:loader" class="w-4 h-4 animate-spin" />
+          <template v-else>
+            <UIcon name="lucide:save" class="w-4 h-4" />
+          </template>
+          {{ saving ? '保存中...' : '保存设置' }}
+        </button>
+      </div>
+    </template>
 
     <div
       v-if="saveMessage"
@@ -183,7 +206,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
+import { getNotificationSettings, updateNotificationSettings } from '~/composables/api/system'
 
 definePageMeta({
   layout: 'console',
@@ -223,6 +247,9 @@ interface NotificationEvent {
   subEvents: SubEvent[]
 }
 
+const loading = ref(true)
+const error = ref<string | null>(null)
+const saving = ref(false)
 const saveMessage = ref<{ type: 'success' | 'error'; text: string } | null>(null)
 
 const notificationChannels = ref<NotificationChannel[]>([
@@ -401,8 +428,40 @@ function resetSettings() {
   showSaveMessage('success', '已恢复默认设置')
 }
 
-function saveSettings() {
-  showSaveMessage('success', '通知设置已保存')
+async function saveSettings() {
+  if (saving.value) return
+  saving.value = true
+  error.value = null
+  try {
+    const channels: any = {}
+    notificationChannels.value.forEach(c => {
+      const key = c.id === 'inapp' ? 'inApp' : c.id
+      channels[key] = { enabled: c.enabled }
+    })
+
+    const events: any = {}
+    notificationEvents.value.forEach(e => {
+      const subEvents: Record<string, boolean> = {}
+      e.subEvents.forEach(s => { subEvents[s.id] = s.enabled })
+      events[e.id] = {
+        enabled: e.enabled,
+        channels: e.channels.filter(c => c.selected).map(c => c.id),
+        subEvents,
+      }
+    })
+
+    await updateNotificationSettings({
+      channels,
+      events,
+    } as any)
+    showSaveMessage('success', '通知设置已保存')
+  } catch (e: any) {
+    const msg = e.message || '保存通知设置失败'
+    error.value = msg
+    showSaveMessage('error', msg)
+  } finally {
+    saving.value = false
+  }
 }
 
 function showSaveMessage(type: 'success' | 'error', text: string) {
@@ -411,4 +470,50 @@ function showSaveMessage(type: 'success' | 'error', text: string) {
     saveMessage.value = null
   }, 3000)
 }
+
+async function fetchSettings() {
+  loading.value = true
+  error.value = null
+  try {
+    const data = await getNotificationSettings()
+    if (data) {
+      if (data.channels) {
+        const ch = data.channels as any
+        notificationChannels.value.forEach(c => {
+          const key = c.id === 'inapp' ? 'inApp' : c.id
+          if (ch[key] !== undefined) {
+            c.enabled = ch[key].enabled ?? c.enabled
+          }
+        })
+      }
+      if (data.events) {
+        const ev = data.events as any
+        notificationEvents.value.forEach(e => {
+          const eventData = ev[e.id]
+          if (eventData) {
+            e.enabled = eventData.enabled ?? e.enabled
+            if (eventData.channels) {
+              e.channels.forEach(c => {
+                c.selected = eventData.channels.includes(c.id)
+              })
+            }
+            if (eventData.subEvents) {
+              e.subEvents.forEach(s => {
+                s.enabled = eventData.subEvents[s.id] ?? s.enabled
+              })
+            }
+          }
+        })
+      }
+    }
+  } catch (e: any) {
+    error.value = e.message || '加载通知设置失败'
+  } finally {
+    loading.value = false
+  }
+}
+
+onMounted(() => {
+  fetchSettings()
+})
 </script>

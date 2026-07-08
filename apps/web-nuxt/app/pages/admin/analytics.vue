@@ -21,6 +21,24 @@
       </div>
     </div>
 
+    <!-- Loading Spinner -->
+    <div v-if="loading" class="flex items-center justify-center py-20">
+      <div class="flex flex-col items-center gap-3">
+        <div class="w-10 h-10 border-4 border-primary/30 border-t-primary rounded-full animate-spin"></div>
+        <p class="text-sm text-slate-500">正在加载分析数据...</p>
+      </div>
+    </div>
+
+    <!-- Error Banner -->
+    <div v-if="error" class="mb-6 p-4 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 flex items-center gap-3">
+      <UIcon name="lucide:alert-triangle" class="w-5 h-5 text-red-500 flex-shrink-0" />
+      <div class="flex-1">
+        <p class="text-sm font-medium text-red-700 dark:text-red-400">数据加载失败</p>
+        <p class="text-xs text-red-500 mt-0.5">{{ error }}，已使用本地缓存数据。</p>
+      </div>
+      <button class="btn-glass text-sm px-3 py-1.5" @click="fetchAnalyticsData">重试</button>
+    </div>
+
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
       <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-100 dark:border-slate-700 transition-all duration-300 hover:shadow-lg">
         <div class="flex items-center justify-between">
@@ -237,13 +255,17 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import { getDashboardData } from '~/composables/api/core'
 
 definePageMeta({
   layout: 'console',
 })
 
 type TimeRange = 'today' | '7days' | '30days' | '90days'
+
+const loading = ref(false)
+const error = ref<string | null>(null)
 
 const activeRange = ref<TimeRange>('7days')
 
@@ -258,97 +280,111 @@ const activeRangeLabel = computed(() => {
   return timeRanges.find(r => r.id === activeRange.value)?.label || ''
 })
 
+interface StatsEntry {
+  totalChats: number
+  totalChatsChange: number
+  activeUsers: number
+  activeUsersChange: number
+  tokenUsage: number
+  tokenUsageChange: number
+  avgResponseTime: number
+  avgResponseTimeChange: number
+}
+
+const defaultStatsMap: Record<TimeRange, StatsEntry> = {
+  today: {
+    totalChats: 3842,
+    totalChatsChange: 8.3,
+    activeUsers: 1256,
+    activeUsersChange: 5.2,
+    tokenUsage: 45800000,
+    tokenUsageChange: 12.5,
+    avgResponseTime: 1280,
+    avgResponseTimeChange: -3.5,
+  },
+  '7days': {
+    totalChats: 24560,
+    totalChatsChange: 12.5,
+    activeUsers: 5680,
+    activeUsersChange: 8.6,
+    tokenUsage: 325000000,
+    tokenUsageChange: 15.2,
+    avgResponseTime: 1320,
+    avgResponseTimeChange: -5.8,
+  },
+  '30days': {
+    totalChats: 102480,
+    totalChatsChange: 18.6,
+    activeUsers: 12580,
+    activeUsersChange: 10.3,
+    tokenUsage: 1348000000,
+    tokenUsageChange: 22.4,
+    avgResponseTime: 1356,
+    avgResponseTimeChange: -8.2,
+  },
+  '90days': {
+    totalChats: 285640,
+    totalChatsChange: 25.8,
+    activeUsers: 18920,
+    activeUsersChange: 15.6,
+    tokenUsage: 3856000000,
+    tokenUsageChange: 30.2,
+    avgResponseTime: 1402,
+    avgResponseTimeChange: -12.5,
+  },
+}
+
+const apiStats = ref<StatsEntry | null>(null)
+
 const stats = computed(() => {
-  const dataMap: Record<TimeRange, {
-    totalChats: number
-    totalChatsChange: number
-    activeUsers: number
-    activeUsersChange: number
-    tokenUsage: number
-    tokenUsageChange: number
-    avgResponseTime: number
-    avgResponseTimeChange: number
-  }> = {
-    today: {
-      totalChats: 3842,
-      totalChatsChange: 8.3,
-      activeUsers: 1256,
-      activeUsersChange: 5.2,
-      tokenUsage: 45800000,
-      tokenUsageChange: 12.5,
-      avgResponseTime: 1280,
-      avgResponseTimeChange: -3.5,
-    },
-    '7days': {
-      totalChats: 24560,
-      totalChatsChange: 12.5,
-      activeUsers: 5680,
-      activeUsersChange: 8.6,
-      tokenUsage: 325000000,
-      tokenUsageChange: 15.2,
-      avgResponseTime: 1320,
-      avgResponseTimeChange: -5.8,
-    },
-    '30days': {
-      totalChats: 102480,
-      totalChatsChange: 18.6,
-      activeUsers: 12580,
-      activeUsersChange: 10.3,
-      tokenUsage: 1348000000,
-      tokenUsageChange: 22.4,
-      avgResponseTime: 1356,
-      avgResponseTimeChange: -8.2,
-    },
-    '90days': {
-      totalChats: 285640,
-      totalChatsChange: 25.8,
-      activeUsers: 18920,
-      activeUsersChange: 15.6,
-      tokenUsage: 3856000000,
-      tokenUsageChange: 30.2,
-      avgResponseTime: 1402,
-      avgResponseTimeChange: -12.5,
-    },
+  if (apiStats.value) {
+    return apiStats.value
   }
-  return dataMap[activeRange.value]
+  return defaultStatsMap[activeRange.value]
 })
 
+const defaultChatTrendMap: Record<TimeRange, Array<{ label: string, value: number }>> = {
+  today: [
+    { label: '00:00', value: 120 },
+    { label: '04:00', value: 80 },
+    { label: '08:00', value: 450 },
+    { label: '10:00', value: 680 },
+    { label: '12:00', value: 820 },
+    { label: '14:00', value: 760 },
+    { label: '16:00', value: 590 },
+    { label: '18:00', value: 480 },
+    { label: '20:00', value: 720 },
+    { label: '22:00', value: 380 },
+  ],
+  '7days': [
+    { label: '周一', value: 3200 },
+    { label: '周二', value: 3800 },
+    { label: '周三', value: 4200 },
+    { label: '周四', value: 3900 },
+    { label: '周五', value: 4500 },
+    { label: '周六', value: 2800 },
+    { label: '周日', value: 2160 },
+  ],
+  '30days': [
+    { label: '第1周', value: 18600 },
+    { label: '第2周', value: 22400 },
+    { label: '第3周', value: 25800 },
+    { label: '第4周', value: 35680 },
+  ],
+  '90days': [
+    { label: '第1月', value: 68400 },
+    { label: '第2月', value: 85200 },
+    { label: '第3月', value: 132040 },
+  ],
+}
+
+const apiChatTrend = ref<Array<{ label: string, value: number }> | null>(null)
+
 const chatTrendData = computed(() => {
-  const dataMap: Record<TimeRange, Array<{ label: string, value: number }>> = {
-    today: [
-      { label: '00:00', value: 120 },
-      { label: '04:00', value: 80 },
-      { label: '08:00', value: 450 },
-      { label: '10:00', value: 680 },
-      { label: '12:00', value: 820 },
-      { label: '14:00', value: 760 },
-      { label: '16:00', value: 590 },
-      { label: '18:00', value: 480 },
-      { label: '20:00', value: 720 },
-      { label: '22:00', value: 380 },
-    ],
-    '7days': [
-      { label: '周一', value: 3200 },
-      { label: '周二', value: 3800 },
-      { label: '周三', value: 4200 },
-      { label: '周四', value: 3900 },
-      { label: '周五', value: 4500 },
-      { label: '周六', value: 2800 },
-      { label: '周日', value: 2160 },
-    ],
-    '30days': [
-      { label: '第1周', value: 18600 },
-      { label: '第2周', value: 22400 },
-      { label: '第3周', value: 25800 },
-      { label: '第4周', value: 35680 },
-    ],
-    '90days': [
-      { label: '第1月', value: 68400 },
-      { label: '第2月', value: 85200 },
-      { label: '第3月', value: 132040 },
-    ],
+  if (apiChatTrend.value) {
+    return apiChatTrend.value
   }
-  return dataMap[activeRange.value]
+  return defaultChatTrendMap[activeRange.value]
 })
 
 const userActivityData = ref([
@@ -414,6 +450,73 @@ const topAgents = ref([
     trend: 5.2,
   },
 ])
+
+function getDaysParam(range: TimeRange): number {
+  const map: Record<TimeRange, number> = {
+    today: 1,
+    '7days': 7,
+    '30days': 30,
+    '90days': 90,
+  }
+  return map[range]
+}
+
+async function fetchAnalyticsData() {
+  loading.value = true
+  error.value = null
+  try {
+    const days = getDaysParam(activeRange.value)
+    const data = await getDashboardData({
+      userDays: days,
+      tokenDays: days,
+      revenueDays: days,
+    })
+
+    // 尝试从 API 响应中提取数据
+    if (data) {
+      if (data.stats) {
+        apiStats.value = {
+          totalChats: data.stats.totalChats ?? data.totalChats ?? defaultStatsMap[activeRange.value].totalChats,
+          totalChatsChange: data.stats.totalChatsChange ?? data.totalChatsChange ?? defaultStatsMap[activeRange.value].totalChatsChange,
+          activeUsers: data.stats.activeUsers ?? data.activeUsers ?? defaultStatsMap[activeRange.value].activeUsers,
+          activeUsersChange: data.stats.activeUsersChange ?? data.activeUsersChange ?? defaultStatsMap[activeRange.value].activeUsersChange,
+          tokenUsage: data.stats.tokenUsage ?? data.tokenUsage ?? defaultStatsMap[activeRange.value].tokenUsage,
+          tokenUsageChange: data.stats.tokenUsageChange ?? data.tokenUsageChange ?? defaultStatsMap[activeRange.value].tokenUsageChange,
+          avgResponseTime: data.stats.avgResponseTime ?? data.avgResponseTime ?? defaultStatsMap[activeRange.value].avgResponseTime,
+          avgResponseTimeChange: data.stats.avgResponseTimeChange ?? data.avgResponseTimeChange ?? defaultStatsMap[activeRange.value].avgResponseTimeChange,
+        }
+      }
+
+      if (data.chatTrend && Array.isArray(data.chatTrend)) {
+        apiChatTrend.value = data.chatTrend
+      }
+
+      if (data.modelUsage && Array.isArray(data.modelUsage)) {
+        modelUsage.value = data.modelUsage
+      }
+
+      if (data.topAgents && Array.isArray(data.topAgents)) {
+        topAgents.value = data.topAgents
+      }
+
+      if (data.userActivity && Array.isArray(data.userActivity)) {
+        userActivityData.value = data.userActivity
+      }
+    }
+  } catch (err: any) {
+    const message = err?.message || err?.statusMessage || '网络请求失败'
+    error.value = message
+    // 降级使用本地 mock 数据
+    apiStats.value = null
+    apiChatTrend.value = null
+  } finally {
+    loading.value = false
+  }
+}
+
+onMounted(() => {
+  fetchAnalyticsData()
+})
 
 function formatNumber(num: number): string {
   if (num >= 100000000) {

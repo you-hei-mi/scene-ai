@@ -13,6 +13,17 @@
       </div>
     </div>
 
+    <div v-if="error" class="mb-6 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/50 rounded-xl p-4 flex items-center gap-3">
+      <UIcon name="lucide:alert-triangle" class="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0" />
+      <div class="flex-1">
+        <p class="text-sm font-medium text-amber-800 dark:text-amber-300">{{ error }}</p>
+        <p class="text-xs text-amber-600 dark:text-amber-400 mt-1">当前显示的是本地缓存数据，部分功能可能受限</p>
+      </div>
+      <button class="text-xs text-amber-700 dark:text-amber-300 underline hover:no-underline flex-shrink-0" @click="fetchAppList">
+        重试
+      </button>
+    </div>
+
     <div class="flex flex-wrap gap-3 mb-8">
       <button
         v-for="cat in categories"
@@ -44,7 +55,31 @@
       </div>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div v-if="loading" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div v-for="i in 6" :key="i" class="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-100 dark:border-slate-700 animate-pulse">
+        <div class="flex items-start gap-4 mb-4">
+          <div class="w-14 h-14 rounded-xl bg-slate-100 dark:bg-slate-700"></div>
+          <div class="flex-1 space-y-2">
+            <div class="h-5 w-2/3 rounded-lg bg-slate-100 dark:bg-slate-700"></div>
+            <div class="h-3 w-1/3 rounded bg-slate-100 dark:bg-slate-700"></div>
+          </div>
+        </div>
+        <div class="space-y-2 mb-4">
+          <div class="h-4 w-full rounded bg-slate-100 dark:bg-slate-700"></div>
+          <div class="h-4 w-5/6 rounded bg-slate-100 dark:bg-slate-700"></div>
+        </div>
+        <div class="flex gap-2 mb-4">
+          <div class="h-6 w-16 rounded-full bg-slate-100 dark:bg-slate-700"></div>
+          <div class="h-6 w-16 rounded-full bg-slate-100 dark:bg-slate-700"></div>
+        </div>
+        <div class="flex justify-between pt-4 border-t border-slate-100 dark:border-slate-700">
+          <div class="h-4 w-12 rounded bg-slate-100 dark:bg-slate-700"></div>
+          <div class="h-8 w-20 rounded-xl bg-slate-100 dark:bg-slate-700"></div>
+        </div>
+      </div>
+    </div>
+
+    <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       <div
         v-for="app in filteredApps"
         :key="app.id"
@@ -119,7 +154,7 @@
       </div>
     </div>
 
-    <div v-if="filteredApps.length === 0" class="text-center py-20">
+    <div v-if="filteredApps.length === 0 && !loading" class="text-center py-20">
       <div class="inline-flex items-center justify-center w-20 h-20 rounded-full bg-slate-100 dark:bg-slate-800 mb-6">
         <UIcon name="lucide:package-search" class="w-10 h-10 text-slate-400" />
       </div>
@@ -217,7 +252,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import { getExtensionList } from '~/composables/api/core'
 
 definePageMeta({
   layout: 'console',
@@ -287,6 +323,16 @@ const selectedApp = ref<AppItem | null>(null)
 const installedAppIds = ref<string[]>(['1', '3'])
 
 /**
+ * 加载状态
+ */
+const loading = ref(false)
+
+/**
+ * 错误信息
+ */
+const error = ref<string | null>(null)
+
+/**
  * 标签页选项
  */
 const tabOptions = [
@@ -318,9 +364,9 @@ const sortOptions = [
 ]
 
 /**
- * 模拟应用数据
+ * 模拟应用数据（API 失败时的回退数据）
  */
-const apps = ref<AppItem[]>([
+const mockApps: AppItem[] = [
   {
     id: '1',
     name: 'Notion 助手',
@@ -486,7 +532,12 @@ const apps = ref<AppItem[]>([
     tags: ['思维导图', '创意', '工具'],
     features: ['智能生成', '多种模板', '实时协作', '多格式导出'],
   },
-])
+]
+
+/**
+ * 应用列表（初始使用 mock 数据，API 成功后替换）
+ */
+const apps = ref<AppItem[]>([...mockApps])
 
 /**
  * 筛选后的应用列表
@@ -617,4 +668,68 @@ function viewAppDetail(app: AppItem) {
   selectedApp.value = app
   showDetailDialog.value = true
 }
+
+/**
+ * 从 API 获取应用列表，失败时回退到 mock 数据
+ */
+async function fetchAppList() {
+  error.value = null
+  loading.value = true
+  try {
+    const apiItems = await getExtensionList()
+    if (apiItems && apiItems.length > 0) {
+      const mappedApps: AppItem[] = apiItems.map((item: any, index: number) => ({
+        id: item.id || item.identifier || String(index + 1),
+        name: item.name || item.identifier || '未知应用',
+        description: item.description || '',
+        fullDescription: item.fullDescription || item.description || '',
+        icon: item.icon || 'lucide:package',
+        category: mapApiCategory(item.category),
+        developer: item.developer || item.author || '未知',
+        version: item.version || '1.0.0',
+        size: item.size || '未知',
+        price: item.price ?? 0,
+        rating: item.rating ?? 4.0,
+        reviewCount: item.reviewCount ?? 0,
+        installCount: item.installCount ?? item.downloadCount ?? 0,
+        updatedAt: item.updatedAt || item.updateTime || '',
+        tags: item.tags ?? [],
+        features: item.features ?? [],
+        isNew: item.isNew ?? false,
+      }))
+      apps.value = mappedApps
+    }
+  } catch (e: any) {
+    error.value = `加载应用列表失败: ${e.message || '网络异常'}` + '，已切换到本地缓存数据'
+    apps.value = [...mockApps]
+  } finally {
+    loading.value = false
+  }
+}
+
+/**
+ * 将 API 返回的分类字符串映射到本地 AppCategory 类型
+ */
+function mapApiCategory(category?: string): AppCategory {
+  if (!category) return 'utilities'
+  const lower = category.toLowerCase()
+  const map: Record<string, AppCategory> = {
+    productivity: 'productivity',
+    development: 'development',
+    dev: 'development',
+    design: 'design',
+    communication: 'communication',
+    chat: 'communication',
+    data: 'data',
+    analytics: 'data',
+    utilities: 'utilities',
+    utility: 'utilities',
+    tools: 'utilities',
+  }
+  return map[lower] || 'utilities'
+}
+
+onMounted(() => {
+  fetchAppList()
+})
 </script>

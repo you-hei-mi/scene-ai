@@ -10,7 +10,22 @@
 
     <AdminSystemTabs />
 
-    <div class="space-y-6">
+    <!-- Loading -->
+    <div v-if="loading" class="flex items-center justify-center py-20">
+      <UIcon name="lucide:loader" class="w-8 h-8 animate-spin text-primary" />
+      <span class="ml-3 text-slate-500">加载中...</span>
+    </div>
+
+    <!-- Error -->
+    <div v-else-if="error" class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4 mb-6">
+      <div class="flex items-center gap-2">
+        <UIcon name="lucide:alert-circle" class="w-5 h-5 text-red-600 dark:text-red-400" />
+        <span class="text-sm text-red-700 dark:text-red-400">{{ error }}</span>
+      </div>
+      <button class="btn-glass mt-3 text-sm" @click="fetchAgreements">重试</button>
+    </div>
+
+    <div v-else class="space-y-6">
       <div
         v-for="agreement in agreements"
         :key="agreement.id"
@@ -76,14 +91,18 @@
       </div>
       <template #footer>
         <button class="btn-glass" @click="showEditDialog = false">取消</button>
-        <button class="btn-glass btn-glass--primary" @click="publishAgreement">发布</button>
+        <button class="btn-glass btn-glass--primary" @click="publishAgreement" :disabled="saving">
+          <UIcon v-if="saving" name="lucide:loader" class="w-4 h-4 animate-spin" />
+          {{ saving ? '保存中...' : '发布' }}
+        </button>
       </template>
     </UDialog>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import { getAgreements, updateAgreement } from '~/composables/api/system'
 
 definePageMeta({
   layout: 'console',
@@ -97,33 +116,14 @@ interface Agreement {
   updatedAt: string
 }
 
+const loading = ref(true)
+const error = ref<string | null>(null)
+const saving = ref(false)
 const showEditDialog = ref(false)
 const showPreview = ref(false)
 const editingAgreement = ref<Agreement | null>(null)
 
-const agreements = ref<Agreement[]>([
-  {
-    id: '1',
-    name: '用户协议',
-    enabled: true,
-    content: '# 用户协议\n\n欢迎使用 BuildingAI 平台。\n\n## 一、总则\n\n1. 本协议是您与 BuildingAI 之间关于使用本平台服务所订立的协议。\n2. 您在使用本平台服务时，即表示您已充分阅读、理解并同意接受本协议的全部内容。\n\n## 二、账号管理\n\n1. 您应保证注册信息的真实性和完整性。\n2. 您应妥善保管账号和密码，不得将账号提供给第三方使用。\n\n## 三、使用规范\n\n1. 您不得利用本平台从事任何违法违规活动。\n2. 您不得利用 AI 生成违法和不良信息。\n3. 您不得对平台进行反向工程、篡改或攻击。\n\n## 四、免责声明\n\n本平台提供的 AI 服务基于机器学习技术，生成内容可能存在偏差，仅供参考。',
-    updatedAt: '2026-07-01 14:30',
-  },
-  {
-    id: '2',
-    name: '隐私政策',
-    enabled: true,
-    content: '# 隐私政策\n\n## 一、信息收集\n\n1. 我们在您注册时收集邮箱地址和用户名。\n2. 我们收集您的使用数据以改进服务质量。\n3. 我们不会收集您的敏感个人信息。\n\n## 二、信息使用\n\n1. 收集的信息仅用于提供和改进服务。\n2. 我们不会将您的信息出售给第三方。\n3. 我们使用加密技术保护您的数据。\n\n## 三、Cookie 使用\n\n我们使用必要的 Cookie 来维持会话和记住您的偏好设置。\n\n## 四、数据安全\n\n我们采用行业标准的安全措施保护您的个人信息。',
-    updatedAt: '2026-06-28 09:15',
-  },
-  {
-    id: '3',
-    name: '服务条款',
-    enabled: false,
-    content: '# 服务条款\n\n## 一、服务说明\n\nBuildingAI 是一个 AI 对话服务和智能体平台，提供以下服务：\n\n- 多模型 AI 对话\n- 智能体创建与编排\n- 知识库管理\n- MCP 工具集成\n\n## 二、服务费用\n\n1. 基础服务免费提供。\n2. 高级功能按订阅计划收费。\n3. 价格变动将提前 30 天通知。\n\n## 三、服务限制\n\n1. 免费用户每日 API 调用次数有限。\n2. 我们保留在必要时暂停服务的权利。\n\n## 四、知识产权\n\n用户对其生成的内容保留所有权，平台保留对平台本身的知识产权。',
-    updatedAt: '2026-06-15 16:45',
-  },
-])
+const agreements = ref<Agreement[]>([])
 
 const editForm = ref({
   name: '',
@@ -141,6 +141,25 @@ const previewContent = computed(() => {
     .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
 })
 
+async function fetchAgreements() {
+  loading.value = true
+  error.value = null
+  try {
+    const data = await getAgreements()
+    agreements.value = data.map((a: any) => ({
+      id: a.id,
+      name: a.name,
+      enabled: a.isEnabled ?? a.enabled ?? false,
+      content: a.content,
+      updatedAt: a.updatedAt || '',
+    }))
+  } catch (e: any) {
+    error.value = e.message || '加载协议数据失败'
+  } finally {
+    loading.value = false
+  }
+}
+
 function openEditDialog(agreement: Agreement) {
   editingAgreement.value = agreement
   editForm.value = {
@@ -152,8 +171,15 @@ function openEditDialog(agreement: Agreement) {
   showEditDialog.value = true
 }
 
-function publishAgreement() {
-  if (editingAgreement.value) {
+async function publishAgreement() {
+  if (!editingAgreement.value || saving.value) return
+  saving.value = true
+  try {
+    await updateAgreement(editingAgreement.value.id, {
+      name: editForm.value.name,
+      isEnabled: editForm.value.enabled,
+      content: editForm.value.content,
+    } as any)
     const item = agreements.value.find(a => a.id === editingAgreement.value!.id)
     if (item) {
       item.name = editForm.value.name
@@ -161,7 +187,15 @@ function publishAgreement() {
       item.content = editForm.value.content
       item.updatedAt = new Date().toLocaleString('zh-CN', { hour12: false })
     }
+    showEditDialog.value = false
+  } catch (e: any) {
+    error.value = e.message || '保存协议失败'
+  } finally {
+    saving.value = false
   }
-  showEditDialog.value = false
 }
+
+onMounted(() => {
+  fetchAgreements()
+})
 </script>

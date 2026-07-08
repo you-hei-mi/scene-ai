@@ -29,6 +29,23 @@
       </button>
     </div>
 
+    <!-- Loading -->
+    <div v-if="loading" class="flex items-center justify-center py-20">
+      <UIcon name="lucide:loader-2" class="w-8 h-8 animate-spin text-primary" />
+      <span class="ml-3 text-slate-500">加载中...</span>
+    </div>
+
+    <!-- Error -->
+    <div v-else-if="error" class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-2xl p-4 mb-6 flex items-start gap-3">
+      <UIcon name="lucide:alert-circle" class="w-5 h-5 text-red-500 mt-0.5 flex-shrink-0" />
+      <div class="flex-1">
+        <p class="text-sm font-medium text-red-700 dark:text-red-400">加载失败</p>
+        <p class="text-xs text-red-600 dark:text-red-300 mt-1">{{ error }}</p>
+      </div>
+      <button class="btn-glass text-sm" @click="fetchApps">重试</button>
+    </div>
+
+    <template v-else>
     <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 p-4 mb-6">
       <div class="flex flex-wrap items-center gap-4">
         <div class="relative w-64">
@@ -177,14 +194,17 @@
       </div>
       <template #footer>
         <button class="btn-glass" @click="showEditDialog = false">取消</button>
-        <button class="btn-glass btn-glass--primary" @click="saveEditApp">保存</button>
+        <button class="btn-glass btn-glass--primary" :disabled="saving" @click="saveEditApp">{{ saving ? '保存中...' : '保存' }}</button>
       </template>
     </UDialog>
+    </template>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import { getDecorateApps, updateDecorateApp, reorderDecorateApps } from '~/composables/api/system'
+import type { DecorateApp as ApiDecorateApp } from '~/composables/api/system'
 
 definePageMeta({
   layout: 'console',
@@ -213,6 +233,9 @@ interface AvailableApp {
 
 type AppCategory = 'chat' | 'agent' | 'knowledge' | 'tool' | 'other'
 
+const loading = ref(true)
+const error = ref('')
+const saving = ref(false)
 const activeTab = ref('apps')
 const searchKeyword = ref('')
 const categoryFilter = ref('all')
@@ -254,74 +277,21 @@ const editForm = ref({
   featured: false,
 })
 
-const apps = ref<DecorateApp[]>([
-  {
-    id: '1',
-    name: 'AI 对话助手',
-    description: '通用智能对话应用，支持多模型切换',
-    icon: 'lucide:message-square',
-    iconColor: 'text-blue-500 dark:text-blue-400',
-    category: 'chat',
-    displayed: true,
-    featured: true,
-    sortOrder: 1,
-  },
-  {
-    id: '2',
-    name: '代码助手',
-    description: 'AI 编程辅助，代码生成与审查',
-    icon: 'lucide:code-2',
-    iconColor: 'text-green-500 dark:text-green-400',
-    category: 'tool',
-    displayed: true,
-    featured: true,
-    sortOrder: 2,
-  },
-  {
-    id: '3',
-    name: '知识库管理',
-    description: '文档上传、检索与管理',
-    icon: 'lucide:database',
-    iconColor: 'text-orange-500 dark:text-orange-400',
-    category: 'knowledge',
-    displayed: true,
+const apps = ref<DecorateApp[]>([])
+
+function mapApiToLocal(api: ApiDecorateApp): DecorateApp {
+  return {
+    id: api.id,
+    name: api.name,
+    description: api.description,
+    icon: api.icon,
+    iconColor: api.thumbnailColor || 'text-blue-500 dark:text-blue-400',
+    category: (api.category as AppCategory) || 'other',
+    displayed: api.isVisible,
     featured: false,
-    sortOrder: 3,
-  },
-  {
-    id: '4',
-    name: '智能体中心',
-    description: '创建和管理 AI Agent',
-    icon: 'lucide:bot',
-    iconColor: 'text-purple-500 dark:text-purple-400',
-    category: 'agent',
-    displayed: true,
-    featured: true,
-    sortOrder: 4,
-  },
-  {
-    id: '5',
-    name: '数据分析',
-    description: '数据可视化与智能分析',
-    icon: 'lucide:bar-chart-3',
-    iconColor: 'text-pink-500 dark:text-pink-400',
-    category: 'tool',
-    displayed: true,
-    featured: false,
-    sortOrder: 5,
-  },
-  {
-    id: '6',
-    name: '图片生成',
-    description: 'AI 图像生成与编辑工具',
-    icon: 'lucide:image',
-    iconColor: 'text-cyan-500 dark:text-cyan-400',
-    category: 'tool',
-    displayed: false,
-    featured: false,
-    sortOrder: 6,
-  },
-])
+    sortOrder: api.sortOrder,
+  }
+}
 
 const availableApps = computed(() => {
   const existingIds = new Set(apps.value.map(a => a.id))
@@ -357,6 +327,25 @@ const filteredApps = computed(() => {
   return result
 })
 
+async function fetchApps() {
+  loading.value = true
+  error.value = ''
+  try {
+    const data = await getDecorateApps()
+    if (data) {
+      apps.value = data.map(mapApiToLocal)
+    }
+  } catch (e: any) {
+    error.value = e.message || '加载应用数据失败'
+  } finally {
+    loading.value = false
+  }
+}
+
+onMounted(() => {
+  fetchApps()
+})
+
 function getCategoryText(category: AppCategory): string {
   const map: Record<AppCategory, string> = {
     chat: '对话',
@@ -379,8 +368,14 @@ function getCategoryBadgeClass(category: AppCategory): string {
   return map[category]
 }
 
-function toggleDisplay(app: DecorateApp) {
+async function toggleDisplay(app: DecorateApp) {
   app.displayed = !app.displayed
+  try {
+    await updateDecorateApp(app.id, { isVisible: app.displayed })
+  } catch (e: any) {
+    app.displayed = !app.displayed
+    error.value = e.message || '更新失败'
+  }
 }
 
 function editApp(app: DecorateApp) {
@@ -395,16 +390,28 @@ function editApp(app: DecorateApp) {
   showEditDialog.value = true
 }
 
-function saveEditApp() {
-  if (editingApp.value) {
+async function saveEditApp() {
+  if (!editingApp.value) return
+  saving.value = true
+  try {
+    await updateDecorateApp(editingApp.value.id, {
+      name: editForm.value.name,
+      description: editForm.value.description,
+      category: editForm.value.category,
+      isVisible: editForm.value.displayed,
+    })
     editingApp.value.name = editForm.value.name
     editingApp.value.description = editForm.value.description
     editingApp.value.category = editForm.value.category
     editingApp.value.displayed = editForm.value.displayed
     editingApp.value.featured = editForm.value.featured
+  } catch (e: any) {
+    error.value = e.message || '保存失败'
+  } finally {
+    saving.value = false
+    showEditDialog.value = false
+    editingApp.value = null
   }
-  showEditDialog.value = false
-  editingApp.value = null
 }
 
 function isAppSelected(id: string): boolean {
@@ -468,9 +475,14 @@ function onDragOver(event: DragEvent, app: DecorateApp) {
   }
 }
 
-function onDrop(event: DragEvent, _app: DecorateApp) {
+async function onDrop(event: DragEvent, _app: DecorateApp) {
   if (event.dataTransfer) {
     event.dataTransfer.dropEffect = 'move'
+  }
+  try {
+    await reorderDecorateApps(apps.value.map(a => a.id))
+  } catch (e: any) {
+    error.value = e.message || '排序保存失败'
   }
 }
 

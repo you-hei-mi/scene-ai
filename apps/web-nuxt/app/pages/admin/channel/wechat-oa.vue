@@ -1,5 +1,22 @@
 <template>
   <div class="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50/30 dark:from-slate-900 dark:via-slate-800 dark:to-indigo-950/30">
+    <!-- Loading -->
+    <div v-if="loading" class="flex items-center justify-center py-20">
+      <UIcon name="lucide:loader-2" class="w-8 h-8 animate-spin text-primary" />
+      <span class="ml-3 text-slate-500">加载中...</span>
+    </div>
+
+    <!-- Error -->
+    <div v-else-if="error" class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-2xl p-4 mb-6 flex items-start gap-3">
+      <UIcon name="lucide:alert-circle" class="w-5 h-5 text-red-500 mt-0.5 flex-shrink-0" />
+      <div class="flex-1">
+        <p class="text-sm font-medium text-red-700 dark:text-red-400">加载失败</p>
+        <p class="text-xs text-red-600 dark:text-red-300 mt-1">{{ error }}</p>
+      </div>
+      <button class="btn-glass text-sm" @click="fetchData">重试</button>
+    </div>
+
+    <template v-else>
     <div class="flex items-center justify-between mb-6">
       <div>
         <div class="flex items-center gap-4 mb-2">
@@ -9,13 +26,13 @@
         <p class="text-slate-600 dark:text-slate-400 ml-5">微信公众号</p>
       </div>
       <div class="flex items-center gap-2">
-        <button class="btn-glass" @click="testConnection">
+        <button class="btn-glass" :disabled="isTesting" @click="testConnection">
           <UIcon name="lucide:plug" class="w-4 h-4" />
-          测试连接
+          {{ isTesting ? '测试中...' : '测试连接' }}
         </button>
-        <button class="btn-glass btn-glass--primary" @click="saveConfig">
+        <button class="btn-glass btn-glass--primary" :disabled="saving" @click="saveConfig">
           <UIcon name="lucide:save" class="w-4 h-4" />
-          保存配置
+          {{ saving ? '保存中...' : '保存配置' }}
         </button>
       </div>
     </div>
@@ -216,9 +233,9 @@
         <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-100 dark:border-slate-700">
           <h2 class="text-lg font-semibold text-slate-900 dark:text-white mb-4">快速操作</h2>
           <div class="space-y-2">
-            <button class="btn-glass w-full justify-start" @click="syncMenus">
+            <button class="btn-glass w-full justify-start" :disabled="savingMenus" @click="syncMenus">
               <UIcon name="lucide:refresh-cw" class="w-4 h-4" />
-              同步菜单到微信
+              {{ savingMenus ? '同步中...' : '同步菜单到微信' }}
             </button>
             <button class="btn-glass w-full justify-start" @click="syncMaterials">
               <UIcon name="lucide:image" class="w-4 h-4" />
@@ -263,11 +280,22 @@
         <button class="btn-glass btn-glass--primary" @click="saveMenu">确认</button>
       </template>
     </UDialog>
+    </template>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, reactive } from 'vue'
+import { ref, computed, reactive, onMounted } from 'vue'
+import {
+  getWeChatOAConfig,
+  updateWeChatOAConfig,
+  testWeChatOAConnection,
+  getWeChatMenus,
+  updateWeChatMenus,
+  getAutoReplyConfig,
+  updateAutoReplyConfig,
+} from '~/composables/api/system'
+import type { WeChatMenu, AutoReplyConfig as ApiAutoReplyConfig } from '~/composables/api/system'
 
 definePageMeta({
   layout: 'console',
@@ -306,15 +334,21 @@ interface AutoReplyConfig {
 
 type ConnectionStatus = 'connected' | 'disconnected' | 'error'
 
+const loading = ref(true)
+const error = ref('')
+const saving = ref(false)
+const isTesting = ref(false)
+const savingMenus = ref(false)
+
 const config = reactive<WechatConfig>({
-  name: 'BuildingAI 智能助手',
-  appId: 'wx1234567890abcdef',
+  name: '',
+  appId: '',
   appSecret: '',
-  token: 'buildingai_token_2024',
+  token: '',
   encodingAesKey: '',
 })
 
-const connectionStatus = ref<ConnectionStatus>('connected')
+const connectionStatus = ref<ConnectionStatus>('disconnected')
 const showMenuDialog = ref(false)
 const editingMenu = ref<MenuItem | null>(null)
 const editingSubMenu = ref<MenuItem | null>(null)
@@ -364,70 +398,136 @@ const menuForm = reactive({
 })
 
 const autoReply = reactive<AutoReplyConfig>({
-  subscribe: '欢迎关注 BuildingAI！我是您的智能助手，可以为您提供 AI 对话、知识查询、智能分析等服务。回复"帮助"了解更多功能。',
-  keywords: [
-    { keyword: '帮助,help', reply: '您好！我可以帮您：\n1. 查询 AI 模型信息\n2. 查看知识库内容\n3. 获取最新活动资讯\n4. 联系客服\n\n直接回复您的问题即可。' },
-    { keyword: '客服,人工', reply: '已为您转接人工客服，请稍候。工作时间：周一至周五 9:00-18:00，我们会尽快回复您。' },
-    { keyword: '活动,优惠', reply: '当前热门活动：\n🎉 新用户注册即送 100 次对话额度\n🎁 邀请好友各得 50 次对话额度\n🔥 专业版限时 8 折优惠\n\n详情请访问：https://buildingai.cc/pricing' },
-  ],
-  default: '已收到您的消息，我们会尽快处理。如需帮助，请回复"帮助"查看可用功能。',
+  subscribe: '',
+  keywords: [],
+  default: '',
 })
 
 const stats = reactive({
-  subscribers: 12850,
-  todayNew: 36,
-  todayMessages: 2840,
-  lastSync: '2026-07-07 10:30:25',
+  subscribers: 0,
+  todayNew: 0,
+  todayMessages: 0,
+  lastSync: '--',
 })
 
-const menuItems = ref<MenuItem[]>([
-  {
-    id: '1',
-    name: 'AI 对话',
-    type: 'view',
-    typeLabel: '跳转网页',
-    icon: 'lucide:message-circle',
-    url: 'https://buildingai.cc/chat',
-    children: [
-      { id: '1-1', name: '开始对话', type: 'view', typeLabel: '跳转网页', icon: 'lucide:play', url: 'https://buildingai.cc/chat/new' },
-      { id: '1-2', name: '对话历史', type: 'view', typeLabel: '跳转网页', icon: 'lucide:history', url: 'https://buildingai.cc/chat/history' },
-      { id: '1-3', name: '模型选择', type: 'click', typeLabel: '点击事件', icon: 'lucide:cpu', key: 'model_select' },
-    ],
-  },
-  {
-    id: '2',
-    name: '智能服务',
-    type: 'parent',
-    typeLabel: '父菜单',
-    icon: 'lucide:bot',
-    children: [
-      { id: '2-1', name: '知识库', type: 'view', typeLabel: '跳转网页', icon: 'lucide:book-open', url: 'https://buildingai.cc/datasets' },
-      { id: '2-2', name: '数据分析', type: 'click', typeLabel: '点击事件', icon: 'lucide:bar-chart-3', key: 'data_analysis' },
-      { id: '2-3', name: '翻译助手', type: 'click', typeLabel: '点击事件', icon: 'lucide:languages', key: 'translator' },
-    ],
-  },
-  {
-    id: '3',
-    name: '个人中心',
-    type: 'view',
-    typeLabel: '跳转网页',
-    icon: 'lucide:user',
-    url: 'https://buildingai.cc/settings',
-    children: [
-      { id: '3-1', name: '我的账户', type: 'view', typeLabel: '跳转网页', icon: 'lucide:credit-card', url: 'https://buildingai.cc/settings/account' },
-      { id: '3-2', name: '联系客服', type: 'click', typeLabel: '点击事件', icon: 'lucide:headphones', key: 'contact_service' },
-    ],
-  },
-])
+const menuItems = ref<MenuItem[]>([])
 
-function saveConfig() {
-  connectionStatus.value = 'connected'
-  console.log('保存配置:', config)
+function mapApiMenuToLocal(menu: WeChatMenu): MenuItem {
+  const typeLabelMap: Record<string, string> = {
+    click: '点击事件',
+    view: '跳转网页',
+    miniprogram: '跳转小程序',
+    parent: '父菜单',
+  }
+  const iconMap: Record<string, string> = {
+    click: 'lucide:mouse-pointer-click',
+    view: 'lucide:link',
+    miniprogram: 'lucide:smartphone',
+    parent: 'lucide:folder',
+  }
+  const effectiveType = menu.children && menu.children.length > 0 ? 'parent' : menu.type
+  return {
+    id: menu.id,
+    name: menu.name,
+    type: effectiveType,
+    typeLabel: typeLabelMap[effectiveType] || effectiveType,
+    icon: iconMap[effectiveType] || 'lucide:link',
+    url: menu.url || undefined,
+    key: menu.key || undefined,
+    appId: undefined,
+    children: menu.children?.map(mapApiMenuToLocal),
+  }
 }
 
-function testConnection() {
-  connectionStatus.value = 'connected'
-  console.log('测试连接...')
+function mapLocalMenuToApi(menu: MenuItem): WeChatMenu {
+  return {
+    id: menu.id,
+    name: menu.name,
+    type: menu.type === 'parent' ? 'view' : menu.type,
+    key: menu.key || '',
+    url: menu.url || '',
+    parentId: null,
+    children: menu.children?.map(mapLocalMenuToApi),
+  }
+}
+
+async function fetchData() {
+  loading.value = true
+  error.value = ''
+  try {
+    const [oaConfig, menus, autoReplyConfig] = await Promise.all([
+      getWeChatOAConfig(),
+      getWeChatMenus(),
+      getAutoReplyConfig(),
+    ])
+
+    if (oaConfig) {
+      config.name = oaConfig.name || ''
+      config.appId = oaConfig.appId || ''
+      config.appSecret = oaConfig.appSecret || ''
+      config.token = oaConfig.token || ''
+      config.encodingAesKey = oaConfig.encodingAESKey || ''
+      connectionStatus.value = oaConfig.isConnected ? 'connected' : 'disconnected'
+      if (oaConfig.stats) {
+        stats.subscribers = oaConfig.stats.followers || 0
+        stats.todayMessages = oaConfig.stats.todayMessages || 0
+      }
+    }
+
+    if (menus) {
+      menuItems.value = menus.map(mapApiMenuToLocal)
+    }
+
+    if (autoReplyConfig) {
+      autoReply.subscribe = autoReplyConfig.followReply?.content || ''
+      autoReply.keywords = (autoReplyConfig.keywordReplies || []).map(kr => ({
+        keyword: kr.keyword || '',
+        reply: kr.content || '',
+      }))
+      autoReply.default = autoReplyConfig.defaultReply?.content || ''
+    }
+  } catch (e: any) {
+    error.value = e.message || '加载数据失败'
+  } finally {
+    loading.value = false
+  }
+}
+
+onMounted(() => {
+  fetchData()
+})
+
+async function saveConfig() {
+  saving.value = true
+  try {
+    const result = await updateWeChatOAConfig({
+      name: config.name,
+      appId: config.appId,
+      appSecret: config.appSecret,
+      token: config.token,
+      encodingAESKey: config.encodingAesKey,
+    })
+    if (result) {
+      connectionStatus.value = result.isConnected ? 'connected' : 'disconnected'
+    }
+  } catch (e: any) {
+    error.value = e.message || '保存配置失败'
+  } finally {
+    saving.value = false
+  }
+}
+
+async function testConnection() {
+  isTesting.value = true
+  try {
+    const result = await testWeChatOAConnection()
+    connectionStatus.value = result?.success ? 'connected' : 'error'
+  } catch (e: any) {
+    connectionStatus.value = 'error'
+    error.value = e.message || '连接测试失败'
+  } finally {
+    isTesting.value = false
+  }
 }
 
 function copyUrl() {
@@ -545,8 +645,19 @@ function removeKeywordReply(idx: number) {
   autoReply.keywords.splice(idx, 1)
 }
 
-function syncMenus() {
-  console.log('同步菜单到微信...')
+async function syncMenus() {
+  savingMenus.value = true
+  try {
+    const apiMenus = menuItems.value.map(mapLocalMenuToApi)
+    const result = await updateWeChatMenus(apiMenus)
+    if (result) {
+      menuItems.value = result.map(mapApiMenuToLocal)
+    }
+  } catch (e: any) {
+    error.value = e.message || '同步菜单失败'
+  } finally {
+    savingMenus.value = false
+  }
 }
 
 function syncMaterials() {

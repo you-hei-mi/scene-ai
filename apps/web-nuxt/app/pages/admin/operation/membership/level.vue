@@ -1,5 +1,18 @@
 <template>
   <div class="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50/30 dark:from-slate-900 dark:via-slate-800 dark:to-indigo-950/30">
+    <!-- Loading -->
+    <div v-if="loading" class="flex items-center justify-center py-24">
+      <UIcon name="lucide:loader-2" class="w-10 h-10 text-primary animate-spin" />
+    </div>
+
+    <!-- Error -->
+    <div v-if="error" class="mb-6 p-4 rounded-2xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
+      <div class="flex items-center gap-3">
+        <UIcon name="lucide:alert-circle" class="w-5 h-5 text-red-500" />
+        <p class="text-sm text-red-700 dark:text-red-400">{{ error }}</p>
+      </div>
+    </div>
+
     <div class="flex items-center justify-between mb-6">
       <div>
         <div class="flex items-center gap-4 mb-2">
@@ -146,7 +159,7 @@
                       color="green"
                       @click="toggleStatus(level)"
                     />
-                    <UDropdownMenuItem label="删除等级" icon="lucide:trash-2" color="red" @click="deleteLevel(level)" />
+                    <UDropdownMenuItem label="删除等级" icon="lucide:trash-2" color="red" @click="removeLevel(level)" />
                   </template>
                 </UDropdownMenu>
               </td>
@@ -214,13 +227,20 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
+import {
+  getMembershipLevels,
+  createMembershipLevel,
+  updateMembershipLevel,
+  deleteMembershipLevel,
+  type MembershipLevel,
+} from '~/composables/api/operation'
 
 definePageMeta({
   layout: 'console',
 })
 
-interface MembershipLevel {
+interface UIMembershipLevel {
   id: string
   name: string
   icon: string
@@ -232,8 +252,11 @@ interface MembershipLevel {
   status: 'active' | 'disabled'
 }
 
+const loading = ref(true)
+const error = ref<string | null>(null)
 const showDialog = ref(false)
-const editingItem = ref<MembershipLevel | null>(null)
+const editingItem = ref<UIMembershipLevel | null>(null)
+const saving = ref(false)
 
 const formData = ref({
   name: '',
@@ -260,52 +283,46 @@ const iconOptions = [
   { label: '太阳', value: 'lucide:sun' },
 ]
 
-const levels = ref<MembershipLevel[]>([
-  {
-    id: '1',
-    name: '普通会员',
-    icon: 'lucide:star',
-    color: '#6b7280',
-    sortOrder: 1,
-    expRequired: 0,
-    benefits: '基础对话功能\n每日 50 次对话额度\n基础模型访问权限\n社区支持',
-    memberCount: 4497,
-    status: 'active',
-  },
-  {
-    id: '2',
-    name: '白银会员',
-    icon: 'lucide:shield',
-    color: '#94a3b8',
-    sortOrder: 2,
-    expRequired: 500,
-    benefits: '每日 200 次对话额度\n高级模型访问权限\n知识库容量 1GB\n邮件优先支持',
-    memberCount: 4498,
-    status: 'active',
-  },
-  {
-    id: '3',
-    name: '黄金会员',
-    icon: 'lucide:crown',
-    color: '#f59e0b',
-    sortOrder: 3,
-    expRequired: 2000,
-    benefits: '每日 1000 次对话额度\n所有模型访问权限\n知识库容量 10GB\nAgent 创建权限\n专属客服通道',
-    memberCount: 2827,
-    status: 'active',
-  },
-  {
-    id: '4',
-    name: '钻石会员',
-    icon: 'lucide:gem',
-    color: '#8b5cf6',
-    sortOrder: 4,
-    expRequired: 10000,
-    benefits: '无限对话额度\n所有模型访问权限\n知识库容量 100GB\nAgent 创建与发布权限\nAPI 访问权限\n专属客户经理\n优先体验新功能',
-    memberCount: 1028,
-    status: 'active',
-  },
-])
+const levels = ref<UIMembershipLevel[]>([])
+
+function mapApiToUI(api: MembershipLevel): UIMembershipLevel {
+  return {
+    id: api.id,
+    name: api.name,
+    icon: api.icon || 'lucide:star',
+    color: api.color || '#6366f1',
+    sortOrder: api.level ?? 0,
+    expRequired: api.requiredPoints ?? 0,
+    benefits: api.description || '',
+    memberCount: api.memberCount || 0,
+    status: api.isEnabled ? 'active' : 'disabled',
+  }
+}
+
+function mapFormToApiPayload() {
+  return {
+    name: formData.value.name,
+    level: formData.value.sortOrder,
+    requiredPoints: formData.value.expRequired,
+    icon: formData.value.icon,
+    color: formData.value.color,
+    description: formData.value.benefits,
+    isEnabled: formData.value.status === 'active',
+  }
+}
+
+async function fetchLevels() {
+  loading.value = true
+  error.value = null
+  try {
+    const res = await getMembershipLevels()
+    levels.value = (res.data || []).map(mapApiToUI)
+  } catch (e: any) {
+    error.value = e?.message || '加载会员等级失败'
+  } finally {
+    loading.value = false
+  }
+}
 
 function openCreateDialog() {
   editingItem.value = null
@@ -321,7 +338,7 @@ function openCreateDialog() {
   showDialog.value = true
 }
 
-function openEditDialog(level: MembershipLevel) {
+function openEditDialog(level: UIMembershipLevel) {
   editingItem.value = level
   formData.value = {
     name: level.name,
@@ -335,49 +352,44 @@ function openEditDialog(level: MembershipLevel) {
   showDialog.value = true
 }
 
-function saveLevel() {
+async function saveLevel() {
   if (!formData.value.name.trim()) return
-
-  if (editingItem.value) {
-    const index = levels.value.findIndex(l => l.id === editingItem.value!.id)
-    if (index > -1) {
-      levels.value[index] = {
-        ...levels.value[index],
-        name: formData.value.name,
-        icon: formData.value.icon,
-        color: formData.value.color,
-        sortOrder: formData.value.sortOrder,
-        expRequired: formData.value.expRequired,
-        benefits: formData.value.benefits,
-        status: formData.value.status,
-      }
+  saving.value = true
+  try {
+    if (editingItem.value) {
+      await updateMembershipLevel(editingItem.value.id, mapFormToApiPayload())
+    } else {
+      await createMembershipLevel(mapFormToApiPayload())
     }
-  } else {
-    const newLevel: MembershipLevel = {
-      id: Date.now().toString(),
-      name: formData.value.name,
-      icon: formData.value.icon,
-      color: formData.value.color,
-      sortOrder: formData.value.sortOrder,
-      expRequired: formData.value.expRequired,
-      benefits: formData.value.benefits,
-      memberCount: 0,
-      status: formData.value.status,
-    }
-    levels.value.push(newLevel)
-  }
-
-  showDialog.value = false
-}
-
-function toggleStatus(level: MembershipLevel) {
-  level.status = level.status === 'active' ? 'disabled' : 'active'
-}
-
-function deleteLevel(level: MembershipLevel) {
-  const index = levels.value.findIndex(l => l.id === level.id)
-  if (index > -1) {
-    levels.value.splice(index, 1)
+    showDialog.value = false
+    await fetchLevels()
+  } catch (e: any) {
+    error.value = e?.message || '保存会员等级失败'
+  } finally {
+    saving.value = false
   }
 }
+
+async function toggleStatus(level: UIMembershipLevel) {
+  try {
+    const newStatus = level.status === 'active' ? 'disabled' : 'active'
+    await updateMembershipLevel(level.id, { isEnabled: newStatus === 'active' })
+    level.status = newStatus
+  } catch (e: any) {
+    error.value = e?.message || '切换状态失败'
+  }
+}
+
+async function removeLevel(level: UIMembershipLevel) {
+  try {
+    await deleteMembershipLevel(level.id)
+    await fetchLevels()
+  } catch (e: any) {
+    error.value = e?.message || '删除会员等级失败'
+  }
+}
+
+onMounted(() => {
+  fetchLevels()
+})
 </script>

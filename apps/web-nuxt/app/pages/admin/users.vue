@@ -33,7 +33,22 @@
       </div>
     </div>
 
-    <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 overflow-hidden">
+    <!-- 错误提示 -->
+    <div v-if="error" class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-2xl p-4 mb-6 flex items-center gap-3">
+      <UIcon name="lucide:alert-circle" class="w-5 h-5 text-red-500 flex-shrink-0" />
+      <p class="text-sm text-red-700 dark:text-red-400">{{ error }}</p>
+      <button class="ml-auto text-sm text-red-600 dark:text-red-400 hover:underline flex-shrink-0" @click="fetchUsers">重试</button>
+    </div>
+
+    <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 overflow-hidden relative">
+      <!-- 加载遮罩 -->
+      <div v-if="loading" class="absolute inset-0 bg-white/60 dark:bg-slate-800/60 z-10 flex items-center justify-center">
+        <div class="flex items-center gap-2 text-slate-600 dark:text-slate-400">
+          <UIcon name="lucide:loader-2" class="w-5 h-5 animate-spin" />
+          <span class="text-sm">加载中...</span>
+        </div>
+      </div>
+
       <div class="overflow-x-auto">
         <table class="w-full">
           <thead>
@@ -108,7 +123,7 @@
                       color="green"
                       @click="toggleUserStatus(user)"
                     />
-                    <UDropdownMenuItem label="删除用户" icon="lucide:trash-2" color="red" @click="deleteUser(user)" />
+                    <UDropdownMenuItem label="删除用户" icon="lucide:trash-2" color="red" @click="deleteUserHandler(user)" />
                   </template>
                 </UDropdownMenu>
               </td>
@@ -117,11 +132,11 @@
         </table>
       </div>
 
-      <div v-if="filteredUsers.length === 0" class="text-center py-12">
+      <div v-if="!loading && filteredUsers.length === 0" class="text-center py-12">
         <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-slate-100 dark:bg-slate-700 mb-4">
           <UIcon name="lucide:users" class="w-8 h-8 text-slate-400" />
         </div>
-        <p class="text-slate-500">未找到匹配的用户</p>
+        <p class="text-slate-500">{{ error ? '加载失败' : '未找到匹配的用户' }}</p>
       </div>
 
       <div class="flex items-center justify-between px-6 py-4 border-t border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-700/30">
@@ -129,17 +144,16 @@
           共 {{ totalUsers }} 位用户
         </div>
         <div class="flex items-center gap-2">
-          <button class="btn-glass px-3 py-1.5 text-sm">
+          <button class="btn-glass px-3 py-1.5 text-sm" :disabled="currentPage <= 1" @click="currentPage--; fetchUsers()">
             <UIcon name="lucide:chevron-left" class="w-4 h-4" />
           </button>
           <span class="text-sm font-medium text-slate-900 dark:text-white">第 {{ currentPage }} / {{ totalPages }} 页</span>
-          <button class="btn-glass px-3 py-1.5 text-sm">
+          <button class="btn-glass px-3 py-1.5 text-sm" :disabled="currentPage >= totalPages" @click="currentPage++; fetchUsers()">
             <UIcon name="lucide:chevron-right" class="w-4 h-4" />
           </button>
         </div>
       </div>
     </div>
-  </div>
 
     <!-- Add/Edit User Dialog -->
     <UDialog v-model:open="showAddDialog" :title="editingUser ? '编辑用户' : '添加用户'">
@@ -216,36 +230,58 @@
         </button>
       </template>
     </UDialog>
+  </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
+import {
+  getUsers,
+  createUser,
+  updateUser,
+  deleteUser,
+  setUserStatus,
+  resetUserPassword,
+  autoResetUserPassword,
+} from '~/composables/api/core'
+import type { UserInfo, PaginatedResult } from '~/composables/api/core'
 
 definePageMeta({
   layout: 'console',
 })
 
+// ====== 本地类型（适配模板） ======
 interface User {
   id: string
   username: string
-  nickname?: string
+  nickname: string
   email: string
-  role: 'super_admin' | 'admin' | 'user'
+  role: string
   status: 'active' | 'disabled'
   createdAt: string
-  lastLogin?: string
+  lastLogin: string
 }
 
+// ====== 状态 ======
 const searchKeyword = ref('')
 const roleFilter = ref('all')
 const statusFilter = ref('all')
 const currentPage = ref(1)
+const pageSize = ref(10)
 
+const users = ref<User[]>([])
+const totalUsers = ref(0)
+const loading = ref(false)
+const error = ref<string | null>(null)
+
+const totalPages = computed(() => Math.ceil(totalUsers.value / pageSize.value) || 1)
+
+// ====== 下拉选项 ======
 const roleOptions = [
   { label: '全部角色', value: 'all' },
-  { label: '超级管理员', value: 'super_admin' },
-  { label: '管理员', value: 'admin' },
-  { label: '普通用户', value: 'user' },
+  { label: '超级管理员', value: '超级管理员' },
+  { label: '管理员', value: '管理员' },
+  { label: '普通用户', value: '普通用户' },
 ]
 
 const statusOptions = [
@@ -254,142 +290,100 @@ const statusOptions = [
   { label: '禁用', value: 'disabled' },
 ]
 
-const users = ref<User[]>([
-  {
-    id: '1',
-    username: 'admin',
-    nickname: '系统管理员',
-    email: 'admin@buildingai.cc',
-    role: 'super_admin',
-    status: 'active',
-    createdAt: '2024-01-01',
-    lastLogin: '2024-06-26 10:30',
-  },
-  {
-    id: '2',
-    username: 'zhangsan',
-    nickname: '张三',
-    email: 'zhangsan@example.com',
-    role: 'admin',
-    status: 'active',
-    createdAt: '2024-02-15',
-    lastLogin: '2024-06-26 09:15',
-  },
-  {
-    id: '3',
-    username: 'lisi',
-    nickname: '李四',
-    email: 'lisi@example.com',
-    role: 'user',
-    status: 'active',
-    createdAt: '2024-03-10',
-    lastLogin: '2024-06-25 16:45',
-  },
-  {
-    id: '4',
-    username: 'wangwu',
-    nickname: '王五',
-    email: 'wangwu@example.com',
-    role: 'user',
-    status: 'active',
-    createdAt: '2024-03-20',
-    lastLogin: '2024-06-24 14:20',
-  },
-  {
-    id: '5',
-    username: 'zhaoliu',
-    nickname: '赵六',
-    email: 'zhaoliu@example.com',
-    role: 'user',
-    status: 'disabled',
-    createdAt: '2024-04-05',
-    lastLogin: '2024-05-20 11:30',
-  },
-  {
-    id: '6',
-    username: 'qianqi',
-    nickname: '钱七',
-    email: 'qianqi@example.com',
-    role: 'admin',
-    status: 'active',
-    createdAt: '2024-04-18',
-    lastLogin: '2024-06-26 08:00',
-  },
-  {
-    id: '7',
-    username: 'sunba',
-    nickname: '孙八',
-    email: 'sunba@example.com',
-    role: 'user',
-    status: 'active',
-    createdAt: '2024-05-02',
-    lastLogin: '2024-06-23 19:15',
-  },
-  {
-    id: '8',
-    username: 'zhoujiu',
-    nickname: '周九',
-    email: 'zhoujiu@example.com',
-    role: 'user',
-    status: 'active',
-    createdAt: '2024-05-15',
-    lastLogin: '2024-06-26 07:45',
-  },
-])
+// ====== API 数据映射 ======
+function mapUser(apiUser: UserInfo): User {
+  return {
+    id: apiUser.id,
+    username: apiUser.username,
+    nickname: apiUser.nickname || '',
+    email: apiUser.email || '',
+    role: apiUser.role?.name || '普通用户',
+    status: apiUser.status === 1 ? 'active' : 'disabled',
+    createdAt: apiUser.createdAt || '',
+    lastLogin: apiUser.updatedAt || '',
+  }
+}
 
-const totalUsers = computed(() => filteredUsers.value.length)
-const totalPages = computed(() => Math.ceil(totalUsers.value / 10) || 1)
+// ====== 获取用户列表 ======
+async function fetchUsers() {
+  loading.value = true
+  error.value = null
+  try {
+    const params: {
+      page: number
+      pageSize: number
+      keyword?: string
+      status?: number
+    } = {
+      page: currentPage.value,
+      pageSize: pageSize.value,
+    }
+    if (searchKeyword.value.trim()) {
+      params.keyword = searchKeyword.value.trim()
+    }
+    if (statusFilter.value !== 'all') {
+      params.status = statusFilter.value === 'active' ? 1 : 0
+    }
+    const result: PaginatedResult<UserInfo> = await getUsers(params)
+    totalUsers.value = result.total
+    users.value = (result.items || []).map(mapUser)
+  } catch (e: any) {
+    error.value = e.message || '加载用户列表失败'
+    users.value = []
+    totalUsers.value = 0
+  } finally {
+    loading.value = false
+  }
+}
 
+// ====== 按角色本地过滤 ======
 const filteredUsers = computed(() => {
-  let result = [...users.value]
-
-  if (searchKeyword.value.trim()) {
-    const kw = searchKeyword.value.toLowerCase()
-    result = result.filter(
-      u =>
-        u.username.toLowerCase().includes(kw) ||
-        u.nickname?.toLowerCase().includes(kw) ||
-        u.email.toLowerCase().includes(kw)
-    )
+  if (roleFilter.value === 'all') {
+    return users.value
   }
-
-  if (roleFilter.value !== 'all') {
-    result = result.filter(u => u.role === roleFilter.value)
-  }
-
-  if (statusFilter.value !== 'all') {
-    result = result.filter(u => u.status === statusFilter.value)
-  }
-
-  return result
+  return users.value.filter(u => u.role === roleFilter.value)
 })
 
+// ====== 角色显示 ======
 function getRoleText(role: string): string {
-  const map: Record<string, string> = {
-    super_admin: '超级管理员',
-    admin: '管理员',
-    user: '普通用户',
-  }
-  return map[role] || role
+  return role
 }
 
 function getRoleBadgeVariant(role: string): 'default' | 'secondary' | 'outline' {
   const map: Record<string, 'default' | 'secondary' | 'outline'> = {
-    super_admin: 'default',
-    admin: 'secondary',
-    user: 'outline',
+    '超级管理员': 'default',
+    '管理员': 'secondary',
+    '普通用户': 'outline',
   }
   return map[role] || 'outline'
 }
 
+// ====== 筛选 ======
 function resetFilters() {
   searchKeyword.value = ''
   roleFilter.value = 'all'
   statusFilter.value = 'all'
   currentPage.value = 1
+  fetchUsers()
 }
 
-// Dialog state
+// 搜索关键词变化时重新获取
+let searchTimer: ReturnType<typeof setTimeout> | null = null
+watch(searchKeyword, () => {
+  if (searchTimer) clearTimeout(searchTimer)
+  searchTimer = setTimeout(() => {
+    currentPage.value = 1
+    fetchUsers()
+  }, 400)
+})
+
+// 状态筛选变化时重新获取
+watch(statusFilter, () => {
+  currentPage.value = 1
+  fetchUsers()
+})
+
+// ====== 对话框状态 ======
 const showAddDialog = ref(false)
 const showResetDialog = ref(false)
 const editingUser = ref<User | null>(null)
@@ -409,9 +403,10 @@ const formData = ref<UserFormData>({
   nickname: '',
   email: '',
   password: '',
-  role: 'user',
+  role: '普通用户',
 })
 
+// ====== 编辑用户 ======
 function openEditDialog(user: User) {
   editingUser.value = user
   formData.value = {
@@ -424,55 +419,78 @@ function openEditDialog(user: User) {
   showAddDialog.value = true
 }
 
-function saveUser() {
-  if (editingUser.value) {
-    const idx = users.value.findIndex(u => u.id === editingUser.value!.id)
-    if (idx !== -1) {
-      users.value[idx] = {
-        ...users.value[idx],
+async function saveUser() {
+  try {
+    if (editingUser.value) {
+      await updateUser(editingUser.value.id, {
         username: formData.value.username,
         nickname: formData.value.nickname,
         email: formData.value.email,
-        role: formData.value.role as 'super_admin' | 'admin' | 'user',
-      }
+        role: formData.value.role,
+      })
+    } else {
+      await createUser({
+        username: formData.value.username,
+        nickname: formData.value.nickname,
+        email: formData.value.email,
+        password: formData.value.password,
+        role: formData.value.role,
+      })
     }
-  } else {
-    const newUser: User = {
-      id: String(Date.now()),
-      username: formData.value.username,
-      nickname: formData.value.nickname,
-      email: formData.value.email,
-      role: formData.value.role as 'super_admin' | 'admin' | 'user',
-      status: 'active',
-      createdAt: new Date().toISOString().split('T')[0],
-    }
-    users.value.unshift(newUser)
+    showAddDialog.value = false
+    editingUser.value = null
+    formData.value = { username: '', nickname: '', email: '', password: '', role: '普通用户' }
+    await fetchUsers()
+  } catch (e: any) {
+    error.value = e.message || '保存用户失败'
   }
-  showAddDialog.value = false
-  editingUser.value = null
-  formData.value = { username: '', nickname: '', email: '', password: '', role: 'user' }
 }
 
+// ====== 重置密码 ======
 function openResetPasswordDialog(user: User) {
   resetTargetUser.value = user
   resetPassword.value = ''
   showResetDialog.value = true
 }
 
-function confirmResetPassword() {
-  showResetDialog.value = false
-  resetTargetUser.value = null
-  resetPassword.value = ''
-}
-
-function toggleUserStatus(user: User) {
-  user.status = user.status === 'active' ? 'disabled' : 'active'
-}
-
-function deleteUser(user: User) {
-  const idx = users.value.findIndex(u => u.id === user.id)
-  if (idx !== -1) {
-    users.value.splice(idx, 1)
+async function confirmResetPassword() {
+  if (!resetTargetUser.value) return
+  try {
+    if (resetPassword.value.trim()) {
+      await resetUserPassword(resetTargetUser.value.id, resetPassword.value)
+    } else {
+      await autoResetUserPassword(resetTargetUser.value.id)
+    }
+    showResetDialog.value = false
+    resetTargetUser.value = null
+    resetPassword.value = ''
+  } catch (e: any) {
+    error.value = e.message || '重置密码失败'
   }
 }
+
+// ====== 切换用户状态 ======
+async function toggleUserStatus(user: User) {
+  const newStatus = user.status === 'active' ? 0 : 1
+  try {
+    await setUserStatus(user.id, newStatus)
+    user.status = user.status === 'active' ? 'disabled' : 'active'
+  } catch (e: any) {
+    error.value = e.message || '更新用户状态失败'
+  }
+}
+
+// ====== 删除用户 ======
+async function deleteUserHandler(user: User) {
+  try {
+    await deleteUser(user.id)
+    users.value = users.value.filter(u => u.id !== user.id)
+    totalUsers.value = Math.max(0, totalUsers.value - 1)
+  } catch (e: any) {
+    error.value = e.message || '删除用户失败'
+  }
+}
+
+// ====== 初始化 ======
+fetchUsers()
 </script>

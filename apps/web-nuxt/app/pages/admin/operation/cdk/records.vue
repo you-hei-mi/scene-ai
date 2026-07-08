@@ -1,5 +1,18 @@
 <template>
   <div class="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50/30 dark:from-slate-900 dark:via-slate-800 dark:to-indigo-950/30">
+    <!-- Loading -->
+    <div v-if="loading" class="flex items-center justify-center py-24">
+      <UIcon name="lucide:loader-2" class="w-10 h-10 text-primary animate-spin" />
+    </div>
+
+    <!-- Error -->
+    <div v-if="error" class="mb-6 p-4 rounded-2xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
+      <div class="flex items-center gap-3">
+        <UIcon name="lucide:alert-circle" class="w-5 h-5 text-red-500" />
+        <p class="text-sm text-red-700 dark:text-red-400">{{ error }}</p>
+      </div>
+    </div>
+
     <div class="flex items-center justify-between mb-6">
       <div>
         <div class="flex items-center gap-4 mb-2">
@@ -177,7 +190,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import { getCDKUsageRecords, type CDKUsageRecord } from '~/composables/api/operation'
 
 definePageMeta({
   layout: 'console',
@@ -185,7 +199,7 @@ definePageMeta({
 
 type CdkType = 'recharge' | 'subscription' | 'gift'
 
-interface CdkRecord {
+interface CdkRecordUI {
   id: string
   code: string
   type: CdkType
@@ -197,11 +211,13 @@ interface CdkRecord {
   usedAt: string
 }
 
+const loading = ref(true)
+const error = ref<string | null>(null)
 const searchKeyword = ref('')
 const typeFilter = ref('all')
 const currentPage = ref(1)
 const showDetailDialog = ref(false)
-const currentRecord = ref<CdkRecord | null>(null)
+const currentRecord = ref<CdkRecordUI | null>(null)
 
 const dateRange = ref({
   start: '',
@@ -215,98 +231,22 @@ const typeOptions = [
   { label: '礼品码', value: 'gift' },
 ]
 
-const mockRecords: CdkRecord[] = [
-  {
-    id: '1',
-    code: 'ABCD-EFGH-IJKL-MNOP',
-    type: 'subscription',
-    content: '1 个月专业版',
-    value: null,
-    username: '张三',
-    email: 'zhangsan@example.com',
-    createdAt: '2026-07-05 10:00',
-    usedAt: '2026-07-05 10:30',
-  },
-  {
-    id: '2',
-    code: 'WXYZ-1234-5678-90AB',
-    type: 'recharge',
-    content: '充值金额',
-    value: 99,
-    username: '李四',
-    email: 'lisi@example.com',
-    createdAt: '2026-07-04 15:00',
-    usedAt: '2026-07-04 16:20',
-  },
-  {
-    id: '3',
-    code: 'DEMO-2026-SUMM-ER01',
-    type: 'gift',
-    content: '暑期活动 7 天体验卡',
-    value: null,
-    username: '王五',
-    email: 'wangwu@example.com',
-    createdAt: '2026-07-03 09:00',
-    usedAt: '2026-07-03 09:15',
-  },
-  {
-    id: '4',
-    code: 'PRO-2026-ANNI-VERS',
-    type: 'recharge',
-    content: '周年庆充值',
-    value: 299,
-    username: '赵六',
-    email: 'zhaoliu@example.com',
-    createdAt: '2026-07-02 14:00',
-    usedAt: '2026-07-02 14:05',
-  },
-  {
-    id: '5',
-    code: 'TEAM-QUAR-TERL-Y001',
-    type: 'subscription',
-    content: '3 个月团队版',
-    value: null,
-    username: '钱七',
-    email: 'qianqi@example.com',
-    createdAt: '2026-07-01 11:00',
-    usedAt: '2026-07-01 11:20',
-  },
-  {
-    id: '6',
-    code: 'BLAC-KFRID-AYSPE-CIAL',
-    type: 'recharge',
-    content: '黑色星期五特惠',
-    value: 199,
-    username: '孙八',
-    email: 'sunba@example.com',
-    createdAt: '2026-06-30 08:00',
-    usedAt: '2026-06-30 08:10',
-  },
-  {
-    id: '7',
-    code: 'NEWY-EAR2-026P-ROMO',
-    type: 'gift',
-    content: '新年礼包 30 天专业版',
-    value: null,
-    username: '周九',
-    email: 'zhoujiu@example.com',
-    createdAt: '2026-06-28 16:00',
-    usedAt: '2026-06-28 17:30',
-  },
-  {
-    id: '8',
-    code: 'CHRI-STMAS-GIFT-001',
-    type: 'gift',
-    content: '圣诞节福利兑换',
-    value: 50,
-    username: '吴十',
-    email: 'wushi@example.com',
-    createdAt: '2026-06-25 10:00',
-    usedAt: '2026-06-25 14:20',
-  },
-]
+const records = ref<CdkRecordUI[]>([])
 
-const records = ref<CdkRecord[]>(mockRecords)
+function mapApiToUI(api: CDKUsageRecord): CdkRecordUI {
+  const uiType: CdkType = api.type === 'recharge' ? 'recharge' : 'subscription'
+  return {
+    id: api.id,
+    code: api.code,
+    type: uiType,
+    content: api.type === 'recharge' ? `¥${api.amount || 0} 充值` : '套餐兑换',
+    value: api.amount || null,
+    username: api.username || '',
+    email: '',
+    createdAt: '',
+    usedAt: api.usedAt || '',
+  }
+}
 
 const totalValue = computed(() => {
   return records.value.reduce((sum, r) => sum + (r.value || 0), 0)
@@ -342,6 +282,19 @@ const filteredRecords = computed(() => {
   return result
 })
 
+async function fetchRecords() {
+  loading.value = true
+  error.value = null
+  try {
+    const res = await getCDKUsageRecords({ page: 1, pageSize: 1000 })
+    records.value = (res.data?.items || []).map(mapApiToUI)
+  } catch (e: any) {
+    error.value = e?.message || '加载 CDK 使用记录失败'
+  } finally {
+    loading.value = false
+  }
+}
+
 function getTypeText(type: CdkType): string {
   const map: Record<CdkType, string> = {
     recharge: '充值',
@@ -367,7 +320,7 @@ function resetFilters() {
   currentPage.value = 1
 }
 
-function viewDetail(record: CdkRecord) {
+function viewDetail(record: CdkRecordUI) {
   currentRecord.value = record
   showDetailDialog.value = true
 }
@@ -377,4 +330,8 @@ function copyCode() {
     navigator.clipboard.writeText(currentRecord.value.code.replace(/-/g, ''))
   }
 }
+
+onMounted(() => {
+  fetchRecords()
+})
 </script>

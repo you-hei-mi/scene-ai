@@ -1,5 +1,24 @@
 <template>
   <div class="min-h-screen">
+    <!-- 加载状态 -->
+    <div v-if="loading" class="flex items-center justify-center py-20">
+      <div class="flex flex-col items-center gap-4">
+        <div class="w-10 h-10 border-4 border-primary/30 border-t-primary rounded-full animate-spin"></div>
+        <span class="text-sm text-slate-500">加载仪表盘数据...</span>
+      </div>
+    </div>
+
+    <!-- 错误提示 -->
+    <div v-if="error && !loading" class="mb-6 p-4 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
+      <div class="flex items-center gap-3">
+        <UIcon name="lucide:alert-circle" class="w-5 h-5 text-red-500 flex-shrink-0" />
+        <div>
+          <p class="text-sm font-medium text-red-700 dark:text-red-400">数据加载失败</p>
+          <p class="text-xs text-red-600 dark:text-red-500 mt-1">{{ error }}，已显示默认数据</p>
+        </div>
+      </div>
+    </div>
+
     <div class="mb-8">
       <div class="flex items-center gap-4 mb-2">
         <div class="w-1 h-8 bg-gradient-to-b from-primary to-accent rounded-full"></div>
@@ -220,26 +239,26 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import { getDashboardData } from '~/composables/api/core'
 
 definePageMeta({
   layout: 'console',
 })
 
-/**
- * 仪表盘统计数据
- */
-const stats = ref({
+// ====== 加载与错误状态 ======
+const loading = ref(true)
+const error = ref<string | null>(null)
+
+// ====== 默认 Mock 数据（API 失败时的回退值） ======
+const defaultStats = {
   totalUsers: 12580,
   todayChats: 3842,
   totalAgents: 256,
   totalDocuments: 5680,
-})
+}
 
-/**
- * 对话趋势数据（近7天）
- */
-const chatTrendData = ref([
+const defaultChatTrendData = [
   { label: '周一', value: 2400 },
   { label: '周二', value: 2800 },
   { label: '周三', value: 3200 },
@@ -247,34 +266,18 @@ const chatTrendData = ref([
   { label: '周五', value: 3500 },
   { label: '周六', value: 2100 },
   { label: '周日', value: 1800 },
-])
+]
 
-/**
- * 用户增长数据（近6个月）
- */
-const userGrowthData = ref([
+const defaultUserGrowthData = [
   { label: '1月', value: 8000 },
   { label: '2月', value: 9200 },
   { label: '3月', value: 10500 },
   { label: '4月', value: 11200 },
   { label: '5月', value: 12000 },
   { label: '6月', value: 12580 },
-])
+]
 
-/**
- * 计算对话趋势最大值，用于图表高度比例计算
- */
-const maxChatValue = computed(() => Math.max(...chatTrendData.value.map(d => d.value)))
-
-/**
- * 计算用户增长最大值，用于图表高度比例计算
- */
-const maxUserValue = computed(() => Math.max(...userGrowthData.value.map(d => d.value)))
-
-/**
- * 最近活动列表
- */
-const recentActivities = ref([
+const defaultRecentActivities = [
   {
     id: '1',
     type: 'user',
@@ -310,28 +313,102 @@ const recentActivities = ref([
     description: '用户李四升级为专业版会员',
     time: '5 小时前',
   },
-])
+]
 
-/**
- * 系统服务状态
- */
-const systemStatus = ref([
+const defaultSystemStatus = [
   { name: 'API 服务', status: 'online', latency: '23ms' },
   { name: '数据库', status: 'online', latency: '12ms' },
   { name: 'Redis', status: 'online', latency: '3ms' },
   { name: '向量引擎', status: 'online', latency: '45ms' },
   { name: '邮件服务', status: 'online', latency: '89ms' },
-])
+]
 
-/**
- * 资源使用情况
- */
-const resourceUsage = ref({
+const defaultResourceUsage = {
   cpu: 45,
   memory: 62,
   disk: 78,
+}
+
+// ====== 响应式数据（初始化为默认值） ======
+const stats = ref({ ...defaultStats })
+const chatTrendData = ref([...defaultChatTrendData])
+const userGrowthData = ref([...defaultUserGrowthData])
+const recentActivities = ref([...defaultRecentActivities])
+const systemStatus = ref([...defaultSystemStatus])
+const resourceUsage = ref({ ...defaultResourceUsage })
+
+// ====== 计算属性 ======
+const maxChatValue = computed(() => Math.max(...chatTrendData.value.map(d => d.value)))
+const maxUserValue = computed(() => Math.max(...userGrowthData.value.map(d => d.value)))
+
+// ====== 数据获取 ======
+onMounted(async () => {
+  try {
+    const data = await getDashboardData()
+    if (data) {
+      // 映射统计数据
+      if (data.stats) {
+        stats.value = {
+          totalUsers: data.stats.totalUsers ?? defaultStats.totalUsers,
+          todayChats: data.stats.todayChats ?? defaultStats.todayChats,
+          totalAgents: data.stats.totalAgents ?? defaultStats.totalAgents,
+          totalDocuments: data.stats.totalDocuments ?? defaultStats.totalDocuments,
+        }
+      }
+
+      // 映射对话趋势数据
+      if (data.chatTrendData && Array.isArray(data.chatTrendData) && data.chatTrendData.length > 0) {
+        chatTrendData.value = data.chatTrendData.map((item: any) => ({
+          label: item.label ?? '',
+          value: item.value ?? 0,
+        }))
+      }
+
+      // 映射用户增长数据
+      if (data.userGrowthData && Array.isArray(data.userGrowthData) && data.userGrowthData.length > 0) {
+        userGrowthData.value = data.userGrowthData.map((item: any) => ({
+          label: item.label ?? '',
+          value: item.value ?? 0,
+        }))
+      }
+
+      // 映射最近活动
+      if (data.recentActivities && Array.isArray(data.recentActivities) && data.recentActivities.length > 0) {
+        recentActivities.value = data.recentActivities.map((item: any) => ({
+          id: item.id ?? '',
+          type: item.type ?? '',
+          title: item.title ?? '',
+          description: item.description ?? '',
+          time: item.time ?? '',
+        }))
+      }
+
+      // 映射系统状态
+      if (data.systemStatus && Array.isArray(data.systemStatus) && data.systemStatus.length > 0) {
+        systemStatus.value = data.systemStatus.map((item: any) => ({
+          name: item.name ?? '',
+          status: item.status ?? 'online',
+          latency: item.latency ?? '',
+        }))
+      }
+
+      // 映射资源使用
+      if (data.resourceUsage) {
+        resourceUsage.value = {
+          cpu: data.resourceUsage.cpu ?? defaultResourceUsage.cpu,
+          memory: data.resourceUsage.memory ?? defaultResourceUsage.memory,
+          disk: data.resourceUsage.disk ?? defaultResourceUsage.disk,
+        }
+      }
+    }
+  } catch (err: any) {
+    error.value = err.message || '获取仪表盘数据失败，已显示默认数据'
+  } finally {
+    loading.value = false
+  }
 })
 
+// ====== 工具函数 ======
 /**
  * 获取活动类型对应的图标
  * @param type - 活动类型

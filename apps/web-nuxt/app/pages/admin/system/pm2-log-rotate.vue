@@ -10,7 +10,22 @@
 
     <AdminSystemTabs />
 
-    <div class="space-y-6">
+    <!-- Loading -->
+    <div v-if="loading" class="flex items-center justify-center py-20">
+      <UIcon name="lucide:loader" class="w-8 h-8 animate-spin text-primary" />
+      <span class="ml-3 text-slate-500">加载中...</span>
+    </div>
+
+    <!-- Error -->
+    <div v-else-if="error" class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4 mb-6">
+      <div class="flex items-center gap-2">
+        <UIcon name="lucide:alert-circle" class="w-5 h-5 text-red-600 dark:text-red-400" />
+        <span class="text-sm text-red-700 dark:text-red-400">{{ error }}</span>
+      </div>
+      <button class="btn-glass mt-3 text-sm" @click="fetchData">重试</button>
+    </div>
+
+    <div v-else class="space-y-6">
       <!-- 日志轮转配置 -->
       <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-100 dark:border-slate-700">
         <div class="mb-6">
@@ -142,14 +157,18 @@
 
       <div class="flex items-center justify-end gap-3">
         <button class="btn-glass" @click="resetConfig">重置</button>
-        <button class="btn-glass btn-glass--primary" @click="saveConfig">保存设置</button>
+        <button class="btn-glass btn-glass--primary" @click="saveConfig" :disabled="saving">
+          <UIcon v-if="saving" name="lucide:loader" class="w-4 h-4 animate-spin" />
+          {{ saving ? '保存中...' : '保存设置' }}
+        </button>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
+import { getLogRotateConfig, updateLogRotateConfig, runLogRotate, getLogRotateRecords } from '~/composables/api/system'
 
 definePageMeta({
   layout: 'console',
@@ -174,8 +193,11 @@ interface RotateRecord {
   duration: string
 }
 
+const loading = ref(true)
+const error = ref<string | null>(null)
+const saving = ref(false)
 const isRotating = ref(false)
-const lastRotateTime = ref('2026-07-06 02:00:00')
+const lastRotateTime = ref('')
 
 const rotateIntervalOptions = [
   { label: '每天', value: 'daily' },
@@ -201,71 +223,7 @@ const defaultConfig: LogRotateConfig = {
 
 const config = reactive<LogRotateConfig>(JSON.parse(JSON.stringify(defaultConfig)))
 
-const rotateHistory = ref<RotateRecord[]>([
-  {
-    id: '1',
-    time: '2026-07-06 02:00:00',
-    trigger: 'auto',
-    fileCount: 15,
-    freedSpace: '256 MB',
-    status: 'success',
-    duration: '3.2s',
-  },
-  {
-    id: '2',
-    time: '2026-07-05 02:00:00',
-    trigger: 'auto',
-    fileCount: 12,
-    freedSpace: '198 MB',
-    status: 'success',
-    duration: '2.8s',
-  },
-  {
-    id: '3',
-    time: '2026-07-04 02:00:00',
-    trigger: 'auto',
-    fileCount: 18,
-    freedSpace: '312 MB',
-    status: 'success',
-    duration: '3.5s',
-  },
-  {
-    id: '4',
-    time: '2026-07-03 15:22:00',
-    trigger: 'manual',
-    fileCount: 8,
-    freedSpace: '124 MB',
-    status: 'success',
-    duration: '2.1s',
-  },
-  {
-    id: '5',
-    time: '2026-07-03 02:00:00',
-    trigger: 'auto',
-    fileCount: 14,
-    freedSpace: '0 MB',
-    status: 'failed',
-    duration: '1.5s',
-  },
-  {
-    id: '6',
-    time: '2026-07-02 02:00:00',
-    trigger: 'auto',
-    fileCount: 10,
-    freedSpace: '167 MB',
-    status: 'success',
-    duration: '2.4s',
-  },
-  {
-    id: '7',
-    time: '2026-07-01 02:00:00',
-    trigger: 'auto',
-    fileCount: 16,
-    freedSpace: '289 MB',
-    status: 'success',
-    duration: '3.1s',
-  },
-])
+const rotateHistory = ref<RotateRecord[]>([])
 
 function getLevelColor(level: string): string {
   const map: Record<string, string> = {
@@ -286,34 +244,101 @@ function toggleLogLevel(value: string) {
   }
 }
 
-async function executeRotate() {
-  isRotating.value = true
-  await new Promise(resolve => setTimeout(resolve, 2000))
-
-  const now = new Date()
-  const pad = (n: number) => n.toString().padStart(2, '0')
-  const timeStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`
-
-  const newRecord: RotateRecord = {
-    id: Date.now().toString(),
-    time: timeStr,
-    trigger: 'manual',
-    fileCount: Math.floor(Math.random() * 10) + 5,
-    freedSpace: Math.floor(Math.random() * 200 + 50) + ' MB',
-    status: 'success',
-    duration: (Math.random() * 3 + 1).toFixed(1) + 's',
+async function fetchData() {
+  loading.value = true
+  error.value = null
+  try {
+    const data = await getLogRotateConfig()
+    if (data) {
+      config.retentionDays = data.keepDays ?? defaultConfig.retentionDays
+      config.maxFileSize = parseInt(data.maxFileSize as string) || defaultConfig.maxFileSize
+      config.rotateInterval = data.rotateInterval ?? defaultConfig.rotateInterval
+      config.compressOld = data.compressOldLogs ?? defaultConfig.compressOld
+      config.logLevels = data.logLevels ?? defaultConfig.logLevels
+      config.logPath = (data as any).storagePath ?? data.logPath ?? defaultConfig.logPath
+    }
+    // Fetch records
+    const records = await getLogRotateRecords()
+    rotateHistory.value = records.map((r: any) => ({
+      id: r.id,
+      time: r.time ?? '',
+      trigger: 'auto',
+      fileCount: r.logCount ?? 0,
+      freedSpace: r.freedSpace ?? '',
+      status: r.status ?? 'success',
+      duration: r.duration ?? '',
+    }))
+    if (rotateHistory.value.length > 0) {
+      lastRotateTime.value = rotateHistory.value[0].time
+    }
+  } catch (e: any) {
+    error.value = e.message || '加载日志轮转配置失败'
+  } finally {
+    loading.value = false
   }
+}
 
-  rotateHistory.value.unshift(newRecord)
-  lastRotateTime.value = timeStr
-  isRotating.value = false
+async function executeRotate() {
+  if (isRotating.value) return
+  isRotating.value = true
+  try {
+    await runLogRotate()
+    const now = new Date()
+    const pad = (n: number) => n.toString().padStart(2, '0')
+    const timeStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`
+    const newRecord: RotateRecord = {
+      id: Date.now().toString(),
+      time: timeStr,
+      trigger: 'manual',
+      fileCount: 0,
+      freedSpace: '0 MB',
+      status: 'success',
+      duration: '0s',
+    }
+    rotateHistory.value.unshift(newRecord)
+    lastRotateTime.value = timeStr
+    // Refresh records
+    const records = await getLogRotateRecords()
+    rotateHistory.value = records.map((r: any) => ({
+      id: r.id,
+      time: r.time ?? '',
+      trigger: 'auto',
+      fileCount: r.logCount ?? 0,
+      freedSpace: r.freedSpace ?? '',
+      status: r.status ?? 'success',
+      duration: r.duration ?? '',
+    }))
+  } catch (e: any) {
+    error.value = e.message || '日志轮转执行失败'
+  } finally {
+    isRotating.value = false
+  }
 }
 
 function resetConfig() {
   Object.assign(config, JSON.parse(JSON.stringify(defaultConfig)))
 }
 
-function saveConfig() {
-  console.log('保存日志轮转配置:', config)
+async function saveConfig() {
+  if (saving.value) return
+  saving.value = true
+  error.value = null
+  try {
+    await updateLogRotateConfig({
+      keepDays: config.retentionDays,
+      maxFileSize: String(config.maxFileSize),
+      rotateInterval: config.rotateInterval,
+      compressOldLogs: config.compressOld,
+      logLevels: config.logLevels,
+    } as any)
+  } catch (e: any) {
+    error.value = e.message || '保存日志轮转配置失败'
+  } finally {
+    saving.value = false
+  }
 }
+
+onMounted(() => {
+  fetchData()
+})
 </script>

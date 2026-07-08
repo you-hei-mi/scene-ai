@@ -1,5 +1,18 @@
 <template>
   <div class="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50/30 dark:from-slate-900 dark:via-slate-800 dark:to-indigo-950/30">
+    <!-- Loading -->
+    <div v-if="loading" class="flex items-center justify-center py-24">
+      <UIcon name="lucide:loader-2" class="w-10 h-10 text-primary animate-spin" />
+    </div>
+
+    <!-- Error -->
+    <div v-if="error" class="mb-6 p-4 rounded-2xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
+      <div class="flex items-center gap-3">
+        <UIcon name="lucide:alert-circle" class="w-5 h-5 text-red-500" />
+        <p class="text-sm text-red-700 dark:text-red-400">{{ error }}</p>
+      </div>
+    </div>
+
     <div class="flex items-center justify-between mb-6">
       <div>
         <div class="flex items-center gap-4 mb-2">
@@ -124,7 +137,7 @@
                       icon="lucide:arrow-down"
                       @click="moveDown(index)"
                     />
-                    <UDropdownMenuItem label="删除档位" icon="lucide:trash-2" color="red" @click="deleteTier(tier)" />
+                    <UDropdownMenuItem label="删除档位" icon="lucide:trash-2" color="red" @click="removeTier(tier)" />
                   </template>
                 </UDropdownMenu>
               </td>
@@ -191,7 +204,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import {
+  getRechargeTiers,
+  createRechargeTier,
+  updateRechargeTier,
+  deleteRechargeTier,
+  type RechargeTier,
+} from '~/composables/api/operation'
 
 definePageMeta({
   layout: 'console',
@@ -199,7 +219,7 @@ definePageMeta({
 
 type TierStatus = 'enabled' | 'disabled'
 
-interface RechargeTier {
+interface RechargeTierUI {
   id: string
   amount: number
   bonusAmount: number
@@ -208,8 +228,11 @@ interface RechargeTier {
   recommended: boolean
 }
 
+const loading = ref(true)
+const error = ref<string | null>(null)
 const showDialog = ref(false)
-const editingItem = ref<RechargeTier | null>(null)
+const editingItem = ref<RechargeTierUI | null>(null)
+const saving = ref(false)
 
 const formData = ref({
   amount: 0,
@@ -219,40 +242,27 @@ const formData = ref({
   recommended: false,
 })
 
-const tiers = ref<RechargeTier[]>([
-  {
-    id: '1',
-    amount: 30,
-    bonusAmount: 3,
-    sortOrder: 1,
-    status: 'enabled',
-    recommended: false,
-  },
-  {
-    id: '2',
-    amount: 99,
-    bonusAmount: 10,
-    sortOrder: 2,
-    status: 'enabled',
-    recommended: true,
-  },
-  {
-    id: '3',
-    amount: 199,
-    bonusAmount: 29,
-    sortOrder: 3,
-    status: 'enabled',
-    recommended: false,
-  },
-  {
-    id: '4',
-    amount: 299,
-    bonusAmount: 50,
-    sortOrder: 4,
-    status: 'enabled',
-    recommended: false,
-  },
-])
+const tiers = ref<RechargeTierUI[]>([])
+
+function mapApiToUI(api: RechargeTier, index: number): RechargeTierUI {
+  return {
+    id: api.id,
+    amount: api.amount ?? 0,
+    bonusAmount: api.giftAmount ?? 0,
+    sortOrder: index + 1,
+    status: api.isEnabled ? 'enabled' : 'disabled',
+    recommended: api.isRecommended || false,
+  }
+}
+
+function mapFormToApiPayload() {
+  return {
+    amount: formData.value.amount,
+    giftAmount: formData.value.bonusAmount,
+    isEnabled: formData.value.status === 'enabled',
+    isRecommended: formData.value.recommended,
+  }
+}
 
 const sortedTiers = computed(() => {
   return [...tiers.value].sort((a, b) => a.sortOrder - b.sortOrder)
@@ -264,13 +274,27 @@ const stats = computed(() => ({
   totalBonus: tiers.value.filter(t => t.status === 'enabled').reduce((sum, t) => sum + t.bonusAmount, 0),
 }))
 
-function getDiscountRate(tier: RechargeTier): number {
+async function fetchTiers() {
+  loading.value = true
+  error.value = null
+  try {
+    const res = await getRechargeTiers()
+    tiers.value = (res.data || []).map((t, i) => mapApiToUI(t, i))
+  } catch (e: any) {
+    error.value = e?.message || '加载充值档位失败'
+  } finally {
+    loading.value = false
+  }
+}
+
+function getDiscountRate(tier: RechargeTierUI): number {
   if (tier.bonusAmount <= 0) return 100
   const total = tier.amount + tier.bonusAmount
   return Math.round((tier.amount / total) * 100)
 }
 
 function getDiscountRateFormatted(): string {
+  if (formData.value.amount <= 0) return '100'
   const total = formData.value.amount + formData.value.bonusAmount
   return ((formData.value.amount / total) * 100).toFixed(1)
 }
@@ -287,7 +311,7 @@ function openAddDialog() {
   showDialog.value = true
 }
 
-function openEditDialog(tier: RechargeTier) {
+function openEditDialog(tier: RechargeTierUI) {
   editingItem.value = tier
   formData.value = {
     amount: tier.amount,
@@ -299,42 +323,42 @@ function openEditDialog(tier: RechargeTier) {
   showDialog.value = true
 }
 
-function saveTier() {
+async function saveTier() {
   if (!formData.value.amount || formData.value.amount <= 0) return
-
-  if (editingItem.value) {
-    const index = tiers.value.findIndex(t => t.id === editingItem.value!.id)
-    if (index > -1) {
-      tiers.value[index] = {
-        ...tiers.value[index],
-        amount: formData.value.amount,
-        bonusAmount: formData.value.bonusAmount,
-        sortOrder: formData.value.sortOrder,
-        status: formData.value.status,
-        recommended: formData.value.recommended,
-      }
+  saving.value = true
+  try {
+    if (editingItem.value) {
+      await updateRechargeTier(editingItem.value.id, mapFormToApiPayload())
+    } else {
+      await createRechargeTier(mapFormToApiPayload())
     }
-  } else {
-    const newTier: RechargeTier = {
-      id: Date.now().toString(),
-      amount: formData.value.amount,
-      bonusAmount: formData.value.bonusAmount,
-      sortOrder: formData.value.sortOrder,
-      status: formData.value.status,
-      recommended: formData.value.recommended,
-    }
-    tiers.value.push(newTier)
+    showDialog.value = false
+    await fetchTiers()
+  } catch (e: any) {
+    error.value = e?.message || '保存充值档位失败'
+  } finally {
+    saving.value = false
   }
-
-  showDialog.value = false
 }
 
-function toggleStatus(tier: RechargeTier) {
-  tier.status = tier.status === 'enabled' ? 'disabled' : 'enabled'
+async function toggleStatus(tier: RechargeTierUI) {
+  try {
+    const newStatus = tier.status === 'enabled' ? 'disabled' : 'enabled'
+    await updateRechargeTier(tier.id, { isEnabled: newStatus === 'enabled' })
+    tier.status = newStatus
+  } catch (e: any) {
+    error.value = e?.message || '切换状态失败'
+  }
 }
 
-function toggleRecommended(tier: RechargeTier) {
-  tier.recommended = !tier.recommended
+async function toggleRecommended(tier: RechargeTierUI) {
+  try {
+    const newVal = !tier.recommended
+    await updateRechargeTier(tier.id, { isRecommended: newVal })
+    tier.recommended = newVal
+  } catch (e: any) {
+    error.value = e?.message || '操作失败'
+  }
 }
 
 function moveUp(index: number) {
@@ -359,10 +383,16 @@ function moveDown(index: number) {
   }
 }
 
-function deleteTier(tier: RechargeTier) {
-  const index = tiers.value.findIndex(t => t.id === tier.id)
-  if (index > -1) {
-    tiers.value.splice(index, 1)
+async function removeTier(tier: RechargeTierUI) {
+  try {
+    await deleteRechargeTier(tier.id)
+    await fetchTiers()
+  } catch (e: any) {
+    error.value = e?.message || '删除充值档位失败'
   }
 }
+
+onMounted(() => {
+  fetchTiers()
+})
 </script>

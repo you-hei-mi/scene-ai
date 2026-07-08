@@ -8,9 +8,9 @@
         </div>
         <p class="text-slate-600 dark:text-slate-400 ml-5">对话配置</p>
       </div>
-      <button class="btn-glass btn-glass--primary" @click="saveConfig">
+      <button class="btn-glass btn-glass--primary" :disabled="saving" @click="saveConfig">
         <UIcon name="lucide:save" class="w-4 h-4" />
-        保存配置
+        {{ saving ? '保存中...' : '保存配置' }}
       </button>
     </div>
 
@@ -29,6 +29,23 @@
       </button>
     </div>
 
+    <!-- Loading -->
+    <div v-if="loading" class="flex items-center justify-center py-20">
+      <UIcon name="lucide:loader-2" class="w-8 h-8 animate-spin text-primary" />
+      <span class="ml-3 text-slate-500">加载中...</span>
+    </div>
+
+    <!-- Error -->
+    <div v-else-if="error" class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-2xl p-4 mb-6 flex items-start gap-3">
+      <UIcon name="lucide:alert-circle" class="w-5 h-5 text-red-500 mt-0.5 flex-shrink-0" />
+      <div class="flex-1">
+        <p class="text-sm font-medium text-red-700 dark:text-red-400">加载失败</p>
+        <p class="text-xs text-red-600 dark:text-red-300 mt-1">{{ error }}</p>
+      </div>
+      <button class="btn-glass text-sm" @click="fetchConfig">重试</button>
+    </div>
+
+    <template v-else>
     <div class="space-y-6">
       <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-100 dark:border-slate-700">
         <div class="mb-6">
@@ -255,17 +272,20 @@
           <UIcon name="lucide:rotate-ccw" class="w-4 h-4" />
           恢复默认
         </button>
-        <button class="btn-glass btn-glass--primary" @click="saveConfig">
+        <button class="btn-glass btn-glass--primary" :disabled="saving" @click="saveConfig">
           <UIcon name="lucide:save" class="w-4 h-4" />
-          保存配置
+          {{ saving ? '保存中...' : '保存配置' }}
         </button>
       </div>
     </div>
+    </template>
   </div>
 </template>
 
 <script setup lang="ts">
-import { reactive } from 'vue'
+import { reactive, ref, onMounted } from 'vue'
+import { getChatConfig, updateChatConfig } from '~/composables/api/system'
+import type { ChatConfig as ApiChatConfig } from '~/composables/api/system'
 
 definePageMeta({
   layout: 'console',
@@ -293,7 +313,10 @@ interface ChatConfig {
   enableRating: boolean
 }
 
-const activeTab = 'config'
+const loading = ref(true)
+const error = ref('')
+const saving = ref(false)
+const activeTab = ref('config')
 
 const tabs = [
   { key: 'record', label: '对话记录', icon: 'lucide:message-square' },
@@ -363,6 +386,43 @@ const defaultConfig: ChatConfig = {
 
 const chatConfig = reactive<ChatConfig>({ ...defaultConfig })
 
+function applyApiConfig(api: ApiChatConfig) {
+  chatConfig.defaultModel = api.defaultModel || defaultConfig.defaultModel
+  chatConfig.fallbackModel1 = api.alternativeModels?.[0] || defaultConfig.fallbackModel1
+  chatConfig.fallbackModel2 = api.alternativeModels?.[1] || defaultConfig.fallbackModel2
+  chatConfig.maxContextLength = api.contextLength || defaultConfig.maxContextLength
+  chatConfig.maxOutputLength = api.maxOutputLength || defaultConfig.maxOutputLength
+  chatConfig.temperature = api.temperature ?? defaultConfig.temperature
+  chatConfig.topP = api.topP ?? defaultConfig.topP
+  chatConfig.frequencyPenalty = api.frequencyPenalty ?? defaultConfig.frequencyPenalty
+  chatConfig.presencePenalty = api.presencePenalty ?? defaultConfig.presencePenalty
+  chatConfig.systemPrompt = api.systemPrompt || defaultConfig.systemPrompt
+  chatConfig.welcomeMessage = api.welcomeMessage || defaultConfig.welcomeMessage
+  chatConfig.enableStreaming = api.streamingEnabled ?? defaultConfig.enableStreaming
+  chatConfig.showCitations = api.citeSources ?? defaultConfig.showCitations
+  chatConfig.enableModeration = api.contentModeration ?? defaultConfig.enableModeration
+  chatConfig.enableRating = api.ratingEnabled ?? defaultConfig.enableRating
+}
+
+async function fetchConfig() {
+  loading.value = true
+  error.value = ''
+  try {
+    const data = await getChatConfig()
+    if (data) {
+      applyApiConfig(data)
+    }
+  } catch (e: any) {
+    error.value = e.message || '加载对话配置失败'
+  } finally {
+    loading.value = false
+  }
+}
+
+onMounted(() => {
+  fetchConfig()
+})
+
 function formatNumber(num: number): string {
   if (num >= 1000) {
     return (num / 1000).toFixed(0) + 'K'
@@ -374,7 +434,29 @@ function resetConfig() {
   Object.assign(chatConfig, { ...defaultConfig })
 }
 
-function saveConfig() {
-  console.log('保存对话配置:', JSON.parse(JSON.stringify(chatConfig)))
+async function saveConfig() {
+  saving.value = true
+  try {
+    await updateChatConfig({
+      defaultModel: chatConfig.defaultModel,
+      alternativeModels: [chatConfig.fallbackModel1, chatConfig.fallbackModel2].filter(m => m !== 'none'),
+      contextLength: chatConfig.maxContextLength,
+      maxOutputLength: chatConfig.maxOutputLength,
+      temperature: chatConfig.temperature,
+      topP: chatConfig.topP,
+      frequencyPenalty: chatConfig.frequencyPenalty,
+      presencePenalty: chatConfig.presencePenalty,
+      systemPrompt: chatConfig.systemPrompt,
+      welcomeMessage: chatConfig.welcomeMessage,
+      streamingEnabled: chatConfig.enableStreaming,
+      citeSources: chatConfig.showCitations,
+      contentModeration: chatConfig.enableModeration,
+      ratingEnabled: chatConfig.enableRating,
+    })
+  } catch (e: any) {
+    error.value = e.message || '保存对话配置失败'
+  } finally {
+    saving.value = false
+  }
 }
 </script>

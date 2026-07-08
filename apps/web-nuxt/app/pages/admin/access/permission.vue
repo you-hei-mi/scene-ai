@@ -29,7 +29,25 @@
       </button>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <!-- 加载状态 -->
+    <div v-if="loading" class="flex items-center justify-center py-20">
+      <div class="flex flex-col items-center gap-4">
+        <UIcon name="lucide:loader-2" class="w-10 h-10 text-primary animate-spin" />
+        <p class="text-slate-500 text-sm">正在加载权限数据...</p>
+      </div>
+    </div>
+
+    <!-- 错误状态 -->
+    <div v-if="error" class="mb-6 p-4 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 flex items-center gap-3">
+      <UIcon name="lucide:alert-circle" class="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0" />
+      <div class="flex-1">
+        <p class="text-sm font-medium text-red-700 dark:text-red-400">加载失败</p>
+        <p class="text-xs text-red-500 mt-0.5">{{ error }}</p>
+      </div>
+      <button class="btn-glass text-sm px-3 py-1.5" @click="fetchPermissions">重试</button>
+    </div>
+
+    <div v-if="!loading" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
       <div
         v-for="group in permissionGroups"
         :key="group.id"
@@ -61,7 +79,7 @@
       </div>
     </div>
 
-    <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 p-4 mb-6">
+    <div v-if="!loading" class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 p-4 mb-6">
       <div class="flex flex-wrap items-center gap-4">
         <div class="relative w-64">
           <UIcon name="lucide:search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -79,7 +97,7 @@
       </div>
     </div>
 
-    <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 overflow-hidden">
+    <div v-if="!loading" class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 overflow-hidden">
       <div class="overflow-x-auto">
         <table class="w-full">
           <thead>
@@ -179,7 +197,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, reactive } from 'vue'
+import { ref, computed, reactive, onMounted } from 'vue'
+import { getPermissions, createPermission, updatePermission, deletePermission as deletePermissionApi } from '~/composables/api/order-finance-access'
 
 definePageMeta({
   layout: 'console',
@@ -210,6 +229,8 @@ const groupFilter = ref('all')
 const currentPage = ref(1)
 const showDialog = ref(false)
 const editingPermission = ref<Permission | null>(null)
+const loading = ref(true)
+const error = ref<string | null>(null)
 
 const tabs = [
   { key: 'menu', label: '菜单管理', icon: 'lucide:menu' },
@@ -247,74 +268,59 @@ const formData = reactive({
   module: '用户管理',
 })
 
-const permissionGroups = ref<PermissionGroup[]>([
-  {
-    id: '1',
-    name: '用户管理',
-    icon: 'lucide:users',
-    iconColor: 'text-blue-600 dark:text-blue-400',
-    bgColor: 'bg-blue-100 dark:bg-blue-900/30',
-    permissionCount: 8,
-    activeCount: 8,
-    allEnabled: true,
-  },
-  {
-    id: '2',
-    name: '财务管理',
-    icon: 'lucide:wallet',
-    iconColor: 'text-green-600 dark:text-green-400',
-    bgColor: 'bg-green-100 dark:bg-green-900/30',
-    permissionCount: 6,
-    activeCount: 4,
-    allEnabled: false,
-  },
-  {
-    id: '3',
-    name: '权限管理',
-    icon: 'lucide:shield',
-    iconColor: 'text-purple-600 dark:text-purple-400',
-    bgColor: 'bg-purple-100 dark:bg-purple-900/30',
-    permissionCount: 5,
-    activeCount: 5,
-    allEnabled: true,
-  },
-  {
-    id: '4',
-    name: '系统设置',
-    icon: 'lucide:settings',
-    iconColor: 'text-slate-600 dark:text-slate-400',
-    bgColor: 'bg-slate-100 dark:bg-slate-700/50',
-    permissionCount: 4,
-    activeCount: 3,
-    allEnabled: false,
-  },
-])
+const groupIconMap: Record<string, { icon: string; iconColor: string; bgColor: string }> = {
+  '用户管理': { icon: 'lucide:users', iconColor: 'text-blue-600 dark:text-blue-400', bgColor: 'bg-blue-100 dark:bg-blue-900/30' },
+  '财务管理': { icon: 'lucide:wallet', iconColor: 'text-green-600 dark:text-green-400', bgColor: 'bg-green-100 dark:bg-green-900/30' },
+  '权限管理': { icon: 'lucide:shield', iconColor: 'text-purple-600 dark:text-purple-400', bgColor: 'bg-purple-100 dark:bg-purple-900/30' },
+  '系统设置': { icon: 'lucide:settings', iconColor: 'text-slate-600 dark:text-slate-400', bgColor: 'bg-slate-100 dark:bg-slate-700/50' },
+}
 
-const permissions = ref<Permission[]>([
-  { id: '1', code: 'user:view', name: '查看用户', description: '查看用户列表和详情', module: '用户管理' },
-  { id: '2', code: 'user:create', name: '创建用户', description: '创建新用户账号', module: '用户管理' },
-  { id: '3', code: 'user:edit', name: '编辑用户', description: '修改用户信息和资料', module: '用户管理' },
-  { id: '4', code: 'user:delete', name: '删除用户', description: '删除用户账号', module: '用户管理' },
-  { id: '5', code: 'user:status', name: '管理用户状态', description: '启用/禁用用户账号', module: '用户管理' },
-  { id: '6', code: 'user:role', name: '分配角色', description: '为用户分配角色', module: '用户管理' },
-  { id: '7', code: 'user:export', name: '导出用户', description: '导出用户数据', module: '用户管理' },
-  { id: '8', code: 'user:import', name: '导入用户', description: '批量导入用户', module: '用户管理' },
-  { id: '9', code: 'financial:view', name: '查看财务', description: '查看财务数据和报表', module: '财务管理' },
-  { id: '10', code: 'financial:export', name: '导出财务', description: '导出财务数据', module: '财务管理' },
-  { id: '11', code: 'financial:recharge', name: '充值管理', description: '管理用户充值记录', module: '财务管理' },
-  { id: '12', code: 'financial:refund', name: '退款管理', description: '处理退款申请', module: '财务管理' },
-  { id: '13', code: 'financial:balance', name: '余额管理', description: '管理用户余额', module: '财务管理' },
-  { id: '14', code: 'financial:order', name: '订单管理', description: '查看和管理订单', module: '财务管理' },
-  { id: '15', code: 'access:menu', name: '菜单管理', description: '管理后台菜单结构', module: '权限管理' },
-  { id: '16', code: 'access:permission', name: '权限管理', description: '管理系统权限项', module: '权限管理' },
-  { id: '17', code: 'access:role', name: '角色管理', description: '管理角色和权限分配', module: '权限管理' },
-  { id: '18', code: 'access:assign', name: '权限分配', description: '为用户分配权限', module: '权限管理' },
-  { id: '19', code: 'access:audit', name: '操作审计', description: '查看权限操作日志', module: '权限管理' },
-  { id: '20', code: 'settings:view', name: '查看设置', description: '查看系统设置', module: '系统设置' },
-  { id: '21', code: 'settings:edit', name: '修改设置', description: '修改系统配置', module: '系统设置' },
-  { id: '22', code: 'settings:mail', name: '邮件配置', description: '配置邮件服务', module: '系统设置' },
-  { id: '23', code: 'settings:storage', name: '存储配置', description: '配置文件存储', module: '系统设置' },
-])
+const permissions = ref<Permission[]>([])
+
+const permissionGroups = computed<PermissionGroup[]>(() => {
+  const moduleMap = new Map<string, Permission[]>()
+  permissions.value.forEach(p => {
+    const mod = p.module || '其他'
+    if (!moduleMap.has(mod)) moduleMap.set(mod, [])
+    moduleMap.get(mod)!.push(p)
+  })
+  return Array.from(moduleMap.entries()).map(([mod, perms], idx) => {
+    const icons = groupIconMap[mod] || { icon: 'lucide:folder', iconColor: 'text-slate-500', bgColor: 'bg-slate-100 dark:bg-slate-700/50' }
+    return {
+      id: String(idx + 1),
+      name: mod,
+      icon: icons.icon,
+      iconColor: icons.iconColor,
+      bgColor: icons.bgColor,
+      permissionCount: perms.length,
+      activeCount: perms.length,
+      allEnabled: true,
+    }
+  })
+})
+
+async function fetchPermissions() {
+  loading.value = true
+  error.value = null
+  try {
+    const data = await getPermissions()
+    permissions.value = (data || []).map((item: any) => ({
+      id: item.id,
+      code: item.code,
+      name: item.name,
+      description: item.description || '',
+      module: item.module || item.group || '其他',
+    }))
+  } catch (e: any) {
+    error.value = e.message || '获取权限数据失败'
+  } finally {
+    loading.value = false
+  }
+}
+
+onMounted(() => {
+  fetchPermissions()
+})
 
 const filteredPermissions = computed(() => {
   let result = [...permissions.value]
@@ -361,37 +367,35 @@ function openEditDialog(permission: Permission) {
   showDialog.value = true
 }
 
-function savePermission() {
+async function savePermission() {
   if (!formData.code.trim() || !formData.name.trim()) return
 
-  if (editingPermission.value) {
-    const idx = permissions.value.findIndex(p => p.id === editingPermission.value!.id)
-    if (idx > -1) {
-      permissions.value[idx] = {
-        ...permissions.value[idx],
-        code: formData.code,
-        name: formData.name,
-        description: formData.description,
-        module: formData.module,
-      }
-    }
-  } else {
-    permissions.value.push({
-      id: Date.now().toString(),
-      code: formData.code,
-      name: formData.name,
-      description: formData.description,
-      module: formData.module,
-    })
+  const payload = {
+    code: formData.code,
+    name: formData.name,
+    description: formData.description,
+    module: formData.module,
   }
 
-  showDialog.value = false
+  try {
+    if (editingPermission.value) {
+      await updatePermission(editingPermission.value.id, payload)
+    } else {
+      await createPermission(payload)
+    }
+    showDialog.value = false
+    await fetchPermissions()
+  } catch (e: any) {
+    error.value = e.message || '保存权限失败'
+  }
 }
 
-function deletePermission(permission: Permission) {
-  const idx = permissions.value.findIndex(p => p.id === permission.id)
-  if (idx > -1) {
-    permissions.value.splice(idx, 1)
+async function deletePermission(permission: Permission) {
+  try {
+    await deletePermissionApi(permission.id)
+    await fetchPermissions()
+  } catch (e: any) {
+    error.value = e.message || '删除权限失败'
   }
 }
 

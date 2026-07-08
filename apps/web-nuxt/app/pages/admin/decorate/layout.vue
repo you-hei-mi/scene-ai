@@ -8,9 +8,9 @@
         </div>
         <p class="text-slate-600 dark:text-slate-400 ml-5">布局装修</p>
       </div>
-      <button class="btn-glass btn-glass--primary" @click="saveLayout">
+      <button class="btn-glass btn-glass--primary" :disabled="saving" @click="saveLayout">
         <UIcon name="lucide:save" class="w-4 h-4" />
-        保存布局
+        {{ saving ? '保存中...' : '保存布局' }}
       </button>
     </div>
 
@@ -29,6 +29,23 @@
       </button>
     </div>
 
+    <!-- Loading -->
+    <div v-if="loading" class="flex items-center justify-center py-20">
+      <UIcon name="lucide:loader-2" class="w-8 h-8 animate-spin text-primary" />
+      <span class="ml-3 text-slate-500">加载中...</span>
+    </div>
+
+    <!-- Error -->
+    <div v-else-if="error" class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-2xl p-4 mb-6 flex items-start gap-3">
+      <UIcon name="lucide:alert-circle" class="w-5 h-5 text-red-500 mt-0.5 flex-shrink-0" />
+      <div class="flex-1">
+        <p class="text-sm font-medium text-red-700 dark:text-red-400">加载失败</p>
+        <p class="text-xs text-red-600 dark:text-red-300 mt-1">{{ error }}</p>
+      </div>
+      <button class="btn-glass text-sm" @click="fetchLayout">重试</button>
+    </div>
+
+    <template v-else>
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
       <div class="lg:col-span-2 space-y-6">
         <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-100 dark:border-slate-700">
@@ -297,30 +314,33 @@
         </div>
       </div>
     </div>
+    </template>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
+import { getDecorateLayout, updateDecorateLayout } from '~/composables/api/system'
+import type { DecorateLayout as ApiDecorateLayout } from '~/composables/api/system'
 
 definePageMeta({
   layout: 'console',
 })
 
 interface LayoutConfig {
-  headerStyle: 'default' | 'transparent' | 'colored'
-  headerHeight: 'compact' | 'default' | 'tall'
+  headerStyle: string
+  headerHeight: string
   showSearch: boolean
   stickyHeader: boolean
-  sidebarPosition: 'left' | 'right'
-  sidebarWidth: 'compact' | 'default' | 'wide'
+  sidebarPosition: string
+  sidebarWidth: string
   sidebarCollapsed: boolean
-  footerStyle: 'default' | 'minimal' | 'hidden'
+  footerStyle: string
   copyright: string
   showIcp: boolean
   showSocial: boolean
   colorScheme: string
-  themeMode: 'light' | 'dark' | 'auto'
+  themeMode: string
 }
 
 interface HeaderStyle {
@@ -336,6 +356,9 @@ interface ColorScheme {
   bg: string
 }
 
+const loading = ref(true)
+const error = ref('')
+const saving = ref(false)
 const activeTab = ref('layout')
 
 const tabs = [
@@ -392,7 +415,61 @@ const layoutConfig = reactive<LayoutConfig>({
   themeMode: 'auto',
 })
 
-function saveLayout() {
-  console.log('保存布局配置:', JSON.parse(JSON.stringify(layoutConfig)))
+function applyApiLayout(api: ApiDecorateLayout) {
+  layoutConfig.headerStyle = api.headerStyle || layoutConfig.headerStyle
+  layoutConfig.headerHeight = api.headerHeight || layoutConfig.headerHeight
+  layoutConfig.showSearch = api.showSearch ?? layoutConfig.showSearch
+  layoutConfig.stickyHeader = api.fixedHeader ?? layoutConfig.stickyHeader
+  layoutConfig.sidebarPosition = api.sidebarPosition || layoutConfig.sidebarPosition
+  layoutConfig.sidebarWidth = api.sidebarWidth || layoutConfig.sidebarWidth
+  layoutConfig.sidebarCollapsed = api.defaultCollapsed ?? layoutConfig.sidebarCollapsed
+  layoutConfig.footerStyle = api.footerStyle || layoutConfig.footerStyle
+  layoutConfig.copyright = api.copyright || layoutConfig.copyright
+  layoutConfig.showIcp = api.showIcp ?? layoutConfig.showIcp
+  layoutConfig.colorScheme = api.colorScheme || layoutConfig.colorScheme
+  layoutConfig.themeMode = api.themeMode === 'system' ? 'auto' : api.themeMode || layoutConfig.themeMode
+}
+
+async function fetchLayout() {
+  loading.value = true
+  error.value = ''
+  try {
+    const data = await getDecorateLayout()
+    if (data) {
+      applyApiLayout(data)
+    }
+  } catch (e: any) {
+    error.value = e.message || '加载布局配置失败'
+  } finally {
+    loading.value = false
+  }
+}
+
+onMounted(() => {
+  fetchLayout()
+})
+
+async function saveLayout() {
+  saving.value = true
+  try {
+    await updateDecorateLayout({
+      headerStyle: layoutConfig.headerStyle,
+      headerHeight: layoutConfig.headerHeight,
+      showSearch: layoutConfig.showSearch,
+      fixedHeader: layoutConfig.stickyHeader,
+      sidebarPosition: layoutConfig.sidebarPosition as 'left' | 'right',
+      sidebarWidth: layoutConfig.sidebarWidth,
+      defaultCollapsed: layoutConfig.sidebarCollapsed,
+      footerStyle: layoutConfig.footerStyle,
+      copyright: layoutConfig.copyright,
+      showIcp: layoutConfig.showIcp,
+      colorScheme: layoutConfig.colorScheme,
+      themeMode: layoutConfig.themeMode === 'auto' ? 'system' : (layoutConfig.themeMode as 'light' | 'dark'),
+    })
+  } catch (e: any) {
+    error.value = e.message || '保存布局配置失败'
+  } finally {
+    saving.value = false
+  }
 }
 </script>

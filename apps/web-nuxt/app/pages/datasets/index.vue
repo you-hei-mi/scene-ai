@@ -14,6 +14,17 @@
       </button>
     </div>
 
+    <div v-if="error" class="mb-6 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/50 rounded-xl p-4 flex items-center gap-3">
+      <UIcon name="lucide:alert-triangle" class="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0" />
+      <div class="flex-1">
+        <p class="text-sm font-medium text-amber-800 dark:text-amber-300">{{ error }}</p>
+        <p class="text-xs text-amber-600 dark:text-amber-400 mt-1">当前显示的是本地缓存数据，部分功能可能受限</p>
+      </div>
+      <button class="text-xs text-amber-700 dark:text-amber-300 underline hover:no-underline flex-shrink-0" @click="fetchDatasetList">
+        重试
+      </button>
+    </div>
+
     <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-8">
       <div class="relative w-full sm:w-64">
         <UIcon name="lucide:search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -188,6 +199,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
+import { getMyDatasets } from '~/composables/api/core'
 
 const datasetStore = useDatasetStore()
 const toast = useToast()
@@ -199,6 +211,7 @@ definePageMeta({
 const keyword = ref('')
 const filterType = ref<'all' | 'private' | 'public'>('all')
 const showCreateDialog = ref(false)
+const error = ref<string | null>(null)
 
 const newDataset = ref({
   name: '',
@@ -266,7 +279,38 @@ function handleSelect(dataset: any) {
   navigateTo(`/datasets/${dataset.id}`)
 }
 
+async function fetchDatasetList() {
+  error.value = null
+  datasetStore.loading = true
+  try {
+    const result = await getMyDatasets()
+    const apiItems = result?.items ?? []
+    const mappedDatasets = apiItems.map((item: any) => ({
+      id: item.id,
+      name: item.name,
+      description: item.description || '',
+      icon: item.icon,
+      type: (item.type === 'public' ? 'public' : 'private') as 'public' | 'private',
+      docCount: item.docCount ?? 0,
+      chunkCount: item.chunkCount ?? 0,
+      size: item.size ?? 0,
+      status: (item.status || 'active') as 'active' | 'indexing' | 'error',
+      createdAt: new Date(item.createdAt || Date.now()),
+      updatedAt: new Date(item.updatedAt || Date.now()),
+      owner: item.owner,
+      members: item.members,
+    }))
+    datasetStore.datasets = mappedDatasets
+    datasetStore.total = mappedDatasets.length
+  } catch (e: any) {
+    error.value = `加载知识库列表失败: ${e.message || '网络异常'}` + '，已切换到本地缓存数据'
+    datasetStore.initMockData()
+  } finally {
+    datasetStore.loading = false
+  }
+}
+
 onMounted(() => {
-  datasetStore.fetchDatasets()
+  fetchDatasetList()
 })
 </script>

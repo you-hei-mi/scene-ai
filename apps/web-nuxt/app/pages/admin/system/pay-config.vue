@@ -10,7 +10,22 @@
 
     <AdminSystemTabs />
 
-    <div class="space-y-6">
+    <!-- Loading -->
+    <div v-if="loading" class="flex items-center justify-center py-20">
+      <UIcon name="lucide:loader" class="w-8 h-8 animate-spin text-primary" />
+      <span class="ml-3 text-slate-500">加载中...</span>
+    </div>
+
+    <!-- Error -->
+    <div v-else-if="error" class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4 mb-6">
+      <div class="flex items-center gap-2">
+        <UIcon name="lucide:alert-circle" class="w-5 h-5 text-red-600 dark:text-red-400" />
+        <span class="text-sm text-red-700 dark:text-red-400">{{ error }}</span>
+      </div>
+      <button class="btn-glass mt-3 text-sm" @click="fetchConfig">重试</button>
+    </div>
+
+    <div v-else class="space-y-6">
       <!-- 支付宝配置 -->
       <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-100 dark:border-slate-700">
         <div class="mb-6">
@@ -103,14 +118,18 @@
 
       <div class="flex items-center justify-end gap-3">
         <button class="btn-glass" @click="resetConfig">重置</button>
-        <button class="btn-glass btn-glass--primary" @click="saveConfig">保存设置</button>
+        <button class="btn-glass btn-glass--primary" @click="saveConfig" :disabled="saving">
+          <UIcon v-if="saving" name="lucide:loader" class="w-4 h-4 animate-spin" />
+          {{ saving ? '保存中...' : '保存设置' }}
+        </button>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { reactive } from 'vue'
+import { reactive, ref, onMounted } from 'vue'
+import { getPayConfig, updatePayConfig } from '~/composables/api/system'
 
 definePageMeta({
   layout: 'console',
@@ -141,18 +160,22 @@ interface PayConfig {
   switches: PaymentSwitches
 }
 
+const loading = ref(true)
+const error = ref<string | null>(null)
+const saving = ref(false)
+
 const defaultConfig: PayConfig = {
   alipay: {
-    appId: '2021000000000001',
+    appId: '',
     merchantPrivateKey: '',
     alipayPublicKey: '',
-    notifyUrl: 'https://buildingai.cc/api/payment/alipay/notify',
+    notifyUrl: '',
   },
   wechat: {
-    mchId: '1234567890',
+    mchId: '',
     apiKey: '',
-    certPath: '/etc/ssl/wechat/apiclient_cert.pem',
-    keyPath: '/etc/ssl/wechat/apiclient_key.pem',
+    certPath: '',
+    keyPath: '',
   },
   switches: {
     alipay: true,
@@ -162,11 +185,70 @@ const defaultConfig: PayConfig = {
 
 const config = reactive<PayConfig>(JSON.parse(JSON.stringify(defaultConfig)))
 
+async function fetchConfig() {
+  loading.value = true
+  error.value = null
+  try {
+    const data = await getPayConfig()
+    if (data) {
+      config.alipay = {
+        appId: (data.alipay as any)?.appId ?? '',
+        merchantPrivateKey: (data.alipay as any)?.privateKey ?? '',
+        alipayPublicKey: (data.alipay as any)?.publicKey ?? '',
+        notifyUrl: (data.alipay as any)?.callbackUrl ?? '',
+      }
+      config.wechat = {
+        mchId: (data.wechatPay as any)?.merchantId ?? '',
+        apiKey: (data.wechatPay as any)?.apiKey ?? '',
+        certPath: (data.wechatPay as any)?.certPath ?? '',
+        keyPath: '',
+      }
+      config.switches = {
+        alipay: (data.paymentSwitch as any)?.alipay ?? true,
+        wechat: (data.paymentSwitch as any)?.wechatPay ?? true,
+      }
+    }
+  } catch (e: any) {
+    error.value = e.message || '加载支付配置失败'
+  } finally {
+    loading.value = false
+  }
+}
+
 function resetConfig() {
   Object.assign(config, JSON.parse(JSON.stringify(defaultConfig)))
 }
 
-function saveConfig() {
-  console.log('保存支付配置:', config)
+async function saveConfig() {
+  if (saving.value) return
+  saving.value = true
+  error.value = null
+  try {
+    await updatePayConfig({
+      alipay: {
+        appId: config.alipay.appId,
+        privateKey: config.alipay.merchantPrivateKey,
+        publicKey: config.alipay.alipayPublicKey,
+        callbackUrl: config.alipay.notifyUrl,
+      },
+      wechatPay: {
+        merchantId: config.wechat.mchId,
+        apiKey: config.wechat.apiKey,
+        certPath: config.wechat.certPath,
+      },
+      paymentSwitch: {
+        alipay: config.switches.alipay,
+        wechatPay: config.switches.wechat,
+      },
+    } as any)
+  } catch (e: any) {
+    error.value = e.message || '保存支付配置失败'
+  } finally {
+    saving.value = false
+  }
 }
+
+onMounted(() => {
+  fetchConfig()
+})
 </script>

@@ -101,5 +101,11 @@ export default defineNuxtConfig({
       // chunk 大小警告阈值
       chunkSizeWarningLimit: 1000,
     },
+    server: {
+      watch: {
+        usePolling: true,
+        interval: 1000,
+      },
+    },
   },
 })

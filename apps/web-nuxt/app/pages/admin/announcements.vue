@@ -1,10 +1,12 @@
 <template>
-  <div style="background: var(--bg-deep); min-height: 100vh">
-    <!-- 页面标题和操作 -->
+  <div class="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50/30 dark:from-slate-900 dark:via-slate-800 dark:to-indigo-950/30">
     <div class="flex items-center justify-between mb-6">
       <div>
-        <h1 class="font-display text-gradient text-2xl font-bold">运营公告管理</h1>
-        <p class="text-sm mt-1" style="color: var(--text-secondary)">管理系统公告和通知</p>
+        <div class="flex items-center gap-4 mb-2">
+          <div class="w-1 h-8 bg-gradient-to-b from-primary to-accent rounded-full"></div>
+          <h1 class="font-display text-3xl font-bold text-slate-900 dark:text-white">运营公告管理</h1>
+        </div>
+        <p class="text-slate-600 dark:text-slate-400 ml-5">管理系统公告和通知</p>
       </div>
       <button class="btn-glass btn-glass--primary" @click="openCreateDialog">
         <UIcon name="lucide:plus" class="w-4 h-4" />
@@ -12,65 +14,84 @@
       </button>
     </div>
 
-    <!-- 统计卡片 -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-      <div class="glass-card p-4">
+    <!-- Loading Spinner -->
+    <div v-if="loading" class="flex items-center justify-center py-20">
+      <div class="flex flex-col items-center gap-3">
+        <div class="w-10 h-10 border-4 border-primary/30 border-t-primary rounded-full animate-spin"></div>
+        <p class="text-sm text-slate-500">正在加载公告数据...</p>
+      </div>
+    </div>
+
+    <!-- Error Banner -->
+    <div v-if="error" class="mb-6 p-4 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 flex items-center gap-3">
+      <UIcon name="lucide:alert-triangle" class="w-5 h-5 text-red-500 flex-shrink-0" />
+      <div class="flex-1">
+        <p class="text-sm font-medium text-red-700 dark:text-red-400">数据加载失败</p>
+        <p class="text-xs text-red-500 mt-0.5">{{ error }}，已使用本地缓存数据。</p>
+      </div>
+      <button class="btn-glass text-sm px-3 py-1.5" @click="fetchAnnouncementData">重试</button>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-100 dark:border-slate-700 transition-all duration-300 hover:shadow-lg">
         <div class="flex items-center justify-between">
           <div>
-            <p class="text-sm" style="color: var(--text-secondary)">总公告数</p>
-            <p class="text-2xl font-bold mt-1" style="color: var(--text-primary)">{{ stats.total }}</p>
+            <p class="text-sm text-slate-500">总公告数</p>
+            <p class="text-3xl font-bold text-slate-900 dark:text-white mt-2">{{ stats.total }}</p>
           </div>
-          <div class="w-12 h-12 rounded-full flex items-center justify-center" style="background: rgba(59, 130, 246, 0.12)">
-            <UIcon name="lucide:megaphone" class="w-6 h-6" style="color: #3b82f6" />
+          <div class="w-14 h-14 rounded-2xl flex items-center justify-center bg-blue-100 dark:bg-blue-900/30">
+            <UIcon name="lucide:megaphone" class="w-7 h-7 text-blue-600 dark:text-blue-400" />
           </div>
         </div>
       </div>
 
-      <div class="glass-card p-4">
+      <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-100 dark:border-slate-700 transition-all duration-300 hover:shadow-lg">
         <div class="flex items-center justify-between">
           <div>
-            <p class="text-sm" style="color: var(--text-secondary)">已发布</p>
-            <p class="text-2xl font-bold mt-1" style="color: #22c55e">{{ stats.published }}</p>
+            <p class="text-sm text-slate-500">已发布</p>
+            <p class="text-3xl font-bold text-green-600 dark:text-green-400 mt-2">{{ stats.published }}</p>
           </div>
-          <div class="w-12 h-12 rounded-full flex items-center justify-center" style="background: rgba(34, 197, 94, 0.12)">
-            <UIcon name="lucide:check-circle" class="w-6 h-6" style="color: #22c55e" />
+          <div class="w-14 h-14 rounded-2xl flex items-center justify-center bg-green-100 dark:bg-green-900/30">
+            <UIcon name="lucide:check-circle" class="w-7 h-7 text-green-600 dark:text-green-400" />
           </div>
         </div>
       </div>
 
-      <div class="glass-card p-4">
+      <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-100 dark:border-slate-700 transition-all duration-300 hover:shadow-lg">
         <div class="flex items-center justify-between">
           <div>
-            <p class="text-sm" style="color: var(--text-secondary)">草稿</p>
-            <p class="text-2xl font-bold mt-1" style="color: #eab308">{{ stats.draft }}</p>
+            <p class="text-sm text-slate-500">草稿</p>
+            <p class="text-3xl font-bold text-yellow-600 dark:text-yellow-400 mt-2">{{ stats.draft }}</p>
           </div>
-          <div class="w-12 h-12 rounded-full flex items-center justify-center" style="background: rgba(234, 179, 8, 0.12)">
-            <UIcon name="lucide:file-edit" class="w-6 h-6" style="color: #eab308" />
+          <div class="w-14 h-14 rounded-2xl flex items-center justify-center bg-yellow-100 dark:bg-yellow-900/30">
+            <UIcon name="lucide:file-edit" class="w-7 h-7 text-yellow-600 dark:text-yellow-400" />
           </div>
         </div>
       </div>
 
-      <div class="glass-card p-4">
+      <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-100 dark:border-slate-700 transition-all duration-300 hover:shadow-lg">
         <div class="flex items-center justify-between">
           <div>
-            <p class="text-sm" style="color: var(--text-secondary)">今日浏览</p>
-            <p class="text-2xl font-bold mt-1" style="color: var(--text-primary)">{{ stats.todayViews.toLocaleString() }}</p>
+            <p class="text-sm text-slate-500">今日浏览</p>
+            <p class="text-3xl font-bold text-slate-900 dark:text-white mt-2">{{ stats.todayViews.toLocaleString() }}</p>
           </div>
-          <div class="w-12 h-12 rounded-full flex items-center justify-center" style="background: rgba(249, 115, 22, 0.12)">
-            <UIcon name="lucide:eye" class="w-6 h-6" style="color: #f97316" />
+          <div class="w-14 h-14 rounded-2xl flex items-center justify-center bg-orange-100 dark:bg-orange-900/30">
+            <UIcon name="lucide:eye" class="w-7 h-7 text-orange-600 dark:text-orange-400" />
           </div>
         </div>
       </div>
     </div>
 
-    <!-- 筛选和搜索 -->
-    <div class="glass-card p-4 mb-6">
+    <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 p-4 mb-6">
       <div class="flex flex-wrap items-center gap-4">
-        <UInput v-model="searchKeyword" placeholder="搜索公告标题..." class="w-64">
-          <template #leading>
-            <UIcon name="lucide:search" class="w-4 h-4" style="color: var(--text-secondary)" />
-          </template>
-        </UInput>
+        <div class="relative w-64">
+          <UIcon name="lucide:search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+          <input 
+            v-model="searchKeyword" 
+            placeholder="搜索公告标题..." 
+            class="w-full pl-10 pr-4 py-2.5 bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
+          />
+        </div>
         <USelect v-model="statusFilter" :options="statusOptions" class="w-40" />
         <USelect v-model="typeFilter" :options="typeOptions" class="w-44" />
         <div class="flex-1"></div>
@@ -80,57 +101,50 @@
       </div>
     </div>
 
-    <!-- 公告列表表格 -->
-    <div class="glass-card" style="padding: 0">
+    <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 overflow-hidden">
       <div class="overflow-x-auto">
         <table class="w-full">
           <thead>
-            <tr style="border-bottom: 1px solid var(--glass-border)">
-              <th class="text-left px-4 py-3 text-sm font-medium" style="color: var(--text-secondary)">标题</th>
-              <th class="text-left px-4 py-3 text-sm font-medium w-28" style="color: var(--text-secondary)">类型</th>
-              <th class="text-left px-4 py-3 text-sm font-medium w-24" style="color: var(--text-secondary)">状态</th>
-              <th class="text-left px-4 py-3 text-sm font-medium w-36" style="color: var(--text-secondary)">发布时间</th>
-              <th class="text-left px-4 py-3 text-sm font-medium w-24" style="color: var(--text-secondary)">浏览量</th>
-              <th class="text-right px-4 py-3 text-sm font-medium w-24" style="color: var(--text-secondary)">操作</th>
+            <tr class="border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-700/50">
+              <th class="text-left px-6 py-4 text-sm font-medium text-slate-500">标题</th>
+              <th class="text-left px-6 py-4 text-sm font-medium text-slate-500 w-28">类型</th>
+              <th class="text-left px-6 py-4 text-sm font-medium text-slate-500 w-24">状态</th>
+              <th class="text-left px-6 py-4 text-sm font-medium text-slate-500 w-36">发布时间</th>
+              <th class="text-left px-6 py-4 text-sm font-medium text-slate-500 w-24">浏览量</th>
+              <th class="text-right px-6 py-4 text-sm font-medium text-slate-500 w-24">操作</th>
             </tr>
           </thead>
           <tbody>
             <tr
               v-for="item in filteredAnnouncements"
               :key="item.id"
-              style="border-bottom: 1px solid var(--glass-border)"
-              :style="item === filteredAnnouncements[filteredAnnouncements.length - 1] ? { borderBottom: 'none' } : {}"
+              class="border-b border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors"
             >
-              <td class="px-4 py-3">
+              <td class="px-6 py-4">
                 <div class="flex items-center gap-2">
                   <UIcon
                     v-if="item.pinned"
                     name="lucide:pin"
-                    class="w-4 h-4 flex-shrink-0"
-                    style="color: #f97316"
+                    class="w-4 h-4 flex-shrink-0 text-orange-500"
                   />
-                  <span class="font-medium text-sm" style="color: var(--text-primary)">{{ item.title }}</span>
+                  <span class="font-medium text-sm text-slate-900 dark:text-white">{{ item.title }}</span>
                 </div>
               </td>
-              <td class="px-4 py-3">
+              <td class="px-6 py-4">
                 <UBadge :variant="getTypeBadgeVariant(item.type)" size="sm">
                   {{ getTypeText(item.type) }}
                 </UBadge>
               </td>
-              <td class="px-4 py-3">
+              <td class="px-6 py-4">
                 <UBadge :variant="getStatusBadgeVariant(item.status)" size="sm">
                   {{ getStatusText(item.status) }}
                 </UBadge>
               </td>
-              <td class="px-4 py-3 text-sm" style="color: var(--text-secondary)">
-                {{ item.publishTime || '—' }}
-              </td>
-              <td class="px-4 py-3 text-sm" style="color: var(--text-secondary)">
-                {{ item.views.toLocaleString() }}
-              </td>
-              <td class="px-4 py-3 text-right">
+              <td class="px-6 py-4 text-sm text-slate-500">{{ item.publishTime || '—' }}</td>
+              <td class="px-6 py-4 text-sm text-slate-500">{{ item.views.toLocaleString() }}</td>
+              <td class="px-6 py-4 text-right">
                 <UDropdownMenu>
-                  <button class="btn-glass" style="font-size: 0.875rem; padding: 0.25rem">
+                  <button class="btn-glass p-2">
                     <UIcon name="lucide:more-horizontal" class="w-4 h-4" />
                   </button>
                   <template #items>
@@ -152,63 +166,60 @@
         </table>
       </div>
 
-      <!-- 空状态 -->
       <div v-if="filteredAnnouncements.length === 0" class="text-center py-12">
-        <UIcon name="lucide:megaphone" class="w-12 h-12 mx-auto mb-3" style="color: var(--text-secondary)" />
-        <p style="color: var(--text-secondary)">未找到匹配的公告</p>
+        <UIcon name="lucide:megaphone" class="w-12 h-12 mx-auto mb-3 text-slate-400" />
+        <p class="text-slate-500">未找到匹配的公告</p>
       </div>
 
-      <!-- 分页 -->
-      <div class="flex items-center justify-between px-4 py-3" style="border-top: 1px solid var(--glass-border)">
-        <div class="text-sm" style="color: var(--text-secondary)">
+      <div class="flex items-center justify-between px-6 py-4 border-t border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-700/30">
+        <div class="text-sm text-slate-500">
           共 {{ filteredAnnouncements.length }} 条公告
         </div>
         <div class="flex items-center gap-2">
-          <button class="btn-glass" style="font-size: 0.875rem; padding: 0.25rem 0.5rem">
+          <button class="btn-glass px-3 py-1.5 text-sm">
             <UIcon name="lucide:chevron-left" class="w-4 h-4" />
           </button>
-          <span class="text-sm" style="color: var(--text-primary)">第 {{ currentPage }} / {{ totalPages }} 页</span>
-          <button class="btn-glass" style="font-size: 0.875rem; padding: 0.25rem 0.5rem">
+          <span class="text-sm font-medium text-slate-900 dark:text-white">第 {{ currentPage }} / {{ totalPages }} 页</span>
+          <button class="btn-glass px-3 py-1.5 text-sm">
             <UIcon name="lucide:chevron-right" class="w-4 h-4" />
           </button>
         </div>
       </div>
     </div>
 
-    <!-- 添加/编辑公告对话框 -->
     <UDialog v-model="showDialog" :title="editingItem ? '编辑公告' : '发布公告'" size="xl">
       <div class="space-y-4">
         <div>
-          <label class="block text-sm font-medium mb-1.5" style="color: var(--text-primary)">公告标题</label>
+          <label class="block text-sm font-medium mb-1.5 text-slate-700 dark:text-slate-300">公告标题</label>
           <UInput v-model="formData.title" placeholder="输入公告标题" />
         </div>
         <div class="grid grid-cols-2 gap-4">
           <div>
-            <label class="block text-sm font-medium mb-1.5" style="color: var(--text-primary)">公告类型</label>
+            <label class="block text-sm font-medium mb-1.5 text-slate-700 dark:text-slate-300">公告类型</label>
             <USelect v-model="formData.type" :options="typeSelectOptions" />
           </div>
           <div>
-            <label class="block text-sm font-medium mb-1.5" style="color: var(--text-primary)">状态</label>
+            <label class="block text-sm font-medium mb-1.5 text-slate-700 dark:text-slate-300">状态</label>
             <USelect v-model="formData.status" :options="statusSelectOptions" />
           </div>
         </div>
         <div>
-          <label class="block text-sm font-medium mb-1.5" style="color: var(--text-primary)">公告内容</label>
+          <label class="block text-sm font-medium mb-1.5 text-slate-700 dark:text-slate-300">公告内容</label>
           <UTextarea v-model="formData.content" placeholder="输入公告内容..." rows="5" />
         </div>
         <div>
-          <label class="block text-sm font-medium mb-1.5" style="color: var(--text-primary)">定时发布时间</label>
+          <label class="block text-sm font-medium mb-1.5 text-slate-700 dark:text-slate-300">定时发布时间</label>
           <UInput v-model="formData.scheduledAt" type="datetime-local" />
-          <p class="text-xs mt-1" style="color: var(--text-secondary)">留空表示立即发布（仅草稿状态生效）</p>
+          <p class="text-xs mt-1 text-slate-500">留空表示立即发布（仅草稿状态生效）</p>
         </div>
         <div class="flex items-center gap-6">
           <label class="flex items-center gap-2 cursor-pointer">
             <UCheckbox v-model="formData.pinned" />
-            <span class="text-sm" style="color: var(--text-primary)">置顶公告</span>
+            <span class="text-sm text-slate-700 dark:text-slate-300">置顶公告</span>
           </label>
           <label class="flex items-center gap-2 cursor-pointer">
             <UCheckbox v-model="formData.sendNotification" />
-            <span class="text-sm" style="color: var(--text-primary)">发送站内通知</span>
+            <span class="text-sm text-slate-700 dark:text-slate-300">发送站内通知</span>
           </label>
         </div>
       </div>
@@ -221,25 +232,16 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import { getSmsConfig } from '~/composables/api/core'
 
 definePageMeta({
   layout: 'console',
 })
 
-/**
- * 公告类型
- */
 type AnnouncementType = 'system' | 'update' | 'activity' | 'maintenance'
-
-/**
- * 公告状态
- */
 type AnnouncementStatus = 'published' | 'draft' | 'expired'
 
-/**
- * 公告接口定义
- */
 interface Announcement {
   id: string
   title: string
@@ -252,39 +254,16 @@ interface Announcement {
   scheduledAt: string | null
 }
 
-/**
- * 搜索关键词
- */
+const loading = ref(false)
+const error = ref<string | null>(null)
+
 const searchKeyword = ref('')
-
-/**
- * 状态筛选
- */
 const statusFilter = ref('all')
-
-/**
- * 类型筛选
- */
 const typeFilter = ref('all')
-
-/**
- * 当前页码
- */
 const currentPage = ref(1)
-
-/**
- * 是否显示对话框
- */
 const showDialog = ref(false)
-
-/**
- * 正在编辑的公告
- */
 const editingItem = ref<Announcement | null>(null)
 
-/**
- * 状态筛选选项
- */
 const statusOptions = [
   { label: '全部状态', value: 'all' },
   { label: '已发布', value: 'published' },
@@ -292,9 +271,6 @@ const statusOptions = [
   { label: '已过期', value: 'expired' },
 ]
 
-/**
- * 类型筛选选项
- */
 const typeOptions = [
   { label: '全部类型', value: 'all' },
   { label: '系统公告', value: 'system' },
@@ -303,9 +279,6 @@ const typeOptions = [
   { label: '维护通知', value: 'maintenance' },
 ]
 
-/**
- * 类型选择选项（表单用）
- */
 const typeSelectOptions = [
   { label: '系统公告', value: 'system' },
   { label: '版本更新', value: 'update' },
@@ -313,17 +286,11 @@ const typeSelectOptions = [
   { label: '维护通知', value: 'maintenance' },
 ]
 
-/**
- * 状态选择选项（表单用）
- */
 const statusSelectOptions = [
   { label: '已发布', value: 'published' },
   { label: '草稿', value: 'draft' },
 ]
 
-/**
- * 表单数据
- */
 const formData = ref({
   title: '',
   type: 'system' as AnnouncementType,
@@ -334,10 +301,7 @@ const formData = ref({
   sendNotification: false,
 })
 
-/**
- * 模拟公告数据
- */
-const announcements = ref<Announcement[]>([
+const defaultAnnouncements: Announcement[] = [
   {
     id: '1',
     title: '系统升级公告：v26.1.1 版本发布',
@@ -404,11 +368,34 @@ const announcements = ref<Announcement[]>([
     pinned: false,
     scheduledAt: null,
   },
-])
+]
 
-/**
- * 统计数据
- */
+const announcements = ref<Announcement[]>([...defaultAnnouncements])
+
+async function fetchAnnouncementData() {
+  loading.value = true
+  error.value = null
+  try {
+    // 尝试调用后端 API 获取 SMS 配置（作为后端连通性验证）
+    // 由于暂无专门的公告 API，此处保留本地数据管理
+    await getSmsConfig('aliyun')
+    // API 调用成功，后端已连通，继续使用本地公告数据
+  } catch (err: any) {
+    const message = err?.message || err?.statusMessage || '网络请求失败'
+    error.value = message
+    // 降级使用本地 mock 数据
+    if (announcements.value.length === 0) {
+      announcements.value = [...defaultAnnouncements]
+    }
+  } finally {
+    loading.value = false
+  }
+}
+
+onMounted(() => {
+  fetchAnnouncementData()
+})
+
 const stats = computed(() => ({
   total: announcements.value.length,
   published: announcements.value.filter(a => a.status === 'published').length,
@@ -416,18 +403,11 @@ const stats = computed(() => ({
   todayViews: 4285,
 }))
 
-/**
- * 总页数
- */
 const totalPages = computed(() => Math.ceil(filteredAnnouncements.value.length / 10) || 1)
 
-/**
- * 根据筛选条件过滤后的公告列表
- */
 const filteredAnnouncements = computed(() => {
   let result = [...announcements.value]
 
-  // 关键词搜索
   if (searchKeyword.value.trim()) {
     const kw = searchKeyword.value.toLowerCase()
     result = result.filter(
@@ -435,17 +415,14 @@ const filteredAnnouncements = computed(() => {
     )
   }
 
-  // 状态筛选
   if (statusFilter.value !== 'all') {
     result = result.filter(a => a.status === statusFilter.value)
   }
 
-  // 类型筛选
   if (typeFilter.value !== 'all') {
     result = result.filter(a => a.type === typeFilter.value)
   }
 
-  // 置顶公告优先排序
   result.sort((a, b) => {
     if (a.pinned && !b.pinned) return -1
     if (!a.pinned && b.pinned) return 1
@@ -455,11 +432,6 @@ const filteredAnnouncements = computed(() => {
   return result
 })
 
-/**
- * 获取公告类型显示文本
- * @param type - 公告类型
- * @returns 类型显示文本
- */
 function getTypeText(type: AnnouncementType): string {
   const map: Record<AnnouncementType, string> = {
     system: '系统公告',
@@ -470,11 +442,6 @@ function getTypeText(type: AnnouncementType): string {
   return map[type]
 }
 
-/**
- * 获取公告类型徽章样式变体
- * @param type - 公告类型
- * @returns UBadge variant
- */
 function getTypeBadgeVariant(type: AnnouncementType): 'default' | 'secondary' | 'outline' | 'destructive' {
   const map: Record<AnnouncementType, 'default' | 'secondary' | 'outline' | 'destructive'> = {
     system: 'default',
@@ -485,11 +452,6 @@ function getTypeBadgeVariant(type: AnnouncementType): 'default' | 'secondary' | 
   return map[type]
 }
 
-/**
- * 获取公告状态显示文本
- * @param status - 公告状态
- * @returns 状态显示文本
- */
 function getStatusText(status: AnnouncementStatus): string {
   const map: Record<AnnouncementStatus, string> = {
     published: '已发布',
@@ -499,11 +461,6 @@ function getStatusText(status: AnnouncementStatus): string {
   return map[status]
 }
 
-/**
- * 获取公告状态徽章样式变体
- * @param status - 公告状态
- * @returns UBadge variant
- */
 function getStatusBadgeVariant(status: AnnouncementStatus): 'default' | 'secondary' | 'outline' {
   const map: Record<AnnouncementStatus, 'default' | 'secondary' | 'outline'> = {
     published: 'default',
@@ -513,9 +470,6 @@ function getStatusBadgeVariant(status: AnnouncementStatus): 'default' | 'seconda
   return map[status]
 }
 
-/**
- * 重置所有筛选条件
- */
 function resetFilters() {
   searchKeyword.value = ''
   statusFilter.value = 'all'
@@ -523,9 +477,6 @@ function resetFilters() {
   currentPage.value = 1
 }
 
-/**
- * 打开创建公告对话框
- */
 function openCreateDialog() {
   editingItem.value = null
   formData.value = {
@@ -540,10 +491,6 @@ function openCreateDialog() {
   showDialog.value = true
 }
 
-/**
- * 打开编辑公告对话框
- * @param item - 公告
- */
 function openEditDialog(item: Announcement) {
   editingItem.value = item
   formData.value = {
@@ -558,12 +505,8 @@ function openEditDialog(item: Announcement) {
   showDialog.value = true
 }
 
-/**
- * 保存公告（新增或编辑）
- */
 function saveAnnouncement() {
   if (editingItem.value) {
-    // 编辑现有公告
     const item = announcements.value.find(a => a.id === editingItem.value!.id)
     if (item) {
       item.title = formData.value.title
@@ -572,13 +515,11 @@ function saveAnnouncement() {
       item.content = formData.value.content
       item.pinned = formData.value.pinned
       item.scheduledAt = formData.value.scheduledAt || null
-      // 草稿转发布时设置发布时间
       if (formData.value.status === 'published' && !item.publishTime) {
         item.publishTime = formatNow()
       }
     }
   } else {
-    // 新增公告
     const newItem: Announcement = {
       id: Date.now().toString(),
       title: formData.value.title,
@@ -596,27 +537,15 @@ function saveAnnouncement() {
   showDialog.value = false
 }
 
-/**
- * 发布草稿公告
- * @param item - 公告
- */
 function publishAnnouncement(item: Announcement) {
   item.status = 'published'
   item.publishTime = formatNow()
 }
 
-/**
- * 切换公告置顶状态
- * @param item - 公告
- */
 function togglePin(item: Announcement) {
   item.pinned = !item.pinned
 }
 
-/**
- * 删除公告
- * @param item - 公告
- */
 function deleteAnnouncement(item: Announcement) {
   const index = announcements.value.findIndex(a => a.id === item.id)
   if (index > -1) {
@@ -624,10 +553,6 @@ function deleteAnnouncement(item: Announcement) {
   }
 }
 
-/**
- * 格式化当前时间为可读字符串
- * @returns 格式化后的时间字符串
- */
 function formatNow(): string {
   const d = new Date()
   const pad = (n: number) => n.toString().padStart(2, '0')

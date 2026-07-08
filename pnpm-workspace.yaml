@@ -66,7 +66,6 @@ catalogs:
     '@shikijs/langs': ^3.13.0
     '@shikijs/markdown-it': ^3.12.2
     '@tailwindcss/vite': ^4.2.1
-    '@tanstack/react-virtual': ^3.13.18
     '@tiptap/extension-color': ^2.27.2
     '@tiptap/extension-highlight': ^2.27.2
     '@tiptap/extension-image': ^2.27.2
@@ -92,7 +91,6 @@ catalogs:
     react: ^19.2.4
     react-dom: ^19.2.4
     react-router-dom: ^7.13.0
-    recharts: 2.15.4
     reka-ui: ^2.9.2
     sass: 1.78.0
     stream-markdown: ^0.0.8

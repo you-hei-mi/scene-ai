@@ -21,7 +21,7 @@
           <span class="block bg-gradient-to-r from-primary via-accent to-secondary bg-clip-text text-transparent">AI 智能体</span>
         </h1>
 
-        <p class="text-lg sm:text-xl leading-relaxed max-w-2xl mx-auto mb-12 text-slate-600 dark:text-slate-300">
+        <p class="text-lg sm:text-xl leading-relaxed mx-auto mb-12 text-slate-600 dark:text-slate-300">
           让每个人都能拥有专属 AI 助手。零代码创建、一键部署、无缝集成。
         </p>
 
@@ -36,7 +36,7 @@
           </button>
         </div>
 
-        <div class="mt-16 grid grid-cols-1 sm:grid-cols-3 gap-8 max-w-3xl mx-auto">
+        <div class="mt-16 grid grid-cols-1 sm:grid-cols-3 gap-8 mx-auto">
           <div v-for="stat in stats" :key="stat.label" class="text-center">
             <p class="text-4xl sm:text-5xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent mb-2">{{ stat.value }}</p>
             <p class="text-sm text-slate-500 dark:text-slate-400">{{ stat.label }}</p>
@@ -56,7 +56,7 @@
       <div class="max-w-6xl mx-auto">
         <div class="text-center mb-16">
           <h2 class="text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white mb-4">核心功能</h2>
-          <p class="text-lg text-slate-600 dark:text-slate-300 max-w-2xl mx-auto">强大的 AI 能力，简单易用的操作体验</p>
+          <p class="text-lg text-slate-600 dark:text-slate-300 mx-auto">强大的 AI 能力，简单易用的操作体验</p>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
